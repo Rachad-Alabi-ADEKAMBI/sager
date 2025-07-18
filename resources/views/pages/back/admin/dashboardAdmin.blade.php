@@ -7,21 +7,7 @@
 @section('content')
 
 
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2>SAGER</h2>
-            <p>Dashboard</p>
-        </div>
-        <ul class="sidebar-menu">
-            <li><a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Tableau de bord</a></li>
-            <li><a href="stock.html"><i class="fas fa-boxes"></i> Stock</a></li>
-            <li><a href="users.html"><i class="fas fa-users"></i> Utilisateurs</a></li>
-            <li><a href="sales.html"><i class="fas fa-shopping-cart"></i> Ventes</a></li>
-            <li><a href="index.html"><i class="fas fa-home"></i> Accueil</a></li>
-            <li><a href="login.html"><i class="fas fa-sign-out-alt"></i> Déconnexion</a></li>
-        </ul>
-    </aside>
+   @include('pages.back.admin.sidebar')
 
     <!-- Main Content -->
     <main class="main-content">
