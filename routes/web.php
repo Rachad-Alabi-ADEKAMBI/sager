@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\RegisteredUserController;
 
 Route::get('/', function () {
     return view('pages/front/home');
@@ -22,9 +23,12 @@ Route::get('/stocks', function () {
 })->name('stocks');
 
 Route::get('/sellers', function () {
-    return view('pages/back/admin/sellers');
+    $users = \App\Models\User::all(); // Fetch all users for the sellers page
+    return view('pages/back/admin/sellers', compact('users'));
 })->name('sellers');
 
 Route::get('/sales', function () {
     return view('pages/back/admin/sales');
 })->name('sales');
+
+Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.store');
