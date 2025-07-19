@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\ProductController;
+use App\Models\Product;
+
 
 Route::get('/', function () {
     return view('pages/front/home');
@@ -19,8 +22,14 @@ Route::get('/dashboardAdmin', function () {
 
 
 Route::get('/stocks', function () {
-    return view('pages/back/admin/stocks');
+    $products = Product::all();
+    return view('pages/back/admin/stocks', compact('products'));
 })->name('stocks');
+
+Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+
+
+
 
 Route::get('/sellers', function () {
     $users = \App\Models\User::all(); // Fetch all users for the sellers page
@@ -32,3 +41,8 @@ Route::get('/sales', function () {
 })->name('sales');
 
 Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.store');
+
+
+Route::get('/login', function () {
+    dd('page login atteinte');
+})->middleware('guest')->name('login');

@@ -72,164 +72,118 @@
             </div>
 
             <!-- Stock Table -->
-            <div class="table-container">
-                <div class="table-header">
-                    <h3>Liste des Produits</h3>
-                    <span>Total: 1,234 produits</span>
-                </div>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th><i class="fas fa-sort"></i> Nom</th>
-                            <th><i class="fas fa-sort"></i> Catégorie</th>
-                            <th><i class="fas fa-sort"></i> Prix</th>
-                            <th><i class="fas fa-sort"></i> Quantité</th>
-                            <th><i class="fas fa-sort"></i> Statut</th>
-                            <th><i class="fas fa-sort"></i> Dernière MAJ</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Ordinateur Portable HP</strong></td>
-                            <td>Informatique</td>
-                            <td>899€</td>
-                            <td>25</td>
-                            <td><span class="status-badge status-in-stock">En stock</span></td>
-                            <td>15/01/2024</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-sm btn-edit" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-sm btn-delete" title="Supprimer">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Smartphone Samsung</strong></td>
-                            <td>Électronique</td>
-                            <td>599€</td>
-                            <td>8</td>
-                            <td><span class="status-badge status-low-stock">Stock faible</span></td>
-                            <td>14/01/2024</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-sm btn-edit" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-sm btn-delete" title="Supprimer">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Casque Audio Sony</strong></td>
-                            <td>Accessoires</td>
-                            <td>199€</td>
-                            <td>0</td>
-                            <td><span class="status-badge status-out-of-stock">Rupture</span></td>
-                            <td>13/01/2024</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-sm btn-edit" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-sm btn-delete" title="Supprimer">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Appareil Photo Canon</strong></td>
-                            <td>Électronique</td>
-                            <td>1299€</td>
-                            <td>12</td>
-                            <td><span class="status-badge status-in-stock">En stock</span></td>
-                            <td>12/01/2024</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-sm btn-edit" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-sm btn-delete" title="Supprimer">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Tablette iPad</strong></td>
-                            <td>Informatique</td>
-                            <td>449€</td>
-                            <td>18</td>
-                            <td><span class="status-badge status-in-stock">En stock</span></td>
-                            <td>11/01/2024</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-sm btn-edit" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-sm btn-delete" title="Supprimer">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h3>Liste des Produits</h3>
+                                <span>Total: {{ $products->count() }}</span>
+                            </div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th><i class="fas fa-sort"></i> Nom</th>
+                                        <th><i class="fas fa-sort"></i> Catégorie</th>
+                                        <th><i class="fas fa-sort"></i> Prix</th>
+                                        <th><i class="fas fa-sort"></i> Quantité</th>
+                                        <th><i class="fas fa-sort"></i> Statut</th>
+                                        <th><i class="fas fa-sort"></i> Dernière MAJ</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                        <tbody>
+                @foreach($products as $product)
+                <tr>
+                    <td data-label="Nom"><strong>{{ $product->name }}</strong></td>
+                    <td data-label="Catégorie">{{ $product->category ?? 'N/A' }}</td>
+                    <td data-label="Prix">{{ number_format($product->price_detail, 2) }}€</td>
+                    <td data-label="Quantité">{{ $product->quantity }}</td>
+                    <td data-label="Statut">
+                        @if($product->quantity > 0)
+                            <span class="status-badge status-in-stock">En stock</span>
+                        @else
+                            <span class="status-badge status-out-stock">Rupture</span>
+                        @endif
+                    </td>
+                    <td data-label="Dernière MAJ">{{ $product->updated_at->format('d/m/Y') }}</td>
+                    <td data-label="Actions">
+                        <div class="action-buttons">
+                            <button class="btn-sm btn-edit" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-sm btn-delete" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+
+
+                            </table>
             </div>
         </div>
     </main>
 
-    <!-- Modal Ajouter Produit -->
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Ajouter un nouveau produit</h3>
-                <span class="close" onclick="closeModal()">&times;</span>
-            </div>
-            <form>
-                <div class="form-group">
-                    <label>Nom du produit</label>
-                    <input type="text" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Catégorie</label>
-                    <select class="form-control" required>
-                        <option value="">Sélectionner une catégorie</option>
-                        <option>Électronique</option>
-                        <option>Informatique</option>
-                        <option>Accessoires</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Prix (€)</label>
-                    <input type="number" class="form-control" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label>Quantité</label>
-                    <input type="number" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea class="form-control" rows="3"></textarea>
-                </div>
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                    <button type="submit" class="btn-primary" style="flex: 1;">
-                        <i class="fas fa-save"></i> Enregistrer
-                    </button>
-                    <button type="button" onclick="closeModal()" style="flex: 1; background: #6c757d; color: white; border: none; padding: 0.75rem; border-radius: 10px; cursor: pointer;">
-                        Annuler
-                    </button>
-                </div>
-            </form>
-        </div>
+ <!-- Modal Ajouter Produit -->
+<div id="productModal" class="modal" style="max-width: 700px; margin: auto;">
+  <div class="modal-content" style="padding: 2rem;">
+    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h3>Ajouter un nouveau produit</h3>
+      <span class="close" onclick="closeModal()" style="cursor: pointer; font-size: 1.5rem;">&times;</span>
     </div>
+    <form enctype="multipart/form-data" method="POST" action="/products">
+      @csrf
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label>Nom du produit</label>
+        <input name="name" type="text" class="form-control" required>
+      </div>
+
+      <div class="row" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+        <div class="form-group" style="flex: 1 1 45%;">
+          <label>Prix d'achat</label>
+          <input name="purchase_price" type="number" class="form-control" step="0.01" required>
+        </div>
+
+        <div class="form-group" style="flex: 1 1 45%;">
+          <label>Quantité</label>
+          <input name="quantity" type="number" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="row" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+        <div class="form-group" style="flex: 1 1 30%;">
+          <label>Prix détail</label>
+          <input name="price_detail" type="number" class="form-control" step="0.01" required>
+        </div>
+
+        <div class="form-group" style="flex: 1 1 30%;">
+          <label>Prix semi gros</label>
+          <input name="price_semi_bulk" type="number" class="form-control" step="0.01" required>
+        </div>
+
+        <div class="form-group" style="flex: 1 1 30%;">
+          <label>Prix gros</label>
+          <input name="price_bulk" type="number" class="form-control" step="0.01" required>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label>Photo</label>
+        <input name="photo" type="file" accept="image/*" class="form-control">
+      </div>
+
+      <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+        <button type="submit" class="btn-primary" style="flex: 1 1 45%; min-width: 120px;">
+          <i class="fas fa-save"></i> Enregistrer
+        </button>
+        <button type="button" onclick="closeModal()" style="flex: 1 1 45%; min-width: 120px; background: #6c757d; color: white; border: none; padding: 0.75rem; border-radius: 10px; cursor: pointer;">
+          Annuler
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 @endsection
 
  <style>
@@ -511,26 +465,28 @@
 
         /* Modal */
         .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            animation: fadeIn 0.3s ease;
-        }
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: none; /* caché par défaut */
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.15); /* fond sombre léger */
+  z-index: 1000;
+}
 
-        .modal-content {
-            background: white;
-            margin: 5% auto;
-            padding: 2rem;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
-            animation: slideIn 0.3s ease;
-        }
+.modal-content {
+  background: #fff;
+  border-radius: 10px;
+  max-width: 700px;
+  width: 90%;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25); /* ombre plus marquée */
+  position: relative;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform: translateY(0);
+  opacity: 1;
+}
+
 
         .modal-header {
             display: flex;
@@ -604,3 +560,238 @@
             }
         }
     </style>
+
+    <style>
+        .table-container {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+@media (max-width: 600px) {
+    .table thead {
+        display: none;
+    }
+    .table, .table tbody, .table tr, .table td {
+        display: block;
+        width: 100%;
+    }
+    .table tr {
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 1rem;
+    }
+    .table td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        border: none;
+        border-bottom: 1px solid #eee;
+    }
+    .table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 50%;
+        padding-left: 1rem;
+        font-weight: bold;
+        text-align: left;
+    }
+}
+
+    </style>
+
+    <style>
+        /* Fond semi-transparent */
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: none; /* caché par défaut */
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 10px;
+  max-width: 700px;
+  width: 90%;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+
+/* Header modal */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.modal-header .close {
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #888;
+  transition: color 0.3s ease;
+}
+
+.modal-header .close:hover {
+  color: #333;
+}
+
+/* Form groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+/* Ligne de formulaire (row) */
+.row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.row .form-group {
+  flex: 1 1 30%;
+  min-width: 150px;
+}
+
+/* Boutons */
+button.btn-primary {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+button.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+button[type="button"] {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button[type="button"]:hover {
+  background-color: #5a6268;
+}
+
+/* Responsive mobile : empilement vertical */
+@media (max-width: 600px) {
+  .row {
+    flex-direction: column;
+  }
+  
+  .row .form-group {
+    flex: 1 1 100%;
+  }
+  
+  button.btn-primary,
+  button[type="button"] {
+    flex: 1 1 100%;
+    margin-bottom: 0.75rem;
+  }
+}
+
+    </style>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+      function openModal() {
+    const modal = document.getElementById('productModal');
+    modal.style.display = 'flex'; // affiché en flex pour centrage
+}
+
+function closeModal() {
+    const modal = document.getElementById('productModal');
+    modal.style.display = 'none'; // caché
+}
+
+// Fermer modal en cliquant à l’extérieur
+window.onclick = function(event) {
+    const modal = document.getElementById('productModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.querySelector('.menu-toggle');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(event.target) && 
+                !menuToggle.contains(event.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+    </script>
+</body>
