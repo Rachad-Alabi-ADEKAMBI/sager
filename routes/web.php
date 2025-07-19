@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ProductController;
 use App\Models\Product;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 
 Route::get('/', function () {
@@ -19,6 +21,11 @@ Route::get('/home', function () {
 Route::get('/dashboardAdmin', function () {
     return view('pages/back/admin/dashboardAdmin');
 })->name('dashboardAdmin');
+
+
+Route::get('/dashboard', function () {
+    return view('pages/back/seller/dashboard');
+})->name('dashboard');
 
 
 Route::get('/stocks', function () {
@@ -40,9 +47,24 @@ Route::get('/sales', function () {
     return view('pages/back/admin/sales');
 })->name('sales');
 
+Route::get('/sale', function () {
+    return view('pages/back/seller/sale');
+})->name('sale');
+
 Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.store');
 
 
+
+Route::post('/logout', function () {
+    Auth::logout();
+    return redirect('/home');
+})->name('logout');
+
+
 Route::get('/login', function () {
-    dd('page login atteinte');
+    return view('pages/front/login');
 })->middleware('guest')->name('login');
+
+Route::post('/login', [AuthenticatedSessionController::class, 'store'])
+    ->middleware('guest')
+    ->name('login');
