@@ -105,6 +105,18 @@ Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.s
 /* end seller routes*/
 
 
+/* api routes */
+     Route::get('/productsList', function () {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $products = Product::all();
+    return response()->json($products);
+})->name('productsList');
+
+/* end api routes*/
+
 
 
 

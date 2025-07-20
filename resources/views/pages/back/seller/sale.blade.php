@@ -594,14 +594,11 @@
                     <div class="product-line first-line">
                         <div class="form-group">
                             <label>Produit</label>
-                            <select class="form-control product-select" onchange="updatePriceOptions(this)">
+                            <select class="form-control product-select">
                                 <option value="">Sélectionner un produit</option>
-                                <option value="eau-pack">Pack d'eau (24 bouteilles)</option>
-                                <option value="coca-caisse">Caisse Coca-Cola (24 bouteilles)</option>
-                                <option value="biere-caisse">Caisse de bière (24 bouteilles)</option>
-                                <option value="gaz-6kg">Bouteille de gaz 6kg</option>
-                                <option value="gaz-12kg">Bouteille de gaz 12kg</option>
-                                <option value="sprite-caisse">Caisse Sprite (24 bouteilles)</option>
+                                v-@foreach ($products as $product)
+                                    <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="form-group">
@@ -654,19 +651,36 @@
     </div>
 </main>
 
-<!-- Vue.js via CDN -->
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 
 <script>
     const {
         createApp
     } = Vue;
+
     createApp({
         data() {
             return {
-                message: "Bonjour depuis Vue !"
+                message: "Bonjour depuis Vue !",
+                products: []
+            }; // <--- Missing closing curly brace and semicolon here
+        }, // <--- Missing comma here to separate data and mounted
+        mounted() {
+            this.fetchSalesData();
+        },
+        methods: {
+            fetchSalesData() {
+                axios.get('http://127.0.0.1:8000/productsList')
+                    .then(response => {
+                        console.log(response.data);
+                        this.products = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors de la récupération des données :', error);
+                    });
             }
-        }
+        } // <--- Correctly closed methods object
     }).mount('#app');
 </script>
