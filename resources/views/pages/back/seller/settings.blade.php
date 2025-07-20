@@ -1,9 +1,10 @@
-@section('title', 'Gestion des vendeurs')
+@section('title', 'Paramètres du compte - SAGER')
 
 <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
 
 
-@include('pages.back.admin.sidebar')
+@include('pages.back.seller.sidebar')
+
 <!-- Main Content -->
 <main class="main-content">
     <header class="header">
@@ -11,219 +12,42 @@
             <button class="menu-toggle" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i>
             </button>
-            <h1>Gestion des vendeurs</h1>
+            <h1>Paramètres du compte</h1>
         </div>
         <div class="user-info">
-            <span>Administrateur</span>
+            <span>Vendeur</span>
             <div class="user-avatar">
                 <i class="fas fa-user"></i>
             </div>
         </div>
     </header>
 
-    <div class="users-content">
-        <div class="users-header">
-            <h2>Équipe SAGER ({{ $users->count() }}) </h2>
-            <button class="btn-primary" onclick="openModal()">
-                <i class="fas fa-user-plus"></i> Ajouter un vendeur
-            </button>
-        </div>
-
-        <!-- Users Grid -->
-        <div class="users-grid">
-            @foreach ($users as $user)
-                <div class="user-card">
-                    <div class="user-status status-active">Actif</div>
-                    <div class="user-card-header">
-                        <div class="user-card-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="user-card-info">
-                            <h3>{{ $user->name }}</h3>
-                            <p>{{ $user->role ?? 'Rôle non défini' }}</p>
-                        </div>
-                    </div>
-                    <div class="user-details">
-                        <div class="user-detail-item">
-                            <span class="user-detail-label">Email:</span>
-                            <span class="user-detail-value">{{ $user->email }}</span>
-                        </div>
-                        <div class="user-detail-item">
-                            <span class="user-detail-label">Dernière connexion:</span>
-                            <span class="user-detail-value">{{ $user->last_login ?? 'Non disponible' }}</span>
-                        </div>
-                        <div class="user-detail-item">
-                            <span class="user-detail-label">Opérations:</span>
-                            <span class="user-detail-value">{{ $user->operations_count ?? '0' }} cette semaine</span>
-                        </div>
-                    </div>
-                    <div class="user-actions">
-                        <button class="btn-sm btn-view" onclick="viewUserActivity('{{ $user->name }}')">
-                            <i class="fas fa-eye"></i> Voir activité
-                        </button>
-                        <button class="btn-sm btn-ban">
-                            <i class="fas fa-ban"></i> Bannir
-                        </button>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        <!-- Activity Section -->
-        <div class="activity-section">
-            <div class="activity-header">
-                <h3>Activité récente des utilisateurs</h3>
-                <select style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
-                    <option>Toutes les activités</option>
-                    <option>Connexions</option>
-                    <option>Ventes</option>
-                    <option>Gestion stock</option>
-                </select>
-            </div>
-            <ul class="activity-list">
-                <li class="activity-item">
-                    <div class="activity-icon login">
-                        <i class="fas fa-sign-in-alt"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div>
-                            <span class="activity-user">Marie Dubois</span>
-                            <span class="activity-action">s'est connectée au système</span>
-                        </div>
-                        <div class="activity-time">Il y a 5 minutes</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon sale">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div>
-                            <span class="activity-user">Pierre Martin</span>
-                            <span class="activity-action">a effectué une vente de 899€</span>
-                        </div>
-                        <div class="activity-time">Il y a 15 minutes</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon stock">
-                        <i class="fas fa-boxes"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div>
-                            <span class="activity-user">Marie Dubois</span>
-                            <span class="activity-action">a mis à jour le stock - Smartphone Samsung</span>
-                        </div>
-                        <div class="activity-time">Il y a 1 heure</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon sale">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div>
-                            <span class="activity-user">Sophie Laurent</span>
-                            <span class="activity-action">a traité une commande client</span>
-                        </div>
-                        <div class="activity-time">Il y a 2 heures</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon login">
-                        <i class="fas fa-sign-in-alt"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div>
-                            <span class="activity-user">Pierre Martin</span>
-                            <span class="activity-action">s'est connecté au système</span>
-                        </div>
-                        <div class="activity-time">Il y a 3 heures</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </div>
-</main>
-
-<!-- Modal Ajouter Utilisateur -->
-<div id="userModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Ajouter un nouveau vendeur</h3>
-            <span class="close" onclick="closeModal()">&times;</span>
-        </div>
-        <form action="{{ route('users.store') }}" method="POST">
+    <section
+        style="max-width: 500px; margin: 3rem auto; background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
+        <h3 style="margin-bottom: 1.5rem;">Modifier les Paramètres du compte</h3>
+        <form action="" method="POST">
             @csrf
             <div class="form-group">
-                <label for="name">Nom complet</label>
-                <input type="text" id="name" name="name" class="form-control" required>
+                <label for="old_password">Ancien mot de passe</label>
+                <input type="password" id="old_password" name="old_password" class="form-control" required>
             </div>
             <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" class="form-control" required>
+                <label for="new_password">Nouveau mot de passe</label>
+                <input type="password" id="new_password" name="new_password" class="form-control" required>
             </div>
             <div class="form-group">
-                <label for="password">Mot de passe temporaire</label>
-                <input type="password" id="password" name="password" class="form-control" required>
+                <label for="password_confirmation">Confirmer le mot de passe</label>
+                <input type="password" id="password_confirmation" name="password_confirmation" class="form-control"
+                    required>
             </div>
-            <input type="hidden" name="role" value="seller">
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                <button type="submit" class="btn-primary" style="flex: 1;">
-                    <i class="fas fa-user-plus"></i> Ajouter l'utilisateur
-                </button>
-                <button type="button" onclick="closeModal()"
-                    style="flex: 1; background: #6c757d; color: white; border: none; padding: 0.75rem; border-radius: 10px; cursor: pointer;">
-                    Annuler
+            <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                <button type="submit" class="btn-primary" style="min-width: 200px;">
+                    <i class="fas fa-save"></i> Modifier le mot de passe
                 </button>
             </div>
         </form>
-    </div>
-</div>
-
-
-
-
-<script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('active');
-    }
-
-    function openModal() {
-        document.getElementById('userModal').style.display = 'block';
-    }
-
-    function closeModal() {
-        document.getElementById('userModal').style.display = 'none';
-    }
-
-    function viewUserActivity(userName) {
-        alert(`Affichage de l'activité de ${userName}`);
-    }
-
-    // Close modal when clicking outside
-    window.onclick = function(event) {
-        const modal = document.getElementById('userModal');
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
-    }
-
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function(event) {
-        const sidebar = document.getElementById('sidebar');
-        const menuToggle = document.querySelector('.menu-toggle');
-
-        if (window.innerWidth <= 768 &&
-            !sidebar.contains(event.target) &&
-            !menuToggle.contains(event.target)) {
-            sidebar.classList.remove('active');
-        }
-    });
-</script>
-
-
+    </section>
+</main>
 
 
 <style>
@@ -697,3 +521,43 @@
         }
     }
 </style>
+
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('active');
+    }
+
+    function openModal() {
+        document.getElementById('userModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('userModal').style.display = 'none';
+    }
+
+    function viewUserActivity(userName) {
+        alert(`Affichage de l'activité de ${userName}`);
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('userModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.querySelector('.menu-toggle');
+
+        if (window.innerWidth <= 768 &&
+            !sidebar.contains(event.target) &&
+            !menuToggle.contains(event.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+</script>

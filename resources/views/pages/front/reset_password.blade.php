@@ -5,24 +5,19 @@
             <p>Système de Gestion de Stock</p>
         </div>
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="">
             @csrf
             <div class="form-group">
                 <i class="fas fa-user"></i>
                 <input type="email" name="email" class="form-control" placeholder="Adresse email" required>
             </div>
 
-            <div class="form-group">
-                <i class="fas fa-lock"></i>
-                <input type="password" name="password" class="form-control" placeholder="Mot de passe" required>
-            </div>
-
             <button type="submit" class="btn-login">
-                <i class="fas fa-sign-in-alt"></i> Se connecter
+                <i class="fas fa-sign-in-alt"></i> Réintilaiser le mot de passe
             </button>
 
             <div class="forgot-password">
-                <a href="{{ route('reset_password') }}">Mot de passe oublié ?</a>
+                <a href="/login">Se connecter</a>
             </div>
         </form>
 

@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rules;
 use Illuminate\Http\Response;
 
 class RegisteredUserController extends Controller
@@ -17,9 +17,9 @@ class RegisteredUserController extends Controller
     public function store(Request $request): Response
     {
         $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', Rules\Password::defaults()],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', Password::defaults()],
         ]);
 
         if ($validator->fails()) {
@@ -31,13 +31,13 @@ class RegisteredUserController extends Controller
         }
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->string('password')),
+            'name'     => $request->input('name'),
+            'email'    => $request->input('email'),
+            'password' => Hash::make($request->input('password')),
         ]);
 
         event(new Registered($user));
-        Auth::login($user);
+      //  Auth::login($user);
 
         return response(
             '<script>alert("Inscription réussie"); window.location.href="/sellers";</script>',
@@ -45,3 +45,4 @@ class RegisteredUserController extends Controller
         )->header('Content-Type', 'text/html');
     }
 }
+    
