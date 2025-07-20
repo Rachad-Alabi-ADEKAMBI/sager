@@ -115,6 +115,20 @@ Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.s
     return response()->json($products);
 })->name('productsList');
 
+
+  Route::get('/product/{id}', function ($id) {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $product = Product::find($id);
+    if ($product) {
+        return response()->json($product->toArray());
+    } else {
+        return response()->json(['error' => 'Product not found'], 404);
+    }
+})->name('product');
+
 /* end api routes*/
 
 

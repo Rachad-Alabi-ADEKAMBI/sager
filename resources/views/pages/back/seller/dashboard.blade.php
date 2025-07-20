@@ -73,7 +73,7 @@
 
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3>Activité récente</h3>
+                    <h3>Vos ventes récente</h3>
                 </div>
                 <ul class="activity-list">
                     <li class="activity-item">
@@ -83,33 +83,6 @@
                         <div class="activity-content">
                             <div>Nouvelle vente - Ordinateur Portable</div>
                             <div class="activity-time">Il y a 5 minutes</div>
-                        </div>
-                    </li>
-                    <li class="activity-item">
-                        <div class="activity-icon stock">
-                            <i class="fas fa-boxes"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div>Stock mis à jour - Smartphone</div>
-                            <div class="activity-time">Il y a 15 minutes</div>
-                        </div>
-                    </li>
-                    <li class="activity-item">
-                        <div class="activity-icon user">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div>Nouvel utilisateur ajouté</div>
-                            <div class="activity-time">Il y a 1 heure</div>
-                        </div>
-                    </li>
-                    <li class="activity-item">
-                        <div class="activity-icon sale">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div>Vente - Casque Audio</div>
-                            <div class="activity-time">Il y a 2 heures</div>
                         </div>
                     </li>
                 </ul>

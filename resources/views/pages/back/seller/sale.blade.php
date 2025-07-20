@@ -547,13 +547,13 @@
             <button class="menu-toggle">
                 <i class="fas fa-bars"></i>
             </button>
-            <h1>Gestion des Ventes
+            <h1>Nouvelle vente
             </h1>
 
-            <h1>@{{ message }}</h1>
+
         </div>
         <div class="user-info">
-            <span></span>
+            <span>@{{ seller_name }}</span>
             <div class="user-avatar">
                 <i class="fas fa-user"></i>
             </div>
@@ -562,12 +562,6 @@
 
     <div class="sales-content">
         <div class="sales-header">
-            <h2>Nouvelle Vente</h2>
-            <div>
-                <button class="btn-primary" onclick="resetSale()">
-                    <i class="fas fa-refresh"></i> Nouvelle vente
-                </button>
-            </div>
         </div>
 
         <!-- Sales Form -->
@@ -592,29 +586,40 @@
                 <h4 style="margin-bottom: 1rem; color: #333;">Produits à vendre</h4>
                 <div id="productLinesContainer">
                     <div class="product-line first-line">
+
+
                         <div class="form-group">
                             <label>Produit</label>
-                            <select class="form-control product-select">
+                            <select v-model="selectedProductId" @change="onProductChange"
+                                class="form-control product-select">
                                 <option value="">Sélectionner un produit</option>
-                                v-@foreach ($products as $product)
+                                @foreach ($products as $product)
                                     <option value="{{ $product->id }}">{{ $product->name }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="form-group">
+
+                        <div class="form-group" v-if="product">
                             <label>Type de prix</label>
-                            <select class="form-control price-type">
+                            <select class="form-control price-type" v-model="selectedPrice" @change="updateUnitPrice">
                                 <option value="">Sélectionner le type</option>
+                                <option :value="product.price_detail">Détail @{{ product.price_detail }}</option>
+                                <option :value="product.price_semi_bulk">Semi gros @{{ product.price_semi_bulk }}</option>
+                                <option :value="product.price_bulk">Gros @{{ product.price_bulk }}</option>
                             </select>
                         </div>
+
                         <div class="form-group">
                             <label>Quantité</label>
                             <input type="number" class="form-control quantity-input" min="1" value="1"
                                 style="width: 100px;">
                         </div>
+
+
                         <div class="form-group">
                             <label>Prix unitaire (FCFA)</label>
-                            <input type="number" class="form-control" style="width: 100px;" step="0.01" readonly>
+                            <input type="number" class="form-control" style="width: 100px;" step="0.01"
+                                v-model="unitPrice" readonly>
                         </div>
                         <div class="form-group">
                             <label style="opacity: 0;">Action</label>
@@ -664,9 +669,16 @@
         data() {
             return {
                 message: "Bonjour depuis Vue !",
-                products: []
-            }; // <--- Missing closing curly brace and semicolon here
-        }, // <--- Missing comma here to separate data and mounted
+                products: [],
+                seller_name: "{{ auth()->user()->name }}",
+                selectedProductId: '',
+                product: [],
+                unitPrice: '',
+                quantity: 1,
+                total: 0,
+
+            };
+        },
         mounted() {
             this.fetchSalesData();
         },
@@ -680,7 +692,23 @@
                     .catch(error => {
                         console.error('Erreur lors de la récupération des données :', error);
                     });
+            },
+            onProductChange() {
+                axios.get('http://127.0.0.1:8000/product/' + this.selectedProductId)
+                    .then(response => {
+                        this.product = response.data;
+                        console.log('Produit sélectionné:', this.product);
+                        // Mettre à jour le prix unitaire dans la ligne de produit
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors de la récupération du produit :', error);
+                    });
+            },
+            updateUnitPrice() {
+                this.unitPrice = parseFloat(this.selectedPrice) || 0;
             }
+
+
         } // <--- Correctly closed methods object
     }).mount('#app');
 </script>
