@@ -6,6 +6,7 @@ use App\Http\Controllers\ProductController;
 use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\SaleController;
 
 
 Route::get('/', function () {
@@ -48,7 +49,8 @@ Route::get('/sales', function () {
 })->name('sales');
 
 Route::get('/sale', function () {
-    return view('pages/back/seller/sale');
+    $products = Product::all();  // récupère tous les produits
+    return view('pages.back.seller.sale', compact('products'));
 })->name('sale');
 
 Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.store');
@@ -68,3 +70,18 @@ Route::get('/login', function () {
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])
     ->middleware('guest')
     ->name('login');
+
+
+Route::post('/vente', function (\Illuminate\Http\Request $request) {
+    dd($request->all());
+})->name('vente.store');
+
+
+Route::resource('sales', SaleController::class);
+Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');
+
+
+Route::get('/sale', [App\Http\Controllers\SaleController::class, 'create'])->name('sale');
+Route::post('/sale', [App\Http\Controllers\SaleController::class, 'store'])->name('sales.store');
+
+
