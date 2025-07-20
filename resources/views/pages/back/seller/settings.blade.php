@@ -15,7 +15,7 @@
             <h1>Paramètres du compte</h1>
         </div>
         <div class="user-info">
-            <span>Vendeur</span>
+            <span>{{ auth()->user()->name }}</span>
             <div class="user-avatar">
                 <i class="fas fa-user"></i>
             </div>
