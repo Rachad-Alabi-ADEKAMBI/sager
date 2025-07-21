@@ -568,90 +568,97 @@
         <div class="sales-form">
             <h3 style="margin-bottom: 1.5rem; color: #333;">Informations de la vente</h3>
 
-            <!-- Customer Information -->
-            <div class="customer-info">
-                <div class="form-group">
-                    <label>Nom du client *</label>
-                    <input type="text" class="form-control" id="customerName" placeholder="Nom complet du client"
-                        required>
-                </div>
-                <div class="form-group">
-                    <label>Téléphone</label>
-                    <input type="tel" class="form-control" id="customerPhone" placeholder="Numéro de téléphone">
-                </div>
-            </div>
 
-            <!-- Product Lines -->
-            <div class="product-lines">
-                <h4 style="margin-bottom: 1rem; color: #333;">Produits à vendre</h4>
-                <div id="productLinesContainer">
-                    <div class="product-line first-line">
+            <form @submit.prevent="submitForm">
 
-
-                        <div class="form-group">
-                            <label>Produit</label>
-                            <select v-model="selectedProductId" @change="onProductChange"
-                                class="form-control product-select">
-                                <option value="">Sélectionner un produit</option>
-                                @foreach ($products as $product)
-                                    <option value="{{ $product->id }}">{{ $product->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="form-group" v-if="product">
-                            <label>Type de prix</label>
-                            <select class="form-control price-type" v-model="selectedPrice" @change="updateUnitPrice">
-                                <option value="">Sélectionner le type</option>
-                                <option :value="product.price_detail">Détail @{{ product.price_detail }}</option>
-                                <option :value="product.price_semi_bulk">Semi gros @{{ product.price_semi_bulk }}</option>
-                                <option :value="product.price_bulk">Gros @{{ product.price_bulk }}</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Quantité</label>
-                            <input type="number" class="form-control quantity-input" min="1" value="1"
-                                style="width: 100px;">
-                        </div>
-
-
-                        <div class="form-group">
-                            <label>Prix unitaire (FCFA)</label>
-                            <input type="number" class="form-control" style="width: 100px;" step="0.01"
-                                v-model="unitPrice" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label style="opacity: 0;">Action</label>
-                            <button type="button" class="btn-remove" onclick="removeProductLine(this)"
-                                style="opacity: 0.3; cursor: not-allowed;" disabled>
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+                <!-- Customer Information -->
+                <div class="customer-info">
+                    <div class="form-group">
+                        <label>Nom du client *</label>
+                        <input type="text" class="form-control" id="customerName" v-model="customer_name"
+                            placeholder="Nom complet du client" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Téléphone</label>
+                        <input type="tel" class="form-control" v-model="customer_phone" id="customerPhone"
+                            placeholder="Numéro de téléphone">
                     </div>
                 </div>
-                <button type="button" class="btn-add-line" onclick="addProductLine()">
-                    <i class="fas fa-plus"></i> Ajouter une ligne
-                </button>
-            </div>
 
-            <!-- Cart Section -->
-            <div class="cart-section">
-                <h4 style="margin-bottom: 1rem; color: #333;">Résumé de la commande</h4>
-                <div class="cart-summary">
-                    <div>
-                        <div class="cart-items-count" id="itemsCount">0 article(s)</div>
+                <!-- Product Lines -->
+                <div class="product-lines">
+                    <h4 style="margin-bottom: 1rem; color: #333;">Produits à vendre</h4>
+                    <div id="productLinesContainer">
+                        <div class="product-line first-line">
+
+
+                            <div class="form-group">
+                                <label>Produit</label>
+                                <select v-model="selectedProductId" @change="onProductChange"
+                                    class="form-control product-select">
+                                    <option value="">Sélectionner un produit</option>
+                                    @foreach ($products as $product)
+                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-group" v-if="product">
+                                <label>Type de prix</label>
+                                <select class="form-control price-type" v-model="selectedPrice"
+                                    @change="updateUnitPrice">
+                                    <option value="">Sélectionner le type</option>
+                                    <option :value="product.price_detail">Détail @{{ product.price_detail }}</option>
+                                    <option :value="product.price_semi_bulk">Semi gros @{{ product.price_semi_bulk }}</option>
+                                    <option :value="product.price_bulk">Gros @{{ product.price_bulk }}</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Quantité</label>
+                                <input type="number" class="form-control quantity-input" min="1" value="1"
+                                    style="width: 100px;" v-model="quantity" @input="onQuantityChange">
+                            </div>
+
+
+                            <div class="form-group">
+                                <label>Prix unitaire</label>
+                                <input type="number" class="form-control" style="width: 100px;" step="0.01"
+                                    v-model="unitPrice" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label style="opacity: 0;">Action</label>
+                                <button type="button" class="btn-remove" onclick="removeProductLine(this)"
+                                    style="opacity: 0.3; cursor: not-allowed;" disabled>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="cart-total" id="cartTotal">
-                        Total: 0 FCFA
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 1.5rem;">
-                    <button class="btn-primary" onclick="completeSale()" id="completeSaleBtn" disabled>
-                        <i class="fas fa-check"></i> Finaliser la vente
+                    <button type="button" class="btn-add-line" onclick="addProductLine()">
+                        <i class="fas fa-plus"></i> Ajouter une ligne
                     </button>
                 </div>
-            </div>
+
+                <!-- Cart Section -->
+                <div class="cart-section">
+                    <h4 style="margin-bottom: 1rem; color: #333;">Résumé de la commande</h4>
+                    <div class="cart-summary">
+                        <div>
+                            <div class="cart-items-count" id="itemsCount">0 article(s)</div>
+                        </div>
+                        <div class="cart-total" id="cartTotal">
+                            Total: @{{ total }} FCFA
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn-primary" type='submit'>
+                            <i class="fas fa-check"></i> Finaliser la vente
+                        </button>
+                    </div>
+                </div>
+
+            </form>
         </div>
     </div>
 </main>
@@ -674,8 +681,10 @@
                 selectedProductId: '',
                 product: [],
                 unitPrice: '',
-                quantity: 1,
-                total: 0,
+                quantity: '',
+                total: '',
+                customer_name: 'oklm',
+                customer_phone: '65454'
 
             };
         },
@@ -706,7 +715,54 @@
             },
             updateUnitPrice() {
                 this.unitPrice = parseFloat(this.selectedPrice) || 0;
+            },
+            onQuantityChange(event) {
+                this.quantity = parseFloat(event.target.value) || 0;
+                this.total = this.unitPrice * this.quantity;
+            },
+
+            submitForm() {
+                if (!this.customer_name || this.customer_name.trim() === '') {
+                    alert('Veuillez entrer le nom du client.');
+                    return;
+                }
+
+                if (!this.quantity || this.quantity <= 0) {
+                    alert('Veuillez entrer une quantité valide.');
+                    return;
+                }
+
+                if (!this.selectedProductId) {
+                    alert('Veuillez sélectionner un produit.');
+                    return;
+                }
+
+                const saleData = {
+                    customer_name: this.customer_name,
+                    customer_phone: this.customer_phone,
+                    product_id: this.selectedProductId,
+                    quantity: this.quantity,
+                    unit_price: this.unitPrice,
+                    total: (this.unitPrice * this.quantity).toFixed(2)
+                };
+
+                console.log('Données à envoyer:', saleData); // 
+
+                axios.post('http://127.0.0.1:8000/sale', saleData)
+                    .then(response => {
+                        console.log('Vente enregistrée avec succès:', response.data);
+                        alert('Vente enregistrée avec succès !');
+                        this.resetForm();
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors de l\'enregistrement de la vente :', error);
+                        alert('Une erreur est survenue lors de l\'enregistrement de la vente.');
+                    });
+
             }
+
+
+
 
 
         } // <--- Correctly closed methods object

@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\SaleController;
+use Illuminate\Http\Request;
 
 
 Route::get('/', function () {
@@ -86,6 +87,11 @@ Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.s
     }
       $products = Product::all();
     return view('pages/back/seller/sale', compact('products'));
+})->name('sale');
+
+Route::post('/sale', function (Request $request) {
+    // Pour debug : afficher les données reçues en JSON
+    return response()->json($request->all());
 })->name('sale');
 
  Route::get('/dashboard', function () {
