@@ -1,0 +1,7 @@
+{
+  "semi": true,
+  "singleQuote": true,
+  "vueIndentScriptAndStyle": true,
+  "htmlWhitespaceSensitivity": "ignore",
+  "bracketSpacing": true
+}

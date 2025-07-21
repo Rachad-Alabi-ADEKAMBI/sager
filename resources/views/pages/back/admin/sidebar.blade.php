@@ -10,9 +10,10 @@
      <ul class="sidebar-menu">
          <li><a href="{{ route('dashboardAdmin') }}" class="active"><i class="fas fa-tachometer-alt"></i> Tableau de
                  bord</a></li>
+                         <li><a href="{{ route('sales') }}"><i class="fas fa-shopping-cart"></i> Ventes</a></li>
          <li><a href="{{ route('stocks') }}"><i class="fas fa-boxes"></i> Stock</a></li>
          <li><a href="{{ route('sellers') }}"><i class="fas fa-users"></i> Vendeurs</a></li>
-         <li><a href="{{ route('sales') }}"><i class="fas fa-shopping-cart"></i> Ventes</a></li>
+
          <li><a href="{{ route('home') }}"><i class="fas fa-home"></i> Accueil</a></li>
          <li><a href="{{ route('settingsAdmin') }}"><i class="fas fa-cog"></i> Paramètres du compte</a></li>
 

@@ -65,7 +65,8 @@ Route::get('/sales', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
         return redirect()->route('login');
     }
-    return view('pages/back/admin/sales');
+   $sales = Sale::with('products')->orderBy('created_at', 'desc')->get();
+    return view('pages/back/admin/sales', compact('sales'));
 })->name('sales');
 
 Route::get('/settingsAdmin', function () {
@@ -89,6 +90,8 @@ Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.s
         return redirect()->route('login');
     }
       $products = Product::all();
+
+      //get all the sales_id of the current 
     return view('pages/back/seller/sale', compact('products'));
 })->name('sale');
 
@@ -219,6 +222,16 @@ Route::get('/newInvoice', function (Request $request) {
     }
 })->name('product');
 
+//user sales
+Route::get('/userSales', function () {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $sales = Sale::with('products')->where('seller_name', Auth::user()->name)->get();
+    return response()->json($sales);
+})->name('userSales');
+
 /* end api routes*/
 
 
@@ -247,16 +260,5 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store'])
 })->middleware('guest')->name('reset_password');
 
 
-Route::post('/vente', function (\Illuminate\Http\Request $request) {
-    dd($request->all());
-})->name('vente.store');
-
-
 
 Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');
-
-/*
-Route::get('/sale', [App\Http\Controllers\SaleController::class, 'create'])->name('sale');
-Route::post('/sale', [App\Http\Controllers\SaleController::class, 'store'])->name('sales.store');
-*/
-

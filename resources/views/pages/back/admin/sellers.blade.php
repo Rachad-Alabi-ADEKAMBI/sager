@@ -87,58 +87,10 @@
                     </div>
                     <div class="activity-content">
                         <div>
-                            <span class="activity-user">Marie Dubois</span>
-                            <span class="activity-action">s'est connectée au système</span>
-                        </div>
-                        <div class="activity-time">Il y a 5 minutes</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon sale">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div>
-                            <span class="activity-user">Pierre Martin</span>
-                            <span class="activity-action">a effectué une vente de 899€</span>
-                        </div>
-                        <div class="activity-time">Il y a 15 minutes</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon stock">
-                        <i class="fas fa-boxes"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div>
-                            <span class="activity-user">Marie Dubois</span>
-                            <span class="activity-action">a mis à jour le stock - Smartphone Samsung</span>
-                        </div>
-                        <div class="activity-time">Il y a 1 heure</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon sale">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div>
-                            <span class="activity-user">Sophie Laurent</span>
-                            <span class="activity-action">a traité une commande client</span>
-                        </div>
-                        <div class="activity-time">Il y a 2 heures</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon login">
-                        <i class="fas fa-sign-in-alt"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div>
-                            <span class="activity-user">Pierre Martin</span>
+                            <span class="activity-user">1 vendeur </span>
                             <span class="activity-action">s'est connecté au système</span>
                         </div>
-                        <div class="activity-time">Il y a 3 heures</div>
+                        <div class="activity-time">Il y a 5 minutes</div>
                     </div>
                 </li>
             </ul>
@@ -182,8 +134,6 @@
 </div>
 
 
-
-
 <script>
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -222,8 +172,6 @@
         }
     });
 </script>
-
-
 
 
 <style>

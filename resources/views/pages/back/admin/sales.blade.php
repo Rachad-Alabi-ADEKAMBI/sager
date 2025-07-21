@@ -39,7 +39,7 @@
                     </select>
                 </div>
             </div>
-            <table class="table">
+           <table class="table">
                 <thead>
                     <tr>
                         <th>N° Facture</th>
@@ -51,58 +51,30 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @foreach ($sales as $sale)
                     <tr>
-                        <td><strong>#INV-2024-001</strong></td>
-                        <td>Jean Dupont</td>
-                        <td>Pierre Martin</td>
-                        <td>15/01/2024 14:30</td>
-                        <td><strong>25,000 FCFA</strong></td>
-                        <td>
-                            <button class="invoice-btn" onclick="viewInvoice('INV-2024-001')">
-                                <i class="fas fa-eye"></i> Voir
+                        <td data-label="N° Facture"><strong>#INV-{{ $sale->id }}</strong></td>
+                        <td data-label="Client">{{ $sale->buyer_name }}</td>
+                        <td data-label="Vendeur">{{ $sale->seller_name }}</td>
+                        <td data-label="Date">{{ $sale->created_at->format('d/m/Y H:i') }}</td>
+                        <td data-label="Montant"><strong>{{ number_format($sale->total, 0, ',', ' ') }} FCFA</strong></td>
+                        <td data-label="Actions">
+                            <button class="invoice-btn" onclick="viewInvoice('#INV-{{ $sale->id }}')">
+                            <i class="fas fa-eye"></i> Voir
                             </button>
-                            <button class="print-btn" onclick="printInvoice('INV-2024-001')">
-                                <i class="fas fa-print"></i> Imprimer
+                            <button class="print-btn" onclick="printInvoice('#INV-{{ $sale->id }}')">
+                            <i class="fas fa-print"></i> Imprimer
                             </button>
                         </td>
-                    </tr>
-                    <tr>
-                        <td><strong>#INV-2024-002</strong></td>
-                        <td>Marie Leblanc</td>
-                        <td>Sophie Laurent</td>
-                        <td>15/01/2024 11:15</td>
-                        <td><strong>18,500 FCFA</strong></td>
-                        <td>
-                            <button class="invoice-btn" onclick="viewInvoice('INV-2024-002')">
-                                <i class="fas fa-eye"></i> Voir
-                            </button>
-                            <button class="print-btn" onclick="printInvoice('INV-2024-002')">
-                                <i class="fas fa-print"></i> Imprimer
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>#INV-2024-003</strong></td>
-                        <td>Paul Durand</td>
-                        <td>Pierre Martin</td>
-                        <td>14/01/2024 16:45</td>
-                        <td><strong>42,000 FCFA</strong></td>
-                        <td>
-                            <button class="invoice-btn" onclick="viewInvoice('INV-2024-003')">
-                                <i class="fas fa-eye"></i> Voir
-                            </button>
-                            <button class="print-btn" onclick="printInvoice('INV-2024-003')">
-                                <i class="fas fa-print"></i> Imprimer
-                            </button>
-                        </td>
-                    </tr>
+                        </tr>
+
+                    @endforeach
                 </tbody>
             </table>
+
         </div>
     </div>
 </main>
-
-
 
 
 <style>
@@ -637,3 +609,158 @@
         }
     }
 </style>
+
+<style>
+  /* Table responsive : sur petits écrans */
+  @media (max-width: 768px) {
+    table.table,
+    thead,
+    tbody,
+    th,
+    td,
+    tr {
+      display: block;
+      width: 100%;
+    }
+
+    thead tr {
+      display: none; /* Masquer l'en-tête sur mobile */
+    }
+
+    tbody tr {
+      margin-bottom: 1.5rem;
+      border: 1px solid #ccc;
+      padding: 15px 10px;
+      border-radius: 8px;
+      background-color: #fff;
+      box-sizing: border-box;
+    }
+
+    tbody td {
+      position: relative;
+      padding-left: 50%;
+      text-align: left;
+      border: none;
+      border-bottom: 1px solid #eee;
+      box-sizing: border-box;
+      min-height: 40px;
+      vertical-align: top;
+    }
+
+    tbody td:last-child {
+      border-bottom: 0;
+    }
+
+    tbody td::before {
+      position: absolute;
+      top: 50%;
+      left: 10px;
+      transform: translateY(-50%);
+      width: 45%;
+      white-space: nowrap;
+      font-weight: 600;
+      content: attr(data-label);
+      color: #333;
+    }
+  }
+</style>
+
+<style>
+    @media (max-width: 768px) {
+  table.table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block !important; /* forcer block */
+    width: 100% !important;
+  }
+
+  thead tr {
+    display: none !important;
+  }
+
+  tbody tr {
+    margin-bottom: 1.5rem;
+    border: 1px solid #ccc;
+    padding: 15px 10px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-sizing: border-box;
+  }
+
+  tbody td {
+    position: relative;
+    padding-left: 50% !important;
+    text-align: left !important;
+    border: none !important;
+    border-bottom: 1px solid #eee !important;
+    box-sizing: border-box;
+    min-height: 40px;
+    vertical-align: top;
+  }
+
+  tbody td:last-child {
+    border-bottom: 0 !important;
+  }
+
+  tbody td::before {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    width: 45%;
+    white-space: nowrap;
+    font-weight: 600;
+    content: attr(data-label);
+    color: #333;
+  }
+
+  /* Boutons en block et marge */
+  tbody td button {
+    display: inline-flex;
+    margin-right: 10px;
+    margin-bottom: 5px;
+  }
+}
+</style>
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('active');
+    }
+
+    function openModal() {
+        document.getElementById('userModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('userModal').style.display = 'none';
+    }
+
+    function viewUserActivity(userName) {
+        alert(`Affichage de l'activité de ${userName}`);
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('userModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.querySelector('.menu-toggle');
+
+        if (window.innerWidth <= 768 &&
+            !sidebar.contains(event.target) &&
+            !menuToggle.contains(event.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+</script>

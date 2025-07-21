@@ -81,15 +81,22 @@
                     @foreach ($products as $product)
                         <tr>
                             <td data-label="Nom"><strong>{{ $product->name }}</strong></td>
-                            <td data-label="Prix">{{ number_format($product->price_detail, 2) }}€</td>
+                        <td data-label="Prix">
+    Detail: <strong>{{ number_format($product->price_detail, 2) }} FCFA</strong><br>
+    Semi-gros: <strong>{{ number_format($product->price_semi_bulk, 2) }} FCFA</strong><br>
+    Gros: <strong>{{ number_format($product->price_bulk, 2) }} FCFA</strong>
+</td>
+
                             <td data-label="Quantité">{{ $product->quantity }}</td>
-                            <td data-label="Statut">
-                                @if ($product->quantity > 0)
-                                    <span class="status-badge status-in-stock">En stock</span>
-                                @else
-                                    <span class="status-badge status-out-stock">Rupture</span>
-                                @endif
-                            </td>
+                           <td data-label="Statut">
+    @if ($product->quantity >= 5)
+        <span class="status-badge status-in-stock">En stock</span>
+    @elseif ($product->quantity < 5)
+        <span class="status-badge status-low-stock">Stock Faible</span>
+    @else
+        <span class="status-badge status-out-stock">Rupture de stock</span>
+    @endif
+</td>
                             <td data-label="Dernière MAJ">{{ $product->updated_at->format('d/m/Y') }}</td>
                             <td data-label="Actions">
                                 <div class="action-buttons">
@@ -155,7 +162,7 @@
             </div>
 
             <div class="form-group" style="margin-bottom: 1rem;">
-                <label>Photo</label>
+                <label>Photo (Optionel)</label>
                 <input name="photo" type="file" accept="image/*" class="form-control">
             </div>
 

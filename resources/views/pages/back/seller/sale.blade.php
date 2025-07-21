@@ -648,7 +648,7 @@
                             <div class="cart-items-count" id="itemsCount">0 article(s)</div>
                         </div>
                         <div class="cart-total" id="cartTotal">
-                            Total: @{{ total }} FCFA
+                            Total: @{{ formatAmount(total )}} FCFA
                         </div>
                     </div>
                     <div style="text-align: center; margin-top: 1.5rem;">
@@ -684,7 +684,8 @@
                 quantity: '',
                 total: '',
                 customer_name: 'oklm',
-                customer_phone: '65454'
+                customer_phone: '65454',
+                sales: [],
 
             };
         },
@@ -693,7 +694,7 @@
         },
         methods: {
             fetchSalesData() {
-                axios.get('http://127.0.0.1:8000/productsList')
+                axios.get('/productsList')
                     .then(response => {
                         console.log(response.data);
                         this.products = response.data;
@@ -701,9 +702,18 @@
                     .catch(error => {
                         console.error('Erreur lors de la récupération des données :', error);
                     });
+
+                axios.get('/userSales')
+                    .then(response => {
+                        console.log(response.data);
+                        this.sales = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors de la récupération des données :', error);
+                    });
             },
             onProductChange() {
-                axios.get('http://127.0.0.1:8000/product/' + this.selectedProductId)
+               axios.get(`/product/${this.selectedProductId}`)
                     .then(response => {
                         this.product = response.data;
                         console.log('Produit sélectionné:', this.product);
@@ -773,7 +783,34 @@
                         console.error('Erreur lors de l\'enregistrement de la vente :', error);
                         alert('Une erreur est survenue lors de l\'enregistrement de la vente.');
                     });
+            },
+            formatDateTime(datetime) {
+                const date = new Date(datetime);
+                const options = {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                };
+                return date.toLocaleString('fr-FR', options);
+            },
+            formatAmount(value) {
+                return Number(value).toLocaleString('fr-FR');
+            },
+            viewInvoice(sale) {
+                // Code pour voir la facture
+                console.log('Voir facture:', sale.id);
+            },
+            printInvoice(sale) {
+                // Code pour imprimer la facture
+                console.log('Imprimer facture:', sale.id);
             }
+
+
+
+
+
 
         } // <--- Correctly closed methods object
     }).mount('#app');

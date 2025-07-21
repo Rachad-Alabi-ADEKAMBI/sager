@@ -3,16 +3,142 @@
 @section('title', 'Accueil')
 
 @section('content')
-    <main class="main">
+  main class="main">
         <!-- Hero Section -->
         <section id="accueil" class="hero">
+            <div class="hero-background"></div>
             <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-award"></i>
+                    <span>Leader depuis 10 ans</span>
+                </div>
                 <h1>Bienvenue chez SAGER</h1>
-                <p>Votre distributeur de confiance pour boissons, eaux, sodas, bières et gaz domestique. Vente en gros et
-                    détail avec service de livraison rapide dans toute la région.</p>
-                <a href="#contact" class="cta-button">
-                    <i class="fas fa-phone"></i> Nous contacter
-                </a>
+                <p class="hero-subtitle">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique</p>
+                <p class="hero-description">Distribution professionnelle • Vente en gros et détail • Livraison rapide dans toute la région • Service client exceptionnel</p>
+                <div class="hero-buttons">
+                    <a href="#contact" class="cta-button primary">
+                        <i class="fas fa-phone"></i> Nous contacter
+                    </a>
+                    <a href="#produits" class="cta-button secondary">
+                        <i class="fas fa-eye"></i> Voir nos produits
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">10+</span>
+                        <span class="stat-label">Années d'expérience</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">500+</span>
+                        <span class="stat-label">Clients satisfaits</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">24h</span>
+                        <span class="stat-label">Livraison rapide</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services" class="services">
+            <div class="container">
+                <h2 class="section-title">Nos Services</h2>
+                <p class="section-subtitle">Des solutions complètes pour répondre à tous vos besoins</p>
+                <div class="services-grid">
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-truck-fast"></i>
+                        </div>
+                        <h3>Livraison Express</h3>
+                        <p>Livraison dans toute la région en moins de 24h. Service d'urgence disponible pour les professionnels.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Livraison gratuite dès 50 000 FCFA</li>
+                            <li><i class="fas fa-check"></i> Suivi en temps réel</li>
+                            <li><i class="fas fa-check"></i> Livraison 7j/7</li>
+                        </ul>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-warehouse"></i>
+                        </div>
+                        <h3>Vente en Gros</h3>
+                        <p>Tarifs préférentiels pour les professionnels, restaurants, hôtels et revendeurs.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Prix dégressifs par quantité</li>
+                            <li><i class="fas fa-check"></i> Facturation professionnelle</li>
+                            <li><i class="fas fa-check"></i> Crédit pour clients fidèles</li>
+                        </ul>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <h3>Vente au Détail</h3>
+                        <p>Magasin ouvert au public avec un large choix de produits frais et de qualité.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Produits toujours frais</li>
+                            <li><i class="fas fa-check"></i> Conseil personnalisé</li>
+                            <li><i class="fas fa-check"></i> Promotions régulières</li>
+                        </ul>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <h3>Gaz Domestique</h3>
+                        <p>Distribution de bouteilles de gaz de toutes tailles avec service de consigne.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Toutes tailles disponibles</li>
+                            <li><i class="fas fa-check"></i> Échange de bouteilles</li>
+                            <li><i class="fas fa-check"></i> Installation gratuite</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-number" data-target="500">0</span>
+                            <span class="stat-label">Clients Fidèles</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-number" data-target="10000">0</span>
+                            <span class="stat-label">Produits Livrés/Mois</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-number" data-target="10">0</span>
+                            <span class="stat-label">Années d'Expérience</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-number" data-target="98">0</span>
+                            <span class="stat-label">% Satisfaction Client</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -20,107 +146,315 @@
         <section id="apropos" class="about">
             <div class="container">
                 <h2 class="section-title">À Propos de SAGER</h2>
+                <p class="section-subtitle">Une histoire de passion, de qualité et de service</p>
                 <div class="about-content">
                     <div class="about-text">
-                        <h3>Notre Histoire</h3>
-                        <p>Depuis plus de 10 ans, SAGER s'est imposé comme le leader de la distribution de boissons et de
-                            gaz domestique dans la région. Notre engagement envers la qualité et le service client nous a
-                            permis de bâtir une réputation solide.</p>
-
-                        <h3>Notre Mission</h3>
-                        <p>Fournir à nos clients des produits de qualité supérieure à des prix compétitifs, avec un service
-                            de livraison rapide et fiable. Nous nous efforçons de répondre aux besoins de nos clients
-                            particuliers et professionnels.</p>
+                        <div class="about-story">
+                            <h3><i class="fas fa-history"></i> Notre Histoire</h3>
+                            <p>Fondée il y a plus de 10 ans, SAGER a débuté comme une petite entreprise familiale avec une vision claire : fournir des boissons de qualité et un service exceptionnel à la communauté de Cotonou. Aujourd'hui, nous sommes fiers d'être devenus le leader régional de la distribution de boissons et de gaz domestique.</p>
+                        </div>
+                        <div class="about-mission">
+                            <h3><i class="fas fa-bullseye"></i> Notre Mission</h3>
+                            <p>Être le partenaire de confiance de nos clients en fournissant des produits de qualité supérieure à des prix compétitifs, avec un service de livraison rapide et fiable. Nous nous engageons à dépasser les attentes de nos clients particuliers et professionnels.</p>
+                        </div>
+                        <div class="about-values">
+                            <h3><i class="fas fa-heart"></i> Nos Valeurs</h3>
+                            <div class="values-list">
+                                <div class="value-item">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Qualité garantie</span>
+                                </div>
+                                <div class="value-item">
+                                    <i class="fas fa-handshake"></i>
+                                    <span>Service client</span>
+                                </div>
+                                <div class="value-item">
+                                    <i class="fas fa-leaf"></i>
+                                    <span>Respect environnement</span>
+                                </div>
+                                <div class="value-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Ponctualité</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="about-image">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.40%20AM-uBRukbqKQHM4lRHsRRU8kv42xg0E9S.jpeg"
-                            alt="Entrepôt SAGER avec stock de boissons">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.40%20AM-uBRukbqKQHM4lRHsRRU8kv42xg0E9S.jpeg" alt="Entrepôt SAGER avec stock de boissons">
+                        <div class="image-overlay">
+                            <div class="overlay-content">
+                                <h4>Notre Entrepôt</h4>
+                                <p>Plus de 1000m² de stockage climatisé</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
                 <div class="features-grid">
                     <div class="feature-card">
                         <i class="fas fa-truck"></i>
                         <h3>Livraison Rapide</h3>
-                        <p>Service de livraison dans toute la région avec des délais respectés et un service client de
-                            qualité.</p>
+                        <p>Service de livraison dans toute la région avec des délais respectés et un service client de qualité. Flotte de véhicules modernes et équipe dédiée.</p>
+                        <div class="feature-details">
+                            <span class="detail-item"><i class="fas fa-map-marker-alt"></i> Rayon 50km</span>
+                            <span class="detail-item"><i class="fas fa-clock"></i> 24h max</span>
+                        </div>
                     </div>
                     <div class="feature-card">
                         <i class="fas fa-shield-alt"></i>
                         <h3>Produits de Qualité</h3>
-                        <p>Nous sélectionnons rigoureusement nos fournisseurs pour garantir la fraîcheur et la qualité de
-                            nos produits.</p>
+                        <p>Nous sélectionnons rigoureusement nos fournisseurs pour garantir la fraîcheur et la qualité de nos produits. Contrôle qualité à chaque étape.</p>
+                        <div class="feature-details">
+                            <span class="detail-item"><i class="fas fa-certificate"></i> Certifié ISO</span>
+                            <span class="detail-item"><i class="fas fa-thermometer-half"></i> Chaîne du froid</span>
+                        </div>
                     </div>
                     <div class="feature-card">
                         <i class="fas fa-users"></i>
                         <h3>Service Client</h3>
-                        <p>Une équipe dédiée à votre service pour répondre à toutes vos questions et besoins spécifiques.
-                        </p>
+                        <p>Une équipe dédiée à votre service pour répondre à toutes vos questions et besoins spécifiques. Support disponible 6j/7.</p>
+                        <div class="feature-details">
+                            <span class="detail-item"><i class="fas fa-phone"></i> Hotline dédiée</span>
+                            <span class="detail-item"><i class="fas fa-comments"></i> Chat en ligne</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Gallery Section -->
+        <!-- Products Section -->
         <section id="produits" class="gallery">
             <div class="container">
                 <h2 class="section-title">Nos Produits</h2>
+                <p class="section-subtitle">Une gamme complète pour tous vos besoins</p>
+                
+                <!-- Product Categories -->
+                <div class="product-categories">
+                    <button class="category-btn active" data-category="all">Tous les produits</button>
+                    <button class="category-btn" data-category="water">Eaux</button>
+                    <button class="category-btn" data-category="beverages">Boissons</button>
+                    <button class="category-btn" data-category="beer">Bières</button>
+                    <button class="category-btn" data-category="gas">Gaz</button>
+                </div>
+
                 <div class="gallery-grid">
-                    <div class="gallery-item">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.39%20AM-wW9qqwdT0BcVm47Uh1EaH1z58cWO0E.jpeg"
-                            alt="Packs d'eau en bouteilles">
+                    <div class="gallery-item" data-category="water">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.39%20AM-wW9qqwdT0BcVm47Uh1EaH1z58cWO0E.jpeg" alt="Packs d'eau en bouteilles">
                         <div class="gallery-overlay">
                             <h3>Eaux en Bouteilles</h3>
-                            <p>Large gamme d'eaux minérales et de source, disponibles en différents formats</p>
+                            <p>Large gamme d'eaux minérales et de source, disponibles en différents formats (0.5L, 1L, 1.5L)</p>
+                            <div class="product-brands">
+                                <span class="brand">Possotomé</span>
+                                <span class="brand">Awé</span>
+                                <span class="brand">Voltic</span>
+                            </div>
+                            <div class="product-price">À partir de 250 FCFA</div>
                         </div>
                     </div>
-
-                    <div class="gallery-item">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.43%20AM-Lx9tURBN0Lq4fNyWWXqRuVQUGoEEAf.jpeg"
-                            alt="Caisses de bières et sodas">
+                    <div class="gallery-item" data-category="beer beverages">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.43%20AM-Lx9tURBN0Lq4fNyWWXqRuVQUGoEEAf.jpeg" alt="Caisses de bières et sodas">
                         <div class="gallery-overlay">
                             <h3>Bières et Sodas</h3>
-                            <p>Toutes les marques populaires de bières et sodas, fraîches et disponibles en gros</p>
+                            <p>Toutes les marques populaires de bières et sodas, fraîches et disponibles en gros et détail</p>
+                            <div class="product-brands">
+                                <span class="brand">Béninoise</span>
+                                <span class="brand">Coca-Cola</span>
+                                <span class="brand">Fanta</span>
+                            </div>
+                            <div class="product-price">À partir de 500 FCFA</div>
                         </div>
                     </div>
-
-                    <div class="gallery-item">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.43%20AM%20%281%29-iib34BZ7jw03tNcux6rdpnybcEwPbr.jpeg"
-                            alt="Stock de boissons diverses">
+                    <div class="gallery-item" data-category="beverages">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.43%20AM%20%281%29-iib34BZ7jw03tNcux6rdpnybcEwPbr.jpeg" alt="Stock de boissons diverses">
                         <div class="gallery-overlay">
                             <h3>Boissons Diverses</h3>
-                            <p>Jus de fruits, boissons énergisantes, et autres rafraîchissements</p>
+                            <p>Jus de fruits, boissons énergisantes, thés glacés et autres rafraîchissements</p>
+                            <div class="product-brands">
+                                <span class="brand">Tampico</span>
+                                <span class="brand">Red Bull</span>
+                                <span class="brand">Lipton</span>
+                            </div>
+                            <div class="product-price">À partir de 300 FCFA</div>
                         </div>
                     </div>
-
-                    <div class="gallery-item">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.40%20AM-uBRukbqKQHM4lRHsRRU8kv42xg0E9S.jpeg"
-                            alt="Étalage de boissons organisé">
+                    <div class="gallery-item" data-category="all">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.40%20AM-uBRukbqKQHM4lRHsRRU8kv42xg0E9S.jpeg" alt="Étalage de boissons organisé">
                         <div class="gallery-overlay">
                             <h3>Vente au Détail</h3>
-                            <p>Espace de vente organisé pour faciliter vos achats au détail</p>
+                            <p>Espace de vente organisé pour faciliter vos achats au détail avec conseil personnalisé</p>
+                            <div class="product-features">
+                                <span class="feature">Produits frais</span>
+                                <span class="feature">Conseil expert</span>
+                                <span class="feature">Promotions</span>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="gallery-item">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.42%20AM-6sNjtAG3G1VI8OfO8kYHh0b3rpiZ3p.jpeg"
-                            alt="Bouteilles de gaz domestique">
+                    <div class="gallery-item" data-category="gas">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.42%20AM-6sNjtAG3G1VI8OfO8kYHh0b3rpiZ3p.jpeg" alt="Bouteilles de gaz domestique">
                         <div class="gallery-overlay">
                             <h3>Gaz Domestique</h3>
-                            <p>Bouteilles de gaz de différentes tailles pour tous vos besoins domestiques</p>
+                            <p>Bouteilles de gaz de différentes tailles pour tous vos besoins domestiques et professionnels</p>
+                            <div class="product-sizes">
+                                <span class="size">6kg</span>
+                                <span class="size">12kg</span>
+                                <span class="size">35kg</span>
+                            </div>
+                            <div class="product-price">À partir de 3 500 FCFA</div>
                         </div>
                     </div>
+                    <div class="gallery-item special-offer" data-category="all">
+                        <div class="special-content">
+                            <i class="fas fa-gift"></i>
+                            <h3>Offres Spéciales</h3>
+                            <p>Découvrez nos promotions du moment et nos packs avantageux</p>
+                            <div class="offer-list">
+                                <div class="offer-item">Pack famille eau + sodas</div>
+                                <div class="offer-item">Remise quantité gros</div>
+                                <div class="offer-item">Fidélité récompensée</div>
+                            </div>
+                            <a href="#contact" class="offer-btn">Voir les offres</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                    <div class="gallery-item">
-                        <div
-                            style="height: 250px; background: linear-gradient(45deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem;">
-                            <i class="fas fa-plus"></i>
+        <!-- Testimonials Section -->
+        <section id="temoignages" class="testimonials">
+            <div class="container">
+                <h2 class="section-title">Ce que disent nos clients</h2>
+                <p class="section-subtitle">La satisfaction de nos clients est notre priorité</p>
+                <div class="testimonials-grid">
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            <div class="stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <p>"Service exceptionnel ! Livraison toujours à l'heure et produits de qualité. Je recommande vivement SAGER pour tous vos besoins en boissons."</p>
                         </div>
-                        <div class="gallery-overlay">
-                            <h3>Et Bien Plus...</h3>
-                            <p>Découvrez notre gamme complète en magasin ou contactez-nous pour plus d'informations</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="author-info">
+                                <h4>Marie Adjovi</h4>
+                                <span>Restauratrice</span>
+                            </div>
                         </div>
                     </div>
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            <div class="stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <p>"Client depuis 5 ans, jamais déçu ! Prix compétitifs, large choix et équipe très professionnelle. Le service de livraison est parfait."</p>
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="author-info">
+                                <h4>Jean-Baptiste Koudou</h4>
+                                <span>Gérant d'hôtel</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            <div class="stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <p>"Excellent rapport qualité-prix ! L'équipe est à l'écoute et trouve toujours des solutions adaptées à nos besoins. Très satisfait !"</p>
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="author-info">
+                                <h4>Fatou Diallo</h4>
+                                <span>Particulier</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="faq">
+            <div class="container">
+                <h2 class="section-title">Questions Fréquentes</h2>
+                <p class="section-subtitle">Trouvez rapidement les réponses à vos questions</p>
+                <div class="faq-grid">
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>Quels sont vos délais de livraison ?</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Nous livrons dans un délai maximum de 24h dans toute la région de Cotonou. Pour les commandes urgentes, nous proposons un service express en moins de 4h (supplément appliqué).</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>Proposez-vous des tarifs préférentiels pour les gros volumes ?</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Oui, nous avons des tarifs dégressifs selon les quantités commandées. Contactez-nous pour obtenir un devis personnalisé adapté à vos besoins professionnels.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>Comment fonctionne le système de consigne pour les bouteilles de gaz ?</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Lors de votre premier achat, vous payez une consigne pour la bouteille. Ensuite, vous ne payez que le gaz lors des recharges. La consigne vous est remboursée si vous ne souhaitez plus utiliser nos services.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>Acceptez-vous les paiements par mobile money ?</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Oui, nous acceptons tous les moyens de paiement : espèces, mobile money (MTN, Moov), virements bancaires et cartes bancaires pour les professionnels.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Newsletter Section -->
+        <section class="newsletter">
+            <div class="container">
+                <div class="newsletter-content">
+                    <div class="newsletter-text">
+                        <h2>Restez informé de nos offres</h2>
+                        <p>Inscrivez-vous à notre newsletter pour recevoir nos promotions exclusives et nouveautés</p>
+                    </div>
+                    <form class="newsletter-form">
+                        <div class="form-group">
+                            <input type="email" placeholder="Votre adresse email" required>
+                            <button type="submit">
+                                <i class="fas fa-paper-plane"></i>
+                                S'inscrire
+                            </button>
+                        </div>
+                        <p class="newsletter-privacy">Nous respectons votre vie privée. Pas de spam, désinscription facile.</p>
+                    </form>
                 </div>
             </div>
         </section>
@@ -129,35 +463,34 @@
         <section id="contact" class="contact">
             <div class="container">
                 <h2 class="section-title">Contactez-Nous</h2>
+                <p class="section-subtitle">Nous sommes là pour répondre à tous vos besoins</p>
                 <div class="contact-content">
                     <div class="contact-info">
                         <h3 style="margin-bottom: 2rem; color: #333;">Informations de Contact</h3>
-
                         <div class="contact-item">
                             <i class="fas fa-map-marker-alt"></i>
                             <div>
                                 <strong>Adresse</strong><br>
-                                Ayélawadjè, 1ère vons à droite en venant de Midombo<br>
+                                Ayélawadjè, 1ère voie à droite en venant de Midombo<br>
                                 Cotonou, Bénin
                             </div>
                         </div>
-
                         <div class="contact-item">
                             <i class="fas fa-phone"></i>
                             <div>
                                 <strong>Téléphone</strong><br>
-                                +229 0196466625<br>
+                                +229 01 96 46 66 25<br>
+                                <small>Disponible 7j/7 de 8h à 19h</small>
                             </div>
                         </div>
-
                         <div class="contact-item">
                             <i class="fas fa-envelope"></i>
                             <div>
                                 <strong>Email</strong><br>
                                 contact@sager.bj<br>
+                                <small>Réponse sous 24h garantie</small>
                             </div>
                         </div>
-
                         <div class="contact-item">
                             <i class="fas fa-clock"></i>
                             <div>
@@ -166,25 +499,113 @@
                                 Dimanche: Fermé
                             </div>
                         </div>
-
-                        <a href="https://wa.me/2290196466625" class="whatsapp-btn" target="_blank">
-                            <i class="fab fa-whatsapp"></i>
-                            Contactez-nous sur WhatsApp
-                        </a>
+                        <div class="contact-buttons">
+                            <a href="https://wa.me/2290196466625" class="whatsapp-btn" target="_blank">
+                                <i class="fab fa-whatsapp"></i>
+                                WhatsApp
+                            </a>
+                            <a href="tel:+2290196466625" class="call-btn">
+                                <i class="fas fa-phone"></i>
+                                Appeler
+                            </a>
+                        </div>
                     </div>
-
-                    <div class="map-container">
-                        <iframe
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3979.8234567890123!2d9.7678901234567!3d4.0123456789012!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNMKwMDAnMjguNCJOIDnCsDQ2JzA0LjQiRQ!5e0!3m2!1sfr!2scm!4v1234567890123!5m2!1sfr!2scm"
-                            allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-                            title="Localisation SAGER">
-                        </iframe>
+                    <div class="contact-form-container">
+                        <h3>Envoyez-nous un message</h3>
+                        <form class="contact-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="name">Nom complet</label>
+                                    <input type="text" id="name" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">Téléphone</label>
+                                    <input type="tel" id="phone" name="phone" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="subject">Sujet</label>
+                                <select id="subject" name="subject" required>
+                                    <option value="">Choisissez un sujet</option>
+                                    <option value="devis">Demande de devis</option>
+                                    <option value="livraison">Information livraison</option>
+                                    <option value="produit">Question produit</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="message">Message</label>
+                                <textarea id="message" name="message" rows="5" required></textarea>
+                            </div>
+                            <button type="submit" class="submit-btn">
+                                <i class="fas fa-paper-plane"></i>
+                                Envoyer le message
+                            </button>
+                        </form>
                     </div>
+                </div>
+                <div class="map-container">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3979.8234567890123!2d9.7678901234567!3d4.0123456789012!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNMKwMDAnMjguNCJOIDnCsDQ2JzA0LjQiRQ!5e0!3m2!1sfr!2scm!4v1234567890123!5m2!1sfr!2scm" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Localisation SAGER"></iframe>
                 </div>
             </div>
         </section>
-
     </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-main">
+                <div class="footer-section">
+                    <h3><i class="fas fa-store"></i> SAGER</h3>
+                    <p>Votre distributeur de confiance pour boissons, eaux, sodas, bières et gaz domestique depuis plus de 10 ans.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="https://wa.me/2290196466625"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Nos Services</h4>
+                    <ul>
+                        <li><a href="#services">Livraison Express</a></li>
+                        <li><a href="#services">Vente en Gros</a></li>
+                        <li><a href="#services">Vente au Détail</a></li>
+                        <li><a href="#services">Gaz Domestique</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Produits</h4>
+                    <ul>
+                        <li><a href="#produits">Eaux en Bouteilles</a></li>
+                        <li><a href="#produits">Bières et Sodas</a></li>
+                        <li><a href="#produits">Boissons Diverses</a></li>
+                        <li><a href="#produits">Gaz Domestique</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <div class="footer-contact">
+                        <p><i class="fas fa-map-marker-alt"></i> Ayélawadjè, Cotonou</p>
+                        <p><i class="fas fa-phone"></i> +229 01 96 46 66 25</p>
+                        <p><i class="fas fa-envelope"></i> contact@sager.bj</p>
+                        <p><i class="fas fa-clock"></i> Lun-Sam: 8h-19h</p>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 SAGER. Tous droits réservés.</p>
+                <div class="footer-links">
+                    <a href="#">Mentions légales</a>
+                    <a href="#">Politique de confidentialité</a>
+                    <a href="#">CGV</a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <style>
         * {
@@ -197,6 +618,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
+            overflow-x: hidden;
         }
 
         /* Header */
@@ -208,7 +630,8 @@
             width: 100%;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
         }
 
         .nav-container {
@@ -223,6 +646,9 @@
         .logo {
             font-size: 1.8rem;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .nav-menu {
@@ -234,67 +660,156 @@
         .nav-menu a {
             color: white;
             text-decoration: none;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
             padding: 0.5rem 1rem;
-            border-radius: 5px;
+            border-radius: 25px;
+            position: relative;
         }
 
         .nav-menu a:hover {
             background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
         }
 
-        .user-info {
+        .phone-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.5rem;
+        }
+
+        .phone-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
         /* Hero Section */
         .hero {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 8rem 0 4rem;
+            padding: 10rem 0 6rem;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.05)" points="0,0 1000,300 1000,1000 0,700"/></svg>');
+            background-size: cover;
         }
 
         .hero-content {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 0 2rem;
+            position: relative;
+            z-index: 2;
         }
 
-        .hero h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            margin-bottom: 2rem;
             animation: fadeInUp 1s ease-out;
         }
 
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
             animation: fadeInUp 1s ease-out 0.2s both;
+            font-weight: 700;
+        }
+
+        .hero-subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            animation: fadeInUp 1s ease-out 0.4s both;
+            font-weight: 300;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 1s ease-out 0.6s both;
+            opacity: 0.9;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 4rem;
+            animation: fadeInUp 1s ease-out 0.8s both;
         }
 
         .cta-button {
-            display: inline-block;
-            background: white;
-            color: #667eea;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 1rem 2rem;
             border-radius: 50px;
             text-decoration: none;
             font-weight: 600;
             transition: all 0.3s ease;
-            animation: fadeInUp 1s ease-out 0.4s both;
+            font-size: 1.1rem;
+        }
+
+        .cta-button.primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .cta-button.secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
         }
 
         .cta-button:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
-        /* About Section */
-        .about {
-            padding: 4rem 0;
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            animation: fadeInUp 1s ease-out 1s both;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Services Section */
+        .services {
+            padding: 6rem 0;
             background: #f8f9fa;
         }
 
@@ -307,16 +822,141 @@
         .section-title {
             text-align: center;
             font-size: 2.5rem;
-            margin-bottom: 3rem;
+            margin-bottom: 1rem;
             color: #333;
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 4rem;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .service-card {
+            background: white;
+            padding: 2.5rem 2rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .service-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .service-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .service-card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .service-features {
+            list-style: none;
+            text-align: left;
+        }
+
+        .service-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .service-features i {
+            color: #667eea;
+            font-size: 0.8rem;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .stat-content .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-content .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* About Section */
+        .about {
+            padding: 6rem 0;
+            background: white;
         }
 
         .about-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 3rem;
+            gap: 4rem;
             align-items: center;
-            margin-bottom: 3rem;
+            margin-bottom: 4rem;
         }
 
         .about-text {
@@ -325,77 +965,184 @@
             color: #666;
         }
 
+        .about-story, .about-mission, .about-values {
+            margin-bottom: 2rem;
+        }
+
         .about-text h3 {
             color: #333;
             margin-bottom: 1rem;
             font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .about-text h3 i {
+            color: #667eea;
+        }
+
+        .values-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .value-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .value-item i {
+            color: #667eea;
         }
 
         .about-image {
+            position: relative;
             text-align: center;
         }
 
         .about-image img {
             max-width: 100%;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
         }
 
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
-            margin-top: 3rem;
+            margin-top: 4rem;
         }
 
         .feature-card {
             background: white;
-            padding: 2rem;
-            border-radius: 15px;
+            padding: 2.5rem 2rem;
+            border-radius: 20px;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #f0f0f0;
         }
 
         .feature-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
         .feature-card i {
             font-size: 3rem;
             color: #667eea;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
             margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .feature-details {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .detail-item i {
+            font-size: 0.8rem;
+            color: #667eea;
         }
 
         /* Gallery Section */
         .gallery {
-            padding: 4rem 0;
+            padding: 6rem 0;
+            background: #f8f9fa;
+        }
+
+        .product-categories {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
             background: white;
+            border: 2px solid #e0e0e0;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .category-btn.active,
+        .category-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
         }
 
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 2rem;
-            margin-top: 2rem;
+            margin-top: 3rem;
         }
 
         .gallery-item {
             position: relative;
-            border-radius: 15px;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            background: white;
         }
 
         .gallery-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
         }
 
         .gallery-item img {
             width: 100%;
-            height: 250px;
+            height: 280px;
             object-fit: cover;
         }
 
@@ -404,9 +1151,9 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
             color: white;
-            padding: 2rem 1rem 1rem;
+            padding: 3rem 2rem 2rem;
             transform: translateY(100%);
             transition: transform 0.3s ease;
         }
@@ -415,33 +1162,302 @@
             transform: translateY(0);
         }
 
+        .gallery-overlay h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .gallery-overlay p {
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .product-brands, .product-features, .product-sizes {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .brand, .feature, .size {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .product-price {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #ffd700;
+        }
+
+        .special-offer {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .special-content {
+            padding: 3rem 2rem;
+            text-align: center;
+            color: white;
+            height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .special-content i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .offer-list {
+            margin: 1rem 0;
+        }
+
+        .offer-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .offer-btn {
+            background: white;
+            color: #667eea;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .offer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            padding: 6rem 0;
+            background: white;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .testimonial-card {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .testimonial-content {
+            margin-bottom: 1.5rem;
+        }
+
+        .stars {
+            color: #ffd700;
+            margin-bottom: 1rem;
+        }
+
+        .testimonial-content p {
+            font-style: italic;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .author-info h4 {
+            margin-bottom: 0.2rem;
+            color: #333;
+        }
+
+        .author-info span {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* FAQ Section */
+        .faq {
+            padding: 6rem 0;
+            background: #f8f9fa;
+        }
+
+        .faq-grid {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: white;
+            margin-bottom: 1rem;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .faq-question {
+            padding: 1.5rem 2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .faq-question:hover {
+            background: #f8f9fa;
+        }
+
+        .faq-question h3 {
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .faq-question i {
+            color: #667eea;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            padding: 0 2rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 0 2rem 1.5rem;
+            max-height: 200px;
+        }
+
+        .faq-answer p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Newsletter Section */
+        .newsletter {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .newsletter-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .newsletter-text h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .newsletter-form {
+            max-width: 400px;
+        }
+
+        .form-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .newsletter-form input {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+        }
+
+        .newsletter-form button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .newsletter-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .newsletter-privacy {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
         /* Contact Section */
         .contact {
-            padding: 4rem 0;
-            background: #f8f9fa;
+            padding: 6rem 0;
+            background: white;
         }
 
         .contact-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            margin-top: 2rem;
+            gap: 4rem;
+            margin-bottom: 3rem;
         }
 
         .contact-info {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background: #f8f9fa;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
         .contact-item {
             display: flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 10px;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 15px;
             transition: all 0.3s ease;
         }
 
@@ -456,37 +1472,139 @@
             margin-right: 1rem;
             width: 30px;
             color: #667eea;
+            margin-top: 0.2rem;
         }
 
         .contact-item:hover i {
             color: white;
         }
 
+        .contact-item strong {
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .contact-item small {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .contact-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .whatsapp-btn, .call-btn {
+            flex: 1;
+            text-align: center;
+            padding: 1rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
         .whatsapp-btn {
             background: #25D366;
             color: white;
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
         }
 
-        .whatsapp-btn:hover {
-            background: #128C7E;
+        .call-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .whatsapp-btn:hover, .call-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .contact-form-container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .contact-form-container h3 {
+            margin-bottom: 2rem;
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
 
         .map-container {
-            border-radius: 15px;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             height: 400px;
+            margin-top: 2rem;
         }
 
         .map-container iframe {
@@ -499,8 +1617,7 @@
         .footer {
             background: #333;
             color: white;
-            text-align: center;
-            padding: 3rem 0;
+            padding: 4rem 0 2rem;
         }
 
         .footer-content {
@@ -509,15 +1626,103 @@
             padding: 0 2rem;
         }
 
+        .footer-main {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .footer-section p {
+            line-height: 1.6;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section ul li a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section ul li a:hover {
+            color: #667eea;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .footer-contact p {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+            color: #ccc;
+        }
+
+        .footer-contact i {
+            color: #667eea;
+            width: 20px;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #555;
+            padding-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
         .footer-links {
             display: flex;
-            justify-content: center;
             gap: 2rem;
-            margin-bottom: 2rem;
         }
 
         .footer-links a {
-            color: white;
+            color: #ccc;
             text-decoration: none;
             transition: color 0.3s ease;
         }
@@ -532,25 +1737,49 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        /* Responsive */
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
             .nav-menu {
                 display: none;
             }
 
             .hero h1 {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
 
-            .hero p {
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .hero-description {
                 font-size: 1rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 1.5rem;
             }
 
             .nav-container {
@@ -558,7 +1787,8 @@
             }
 
             .about-content,
-            .contact-content {
+            .contact-content,
+            .newsletter-content {
                 grid-template-columns: 1fr;
             }
 
@@ -566,10 +1796,219 @@
                 grid-template-columns: 1fr;
             }
 
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-main {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+
             .footer-links {
                 flex-direction: column;
                 gap: 1rem;
             }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-buttons {
+                flex-direction: column;
+            }
+
+            .values-list {
+                grid-template-columns: 1fr;
+            }
+
+            .product-categories {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 1rem;
+            }
+
+            .category-btn {
+                white-space: nowrap;
+            }
         }
+
+        @media (max-width: 480px) {
+            .hero {
+                padding: 8rem 0 4rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Loading animations */
+        .gallery-item,
+        .service-card,
+        .feature-card,
+        .testimonial-card {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .gallery-item:nth-child(1) { animation-delay: 0.1s; }
+        .gallery-item:nth-child(2) { animation-delay: 0.2s; }
+        .gallery-item:nth-child(3) { animation-delay: 0.3s; }
+        .gallery-item:nth-child(4) { animation-delay: 0.4s; }
+        .gallery-item:nth-child(5) { animation-delay: 0.5s; }
+        .gallery-item:nth-child(6) { animation-delay: 0.6s; }
+
+        .service-card:nth-child(1) { animation-delay: 0.1s; }
+        .service-card:nth-child(2) { animation-delay: 0.2s; }
+        .service-card:nth-child(3) { animation-delay: 0.3s; }
+        .service-card:nth-child(4) { animation-delay: 0.4s; }
     </style>
+
+    <script>
+        // FAQ Toggle
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const faqItem = question.parentElement;
+                const isActive = faqItem.classList.contains('active');
+                
+                // Close all FAQ items
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Open clicked item if it wasn't active
+                if (!isActive) {
+                    faqItem.classList.add('active');
+                }
+            });
+        });
+
+        // Product Category Filter
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const category = btn.dataset.category;
+                
+                // Update active button
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Filter products
+                document.querySelectorAll('.gallery-item').forEach(item => {
+                    if (category === 'all' || item.dataset.category.includes(category)) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Counter Animation
+        function animateCounters() {
+            const counters = document.querySelectorAll('.stat-number[data-target]');
+            
+            counters.forEach(counter => {
+                const target = parseInt(counter.dataset.target);
+                const duration = 2000;
+                const step = target / (duration / 16);
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += step;
+                    if (current >= target) {
+                        counter.textContent = target;
+                        clearInterval(timer);
+                    } else {
+                        counter.textContent = Math.floor(current);
+                    }
+                }, 16);
+            });
+        }
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    if (entry.target.classList.contains('stats-section')) {
+                        animateCounters();
+                    }
+                }
+            });
+        }, observerOptions);
+
+        // Observe stats section
+        const statsSection = document.querySelector('.stats-section');
+        if (statsSection) {
+            observer.observe(statsSection);
+        }
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Form submission
+        document.querySelector('.contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Merci pour votre message ! Nous vous répondrons dans les plus brefs délais.');
+        });
+
+        document.querySelector('.newsletter-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Merci pour votre inscription à notre newsletter !');
+        });
+    </script>
 @endsection
