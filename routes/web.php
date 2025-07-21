@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\SaleController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Models\Sale;
+use App\Models\SaleProduct;
 
 
 Route::get('/', function () {
@@ -89,10 +92,82 @@ Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.s
     return view('pages/back/seller/sale', compact('products'));
 })->name('sale');
 
+
 Route::post('/sale', function (Request $request) {
-    // Pour debug : afficher les données reçues en JSON
-    return response()->json($request->all());
-})->name('sale');
+    // Validation des données
+    $validated = $request->validate([
+        'seller_name' => 'required|string',
+        'buyer_name' => 'required|string',
+        'buyer_phone' => 'required|string',
+        'products' => 'required|array|min:1',
+        'products.*.product_id' => 'required|exists:products,id',
+        'products.*.quantity' => 'required|integer|min:1',
+        'products.*.price' => 'required|numeric|min:0',
+    ]);
+
+    DB::beginTransaction();
+
+    try {
+        // Calcul du total
+        $total = collect($validated['products'])->sum(function ($item) {
+            return $item['quantity'] * $item['price'];
+        });
+
+        // Création de la vente
+        $sale = Sale::create([
+            'seller_name' => $validated['seller_name'],
+            'buyer_name' => $validated['buyer_name'],
+            'buyer_phone' => $validated['buyer_phone'],
+            'total' => $total,
+        ]);
+
+        $details = [];
+
+        foreach ($validated['products'] as $item) {
+            $product = Product::findOrFail($item['product_id']);
+
+            // Vérifie le stock
+            if ($product->quantity < $item['quantity']) {
+                throw new \Exception("Stock insuffisant pour le produit: {$product->name}");
+            }
+
+            // Création de la ligne de vente
+            $saleProduct = SaleProduct::create([
+                'sale_id' => $sale->id,
+                'product_id' => $product->id,
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+            ]);
+
+            // Mise à jour du stock
+            $product->decrement('quantity', $item['quantity']);
+
+            $details[] = [
+                'product' => $product->name,
+                'quantity_sold' => $item['quantity'],
+                'price' => $item['price']
+            ];
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Vente enregistrée avec succès.',
+            'sale_id' => $sale->id,
+            'total' => $total,
+            'products' => $details
+        ], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'error' => 'Échec de l\'enregistrement de la vente.',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+});
+
+
 
  Route::get('/dashboard', function () {
     if (!Auth::check() || Auth::user()->role !== 'seller') {
@@ -100,6 +175,15 @@ Route::post('/sale', function (Request $request) {
     }
     return view('pages/back/seller/dashboard');
 })->name('dashboard');
+
+
+Route::get('/newInvoice', function (Request $request) {
+    $sale = Sale::with('products')->findOrFail($request->sale_id);
+
+    return view('pages/back/seller/newInvoice', [
+        'sale' => $sale,
+    ]);
+});
 
    Route::get('/settings', function () {
     if (!Auth::check() || Auth::user()->role !== 'seller') {
@@ -170,7 +254,6 @@ Route::post('/vente', function (\Illuminate\Http\Request $request) {
 
 
 Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');
-
 
 /*
 Route::get('/sale', [App\Http\Controllers\SaleController::class, 'create'])->name('sale');

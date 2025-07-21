@@ -37,15 +37,7 @@
                     <label>Rechercher</label>
                     <input type="text" class="form-control" placeholder="Nom du produit...">
                 </div>
-                <div class="form-group">
-                    <label>Catégorie</label>
-                    <select class="form-control">
-                        <option>Toutes les catégories</option>
-                        <option>Électronique</option>
-                        <option>Informatique</option>
-                        <option>Accessoires</option>
-                    </select>
-                </div>
+
                 <div class="form-group">
                     <label>Statut</label>
                     <select class="form-control">
@@ -78,7 +70,6 @@
                 <thead>
                     <tr>
                         <th><i class="fas fa-sort"></i> Nom</th>
-                        <th><i class="fas fa-sort"></i> Catégorie</th>
                         <th><i class="fas fa-sort"></i> Prix</th>
                         <th><i class="fas fa-sort"></i> Quantité</th>
                         <th><i class="fas fa-sort"></i> Statut</th>
@@ -90,7 +81,6 @@
                     @foreach ($products as $product)
                         <tr>
                             <td data-label="Nom"><strong>{{ $product->name }}</strong></td>
-                            <td data-label="Catégorie">{{ $product->category ?? 'N/A' }}</td>
                             <td data-label="Prix">{{ number_format($product->price_detail, 2) }}€</td>
                             <td data-label="Quantité">{{ $product->quantity }}</td>
                             <td data-label="Statut">

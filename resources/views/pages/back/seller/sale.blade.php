@@ -727,6 +727,11 @@
                     return;
                 }
 
+                if (!this.customer_phone || this.customer_phone.trim() === '') {
+                    alert('Veuillez entrer le téléphone du client.');
+                    return;
+                }
+
                 if (!this.quantity || this.quantity <= 0) {
                     alert('Veuillez entrer une quantité valide.');
                     return;
@@ -737,33 +742,38 @@
                     return;
                 }
 
+                if (!this.unitPrice || this.unitPrice <= 0) {
+                    alert('Veuillez entrer un prix unitaire valide.');
+                    return;
+                }
+
+                // Préparer les données dans le format attendu
                 const saleData = {
-                    customer_name: this.customer_name,
-                    customer_phone: this.customer_phone,
-                    product_id: this.selectedProductId,
-                    quantity: this.quantity,
-                    unit_price: this.unitPrice,
-                    total: (this.unitPrice * this.quantity).toFixed(2)
+                    seller_name: this.seller_name,
+                    buyer_name: this.customer_name,
+                    buyer_phone: this.customer_phone,
+                    products: [{
+                        product_id: this.selectedProductId,
+                        quantity: this.quantity,
+                        price: this.unitPrice
+                    }]
                 };
 
-                console.log('Données à envoyer:', saleData); // 
+                console.log('Données à envoyer:', saleData);
 
                 axios.post('http://127.0.0.1:8000/sale', saleData)
                     .then(response => {
                         console.log('Vente enregistrée avec succès:', response.data);
                         alert('Vente enregistrée avec succès !');
-                        this.resetForm();
+
+                        // Redirection vers la page /newInvoice avec l'ID de la vente
+                        window.location.href = '/newInvoice?sale_id=' + response.data.sale_id;
                     })
                     .catch(error => {
                         console.error('Erreur lors de l\'enregistrement de la vente :', error);
                         alert('Une erreur est survenue lors de l\'enregistrement de la vente.');
                     });
-
             }
-
-
-
-
 
         } // <--- Correctly closed methods object
     }).mount('#app');
