@@ -1,6 +1,7 @@
 @section('title', 'Ventes - Tableau de Bord')
 
 <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
 
 
@@ -39,7 +40,7 @@
                     </select>
                 </div>
             </div>
-           <table class="table">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>N° Facture</th>
@@ -52,22 +53,22 @@
                 </thead>
                 <tbody>
                     @foreach ($sales as $sale)
-                    <tr>
-                        <td data-label="N° Facture"><strong>#INV-{{ $sale->id }}</strong></td>
-                        <td data-label="Client">{{ $sale->buyer_name }}</td>
-                        <td data-label="Vendeur">{{ $sale->seller_name }}</td>
-                        <td data-label="Date">{{ $sale->created_at->format('d/m/Y H:i') }}</td>
-                        <td data-label="Montant"><strong>{{ number_format($sale->total, 0, ',', ' ') }} FCFA</strong></td>
-                        <td data-label="Actions">
-                            <button class="invoice-btn" onclick="viewInvoice('#INV-{{ $sale->id }}')">
-                            <i class="fas fa-eye"></i> Voir
-                            </button>
-                            <button class="print-btn" onclick="printInvoice('#INV-{{ $sale->id }}')">
-                            <i class="fas fa-print"></i> Imprimer
-                            </button>
-                        </td>
-                        </tr>
+                        <tr>
+                            <td data-label="N° Facture"><strong>
+                                    N° {{ $sale->id }}/{{ now()->format('m') }}/{{ now()->format('y') }}/FR-N
+                                </strong></td>
+                            <td data-label="Client">{{ $sale->buyer_name }}</td>
+                            <td data-label="Vendeur">{{ $sale->seller_name }}</td>
+                            <td data-label="Date">{{ $sale->created_at->format('d/m/Y H:i') }}</td>
+                            <td data-label="Montant"><strong>{{ number_format($sale->total, 0, ',', ' ') }}
+                                    FCFA</strong></td>
+                            <td data-label="Actions">
+                                <button class="invoice-btn" onclick="showSaleDetails({{ $sale->id }})">
+                                    <i class="fas fa-eye"></i> Voir
+                                </button>
 
+                            </td>
+                        </tr>
                     @endforeach
                 </tbody>
             </table>
@@ -75,6 +76,34 @@
         </div>
     </div>
 </main>
+
+
+
+<!-- Modal Détails Vente -->
+<div class="modal fade" id="saleDetailModal" tabindex="-1" aria-labelledby="saleDetailLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="saleDetailLabel">Détails de la vente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Client :</strong> <span id="modalBuyerName"></span></p>
+                <p><strong>Vendeur :</strong> <span id="modalSellerName"></span></p>
+                <p><strong>Date :</strong> <span id="modalDate"></span></p>
+                <p><strong>Total :</strong> <span id="modalTotal"></span> FCFA</p>
+                <hr>
+                <h6>Produits achetés :</h6>
+                <ul id="modalProductList"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 
 <style>
@@ -611,119 +640,123 @@
 </style>
 
 <style>
-  /* Table responsive : sur petits écrans */
-  @media (max-width: 768px) {
-    table.table,
-    thead,
-    tbody,
-    th,
-    td,
-    tr {
-      display: block;
-      width: 100%;
-    }
+    /* Table responsive : sur petits écrans */
+    @media (max-width: 768px) {
 
-    thead tr {
-      display: none; /* Masquer l'en-tête sur mobile */
-    }
+        table.table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+            display: block;
+            width: 100%;
+        }
 
-    tbody tr {
-      margin-bottom: 1.5rem;
-      border: 1px solid #ccc;
-      padding: 15px 10px;
-      border-radius: 8px;
-      background-color: #fff;
-      box-sizing: border-box;
-    }
+        thead tr {
+            display: none;
+            /* Masquer l'en-tête sur mobile */
+        }
 
-    tbody td {
-      position: relative;
-      padding-left: 50%;
-      text-align: left;
-      border: none;
-      border-bottom: 1px solid #eee;
-      box-sizing: border-box;
-      min-height: 40px;
-      vertical-align: top;
-    }
+        tbody tr {
+            margin-bottom: 1.5rem;
+            border: 1px solid #ccc;
+            padding: 15px 10px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
 
-    tbody td:last-child {
-      border-bottom: 0;
-    }
+        tbody td {
+            position: relative;
+            padding-left: 50%;
+            text-align: left;
+            border: none;
+            border-bottom: 1px solid #eee;
+            box-sizing: border-box;
+            min-height: 40px;
+            vertical-align: top;
+        }
 
-    tbody td::before {
-      position: absolute;
-      top: 50%;
-      left: 10px;
-      transform: translateY(-50%);
-      width: 45%;
-      white-space: nowrap;
-      font-weight: 600;
-      content: attr(data-label);
-      color: #333;
+        tbody td:last-child {
+            border-bottom: 0;
+        }
+
+        tbody td::before {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            width: 45%;
+            white-space: nowrap;
+            font-weight: 600;
+            content: attr(data-label);
+            color: #333;
+        }
     }
-  }
 </style>
 
 <style>
     @media (max-width: 768px) {
-  table.table,
-  thead,
-  tbody,
-  th,
-  td,
-  tr {
-    display: block !important; /* forcer block */
-    width: 100% !important;
-  }
 
-  thead tr {
-    display: none !important;
-  }
+        table.table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+            display: block !important;
+            /* forcer block */
+            width: 100% !important;
+        }
 
-  tbody tr {
-    margin-bottom: 1.5rem;
-    border: 1px solid #ccc;
-    padding: 15px 10px;
-    border-radius: 8px;
-    background-color: #fff;
-    box-sizing: border-box;
-  }
+        thead tr {
+            display: none !important;
+        }
 
-  tbody td {
-    position: relative;
-    padding-left: 50% !important;
-    text-align: left !important;
-    border: none !important;
-    border-bottom: 1px solid #eee !important;
-    box-sizing: border-box;
-    min-height: 40px;
-    vertical-align: top;
-  }
+        tbody tr {
+            margin-bottom: 1.5rem;
+            border: 1px solid #ccc;
+            padding: 15px 10px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
 
-  tbody td:last-child {
-    border-bottom: 0 !important;
-  }
+        tbody td {
+            position: relative;
+            padding-left: 50% !important;
+            text-align: left !important;
+            border: none !important;
+            border-bottom: 1px solid #eee !important;
+            box-sizing: border-box;
+            min-height: 40px;
+            vertical-align: top;
+        }
 
-  tbody td::before {
-    position: absolute;
-    top: 50%;
-    left: 10px;
-    transform: translateY(-50%);
-    width: 45%;
-    white-space: nowrap;
-    font-weight: 600;
-    content: attr(data-label);
-    color: #333;
-  }
+        tbody td:last-child {
+            border-bottom: 0 !important;
+        }
 
-  /* Boutons en block et marge */
-  tbody td button {
-    display: inline-flex;
-    margin-right: 10px;
-    margin-bottom: 5px;
-  }
-}
+        tbody td::before {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            width: 45%;
+            white-space: nowrap;
+            font-weight: 600;
+            content: attr(data-label);
+            color: #333;
+        }
+
+        /* Boutons en block et marge */
+        tbody td button {
+            display: inline-flex;
+            margin-right: 10px;
+            margin-bottom: 5px;
+        }
+    }
 </style>
 
 <script>
@@ -763,4 +796,64 @@
             sidebar.classList.remove('active');
         }
     });
+</script>
+
+<script>
+    const salesData = @json($sales); // Passe les ventes du backend vers JS
+
+    function showSaleDetails(saleId) {
+        const sale = salesData.find(s => s.id === saleId);
+        if (!sale) return;
+
+        document.getElementById('modalBuyerName').textContent = sale.buyer_name;
+        document.getElementById('modalSellerName').textContent = sale.seller_name;
+        document.getElementById('modalDate').textContent = new Date(sale.created_at).toLocaleString('fr-FR');
+        document.getElementById('modalTotal').textContent = Number(sale.total).toLocaleString('fr-FR', {
+            minimumFractionDigits: 0
+        });
+
+        const productList = document.getElementById('modalProductList');
+        productList.innerHTML = ''; // reset
+
+        sale.products.forEach(product => {
+            const li = document.createElement('li');
+            li.textContent =
+                `${product.name} - Qté: ${product.pivot.quantity} - Prix: ${Number(product.pivot.price).toLocaleString('fr-FR')} FCFA`;
+            productList.appendChild(li);
+        });
+
+        const modal = new bootstrap.Modal(document.getElementById('saleDetailModal'));
+        modal.show();
+    }
+</script>
+
+
+<script>
+    function printInvoice(invoiceId) {
+        const content = document.getElementById(invoiceId).innerHTML;
+        const printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write('<html><head><title>Facture</title>');
+
+        // Inclure styles nécessaires, par exemple bootstrap/fontawesome si utilisés
+        printWindow.document.write(`
+        <style>
+            body { font-family: Arial, sans-serif; font-size: 14px; padding: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            td, th { padding: 5px; border: 1px solid #ccc; }
+            .right { text-align: right; }
+            .total { font-weight: bold; }
+            .footer { margin-top: 20px; font-size: 12px; }
+        </style>
+    `);
+
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(content);
+        printWindow.document.write('</body></html>');
+
+        printWindow.document.close();
+        printWindow.focus();
+
+        printWindow.print();
+        printWindow.close();
+    }
 </script>

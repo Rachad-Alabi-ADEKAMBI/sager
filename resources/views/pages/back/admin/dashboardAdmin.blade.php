@@ -41,7 +41,9 @@
             <div class="stat-card">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-value">892</div>
+                        <div class="stat-value">
+                            {{ $sales->count() }}
+                        </div>
                         <div class="stat-label">Ventes ce mois</div>
                     </div>
                     <div class="stat-icon sales">
@@ -53,11 +55,13 @@
             <div class="stat-card">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-value">€45,678</div>
+                        <div class="stat-value">
+                            {{ number_format($totalCA, 0, ',', ' ') }} FCFA
+                        </div>
                         <div class="stat-label">Chiffre d'affaires</div>
                     </div>
                     <div class="stat-icon revenue">
-                        <i class="fas fa-euro-sign"></i>
+                        <i class="fas fa-wallet"></i>
                     </div>
                 </div>
             </div>
@@ -68,16 +72,13 @@
             <div class="chart-card">
                 <div class="chart-header">
                     <h3>Évolution des ventes</h3>
-                    <select style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
-                        <option>7 derniers jours</option>
-                        <option>30 derniers jours</option>
-                        <option>3 derniers mois</option>
+                    <select id="dateRange" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="7">7 derniers jours</option>
+                        <option value="30">30 derniers jours</option>
+                        <option value="90">3 derniers mois</option>
                     </select>
                 </div>
-                <div class="chart-placeholder">
-                    <i class="fas fa-chart-line" style="margin-right: 0.5rem;"></i>
-                    Graphique des ventes
-                </div>
+                <canvas id="salesChart" style="width: 100%; height: 300px;"></canvas>
             </div>
 
             <div class="chart-card">
@@ -85,18 +86,142 @@
                     <h3>Activité récente</h3>
                 </div>
                 <ul class="activity-list">
-                    <li class="activity-item">
-                        <div class="activity-icon sale">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div>Nouvelle venter</div>
-                            <div class="activity-time">Il y a 5 minutes</div>
-                        </div>
-                    </li>
+                    @foreach ($notifications as $notification)
+                        <li class="activity-item">
+                            <div class="activity-icon sale">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div>{{ $notification->description }}</div>
+                                <div class="activity-time">
+                                    {{ $notification->created_at->format('H:i:s') }}
+                                </div>
+                            </div>
+                        </li>
+                    @endforeach
                 </ul>
+
             </div>
         </div>
+
+        <!-- Inclure Chart.js -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        @php
+            // Préparer les données PHP: ventes groupées par date (format jj/mm)
+            $dateLimit = now()->subDays(90);
+            $salesFiltered = $sales->filter(fn($s) => $s->created_at >= $dateLimit);
+
+            // Regrouper par date formatée
+            $grouped = $salesFiltered->groupBy(fn($s) => $s->created_at->format('d/m'));
+
+            // Construire tableau date => total ventes
+            $salesData = [];
+            foreach ($grouped as $date => $items) {
+                $salesData[$date] = $items->sum('total');
+            }
+
+            // Trier par date (optionnel)
+            ksort($salesData);
+
+            // Rendre JSON utilisable en JS
+            $salesJson = json_encode($salesData);
+        @endphp
+
+        <script>
+            // Récupérer données PHP en JS
+            const salesData = {!! $salesJson !!};
+
+            // Fonction pour filtrer par nombre de jours
+            function filterData(days) {
+                const allDates = Object.keys(salesData);
+                const allValues = Object.values(salesData);
+
+                // Dates triées, on conserve les 'days' derniers
+                const slicedDates = allDates.slice(-days);
+                const slicedValues = allValues.slice(-days);
+
+                return {
+                    dates: slicedDates,
+                    values: slicedValues
+                };
+            }
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+
+            let currentRange = 7; // par défaut 7 jours
+
+            let chartInstance = null;
+
+            function renderChart(days) {
+                const filtered = filterData(days);
+
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: filtered.dates,
+                        datasets: [{
+                            label: 'Chiffre d\'affaires (FCFA)',
+                            data: filtered.values,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.3)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            borderWidth: 3,
+                            animation: {
+                                duration: 1000,
+                                easing: 'easeOutQuart'
+                            }
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString('fr-FR') + ' FCFA';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.y.toLocaleString('fr-FR') + ' FCFA';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Initial render
+            renderChart(currentRange);
+
+            // Changement de filtre date
+            document.getElementById('dateRange').addEventListener('change', e => {
+                currentRange = parseInt(e.target.value, 10);
+                renderChart(currentRange);
+            });
+        </script>
+
     </div>
 </main>
 
@@ -410,6 +535,22 @@
     @media (max-width: 768px) {
         .menu-toggle {
             display: block;
+        }
+    }
+</style>
+
+
+<style>
+    #salesChart {
+        max-width: 600px;
+        width: 100%;
+        height: 300px;
+    }
+
+    @media (max-width: 480px) {
+        #salesChart {
+            height: 200px;
+            /* hauteur réduite pour mobile */
         }
     }
 </style>

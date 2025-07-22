@@ -3,556 +3,379 @@
 @section('title', 'Accueil')
 
 @section('content')
-  main class="main">
-        <!-- Hero Section -->
-        <section id="accueil" class="hero">
-            <div class="hero-background"></div>
-            <div class="hero-content">
-                <div class="hero-badge">
-                    <i class="fas fa-award"></i>
-                    <span>Leader depuis 10 ans</span>
-                </div>
-                <h1>Bienvenue chez SAGER</h1>
-                <p class="hero-subtitle">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique</p>
-                <p class="hero-description">Distribution professionnelle • Vente en gros et détail • Livraison rapide dans toute la région • Service client exceptionnel</p>
-                <div class="hero-buttons">
-                    <a href="#contact" class="cta-button primary">
-                        <i class="fas fa-phone"></i> Nous contacter
-                    </a>
-                    <a href="#produits" class="cta-button secondary">
-                        <i class="fas fa-eye"></i> Voir nos produits
-                    </a>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat-item">
-                        <span class="stat-number">10+</span>
-                        <span class="stat-label">Années d'expérience</span>
+    main class="main">
+    <!-- Hero Section -->
+    <section id="accueil" class="hero">
+        <div class="hero-background"></div>
+        <div class="hero-content">
+            <h1>Bienvenue chez SAGER</h1>
+            <p class="hero-subtitle">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique</p>
+            <p class="hero-description">Distribution professionnelle • Vente en gros et détail </p>
+            <div class="hero-buttons">
+                <a href="#contact" class="cta-button primary">
+                    <i class="fas fa-phone"></i> Nous contacter
+                </a>
+                <a href="#produits" class="cta-button secondary">
+                    <i class="fas fa-eye"></i> Voir nos produits
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <h2 class="section-title">Nos Services</h2>
+            <p class="section-subtitle">Des solutions complètes pour répondre à tous vos besoins</p>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-warehouse"></i>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-number">500+</span>
-                        <span class="stat-label">Clients satisfaits</span>
+                    <h3>Vente en Gros</h3>
+                    <p>Tarifs préférentiels pour les professionnels, restaurants, hôtels et revendeurs.</p>
+                    <ul class="service-features">
+                        <li><i class="fas fa-check"></i> Prix dégressifs par quantité</li>
+                        <li><i class="fas fa-check"></i> Facturation professionnelle</li>
+                        <li><i class="fas fa-check"></i> Remises et ristournes</li>
+                    </ul>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-store"></i>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-number">24h</span>
-                        <span class="stat-label">Livraison rapide</span>
+                    <h3>Vente au Détail</h3>
+                    <p>Magasin ouvert au public avec un large choix de produits vendus au pix du détaillant.</p>
+                    <ul class="service-features">
+                        <li><i class="fas fa-check"></i> Prix avantageux</li>
+                        <li><i class="fas fa-check"></i> Articles de qualité</li>
+                        <li><i class="fas fa-check"></i> Promotions régulières</li>
+                    </ul>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <h3>Gaz Domestique</h3>
+                    <p>Distribution de bouteilles de gaz de toutes tailles et origine avec service de consigne .</p>
+                    <ul class="service-features">
+                        <li><i class="fas fa-check"></i> Toutes tailles disponibles</li>
+                        <li><i class="fas fa-check"></i> Échange de bouteilles</li>
+                        <li><i class="fas fa-check"></i> Consignation </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- À propos simplifié -->
+    <section id="apropos" class="about">
+        <div class="container">
+            <h2 class="section-title">À propos de SAGER</h2>
+            <p class="section-subtitle">Distributeur local de boissons et gaz à Cotonou</p>
+
+            <div class="about-content">
+                <div class="about-text">
+                    <h3><i class="fas fa-info-circle"></i> Qui sommes-nous ?</h3>
+                    <p>SAGER est une boutique locale spécialisée dans la distribution de boissons et de gaz domestique. Nous
+                        servons particuliers et professionnels avec des produits fiables et un service simple.</p>
+
+                    <h3><i class="fas fa-bullseye"></i> Ce que nous proposons</h3>
+                    <p>Livraison rapide, produits suivis, prix accessibles. Notre équipe est disponible pour toute commande
+                        ou renseignement.</p>
+
+                    <h3><i class="fas fa-handshake"></i> Nos engagements</h3>
+                    <ul class="simple-list">
+                        <li><i class="fas fa-check-circle"></i> Produits disponibles</li>
+                        <li><i class="fas fa-clock"></i> Promotions régulières</li>
+                        <li><i class="fas fa-phone"></i> Facturation professionnelle</li>
+                    </ul>
+                </div>
+
+                <div class="about-image">
+                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.40%20AM-uBRukbqKQHM4lRHsRRU8kv42xg0E9S.jpeg"
+                        alt="Entrepôt SAGER">
+                    <div class="image-overlay">
+                        <div class="overlay-content">
+                            <h4>Notre stock</h4>
+                            <p>Produits disponibles en quantité</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Services Section -->
-        <section id="services" class="services">
-            <div class="container">
-                <h2 class="section-title">Nos Services</h2>
-                <p class="section-subtitle">Des solutions complètes pour répondre à tous vos besoins</p>
-                <div class="services-grid">
-                    <div class="service-card">
-                        <div class="service-icon">
-                            <i class="fas fa-truck-fast"></i>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-gas-pump"></i>
+                    <h3>Consignation</h3>
+                    <p>Reprise et échange de bouteilles consignées.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-box"></i>
+                    <h3>Stock local</h3>
+                    <p>Produits disponibles en dépôt, visibles sur place.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-phone"></i>
+                    <h3>Commande simple</h3>
+                    <p>Appelez ou envoyez un message pour réserver.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- Products Section -->
+    <section id="produits" class="gallery">
+        <div class="container">
+            <h2 class="section-title">Nos Produits</h2>
+            <p class="section-subtitle">Une gamme complète pour tous vos besoins</p>
+
+            <!-- Product Categories -->
+            <div class="product-categories">
+                <button class="category-btn active" data-category="all">Tous les produits</button>
+                <button class="category-btn" data-category="water">Eaux</button>
+                <button class="category-btn" data-category="beverages">Boissons</button>
+                <button class="category-btn" data-category="beer">Bières</button>
+                <button class="category-btn" data-category="gas">Gaz</button>
+            </div>
+
+            <div class="gallery-grid">
+                <div class="gallery-item" data-category="water">
+                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.39%20AM-wW9qqwdT0BcVm47Uh1EaH1z58cWO0E.jpeg"
+                        alt="Packs d'eau en bouteilles">
+                    <div class="gallery-overlay">
+                        <h3>Eaux en Bouteilles</h3>
+                        <p>Large gamme d'eaux minérales et de source, disponibles en différents formats (0.5L, 1L, 1.5L)</p>
+                        <div class="product-brands">
+                            <span class="brand">Possotomé</span>
+                            <span class="brand">Awé</span>
+                            <span class="brand">Voltic</span>
                         </div>
-                        <h3>Livraison Express</h3>
-                        <p>Livraison dans toute la région en moins de 24h. Service d'urgence disponible pour les professionnels.</p>
-                        <ul class="service-features">
-                            <li><i class="fas fa-check"></i> Livraison gratuite dès 50 000 FCFA</li>
-                            <li><i class="fas fa-check"></i> Suivi en temps réel</li>
-                            <li><i class="fas fa-check"></i> Livraison 7j/7</li>
-                        </ul>
+                        <div class="product-price">À partir de 250 FCFA</div>
                     </div>
-                    <div class="service-card">
-                        <div class="service-icon">
-                            <i class="fas fa-warehouse"></i>
+                </div>
+                <div class="gallery-item" data-category="beer beverages">
+                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.43%20AM-Lx9tURBN0Lq4fNyWWXqRuVQUGoEEAf.jpeg"
+                        alt="Caisses de bières et sodas">
+                    <div class="gallery-overlay">
+                        <h3>Bières et Sodas</h3>
+                        <p>Toutes les marques populaires de bières et sodas, fraîches et disponibles en gros et détail</p>
+                        <div class="product-brands">
+                            <span class="brand">Béninoise</span>
+                            <span class="brand">Coca-Cola</span>
+                            <span class="brand">Fanta</span>
                         </div>
-                        <h3>Vente en Gros</h3>
-                        <p>Tarifs préférentiels pour les professionnels, restaurants, hôtels et revendeurs.</p>
-                        <ul class="service-features">
-                            <li><i class="fas fa-check"></i> Prix dégressifs par quantité</li>
-                            <li><i class="fas fa-check"></i> Facturation professionnelle</li>
-                            <li><i class="fas fa-check"></i> Crédit pour clients fidèles</li>
-                        </ul>
+                        <div class="product-price">À partir de 500 FCFA</div>
                     </div>
-                    <div class="service-card">
-                        <div class="service-icon">
-                            <i class="fas fa-store"></i>
+                </div>
+                <div class="gallery-item" data-category="beverages">
+                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.43%20AM%20%281%29-iib34BZ7jw03tNcux6rdpnybcEwPbr.jpeg"
+                        alt="Stock de boissons diverses">
+                    <div class="gallery-overlay">
+                        <h3>Boissons Diverses</h3>
+                        <p>Jus de fruits, boissons énergisantes, thés glacés et autres rafraîchissements</p>
+                        <div class="product-brands">
+                            <span class="brand">Tampico</span>
+                            <span class="brand">Red Bull</span>
+                            <span class="brand">Lipton</span>
                         </div>
+                        <div class="product-price">À partir de 300 FCFA</div>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="all">
+                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.40%20AM-uBRukbqKQHM4lRHsRRU8kv42xg0E9S.jpeg"
+                        alt="Étalage de boissons organisé">
+                    <div class="gallery-overlay">
                         <h3>Vente au Détail</h3>
-                        <p>Magasin ouvert au public avec un large choix de produits frais et de qualité.</p>
-                        <ul class="service-features">
-                            <li><i class="fas fa-check"></i> Produits toujours frais</li>
-                            <li><i class="fas fa-check"></i> Conseil personnalisé</li>
-                            <li><i class="fas fa-check"></i> Promotions régulières</li>
-                        </ul>
-                    </div>
-                    <div class="service-card">
-                        <div class="service-icon">
-                            <i class="fas fa-fire"></i>
+                        <p>Espace de vente organisé pour faciliter vos achats au détail avec conseil personnalisé</p>
+                        <div class="product-features">
+                            <span class="feature">Produits frais</span>
+                            <span class="feature">Conseil expert</span>
+                            <span class="feature">Promotions</span>
                         </div>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="gas">
+                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.42%20AM-6sNjtAG3G1VI8OfO8kYHh0b3rpiZ3p.jpeg"
+                        alt="Bouteilles de gaz domestique">
+                    <div class="gallery-overlay">
                         <h3>Gaz Domestique</h3>
-                        <p>Distribution de bouteilles de gaz de toutes tailles avec service de consigne.</p>
-                        <ul class="service-features">
-                            <li><i class="fas fa-check"></i> Toutes tailles disponibles</li>
-                            <li><i class="fas fa-check"></i> Échange de bouteilles</li>
-                            <li><i class="fas fa-check"></i> Installation gratuite</li>
-                        </ul>
+                        <p>Bouteilles de gaz de différentes tailles pour tous vos besoins domestiques et professionnels</p>
+                        <div class="product-sizes">
+                            <span class="size">6kg</span>
+                            <span class="size">12kg</span>
+                            <span class="size">35kg</span>
+                        </div>
+                        <div class="product-price">À partir de 3 500 FCFA</div>
+                    </div>
+                </div>
+                <div class="gallery-item special-offer" data-category="all">
+                    <div class="special-content">
+                        <i class="fas fa-gift"></i>
+                        <h3>Offres Spéciales</h3>
+                        <p>Découvrez nos promotions du moment et nos packs avantageux</p>
+                        <div class="offer-list">
+                            <div class="offer-item">Pack famille eau + sodas</div>
+                            <div class="offer-item">Remise quantité gros</div>
+                            <div class="offer-item">Fidélité récompensée</div>
+                        </div>
+                        <a href="#contact" class="offer-btn">Voir les offres</a>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Stats Section -->
-        <section class="stats-section">
-            <div class="container">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-number" data-target="500">0</span>
-                            <span class="stat-label">Clients Fidèles</span>
-                        </div>
+
+    <!-- FAQ Section -->
+    <section class="faq">
+        <div class="container">
+            <h2 class="section-title">Questions Fréquentes</h2>
+            <p class="section-subtitle">Trouvez rapidement les réponses à vos questions</p>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Délivrez vous des factures ? </h3>
+                        <i class="fas fa-chevron-down"></i>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-boxes"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-number" data-target="10000">0</span>
-                            <span class="stat-label">Produits Livrés/Mois</span>
-                        </div>
+                    <div class="faq-answer">
+                        <p>Oui nous délivrons une facture pro format pour chaque achat.</p>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-number" data-target="10">0</span>
-                            <span class="stat-label">Années d'Expérience</span>
-                        </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Proposez-vous des tarifs préférentiels pour les gros volumes ?</h3>
+                        <i class="fas fa-chevron-down"></i>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-number" data-target="98">0</span>
-                            <span class="stat-label">% Satisfaction Client</span>
-                        </div>
+                    <div class="faq-answer">
+                        <p>Oui, nous avons des tarifs dégressifs selon les quantités achetées. Contactez-nous pour obtenir
+                            un devis personnalisé adapté à vos besoins professionnels.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Comment fonctionne le système de consigne pour les bouteilles de gaz ?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Lors de votre premier achat, vous payez une consigne pour la bouteille. Ensuite, vous ne payez
+                            que le gaz lors des recharges. La consigne vous est remboursée si vous ne souhaitez plus
+                            utiliser nos services.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Acceptez-vous les paiements par mobile money ?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Oui, nous acceptons tous les moyens de paiement : espèces, mobile money (MTN, Moov), virements
+                            bancaires et cartes bancaires pour les professionnels.</p>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- About Section -->
-        <section id="apropos" class="about">
-            <div class="container">
-                <h2 class="section-title">À Propos de SAGER</h2>
-                <p class="section-subtitle">Une histoire de passion, de qualité et de service</p>
-                <div class="about-content">
-                    <div class="about-text">
-                        <div class="about-story">
-                            <h3><i class="fas fa-history"></i> Notre Histoire</h3>
-                            <p>Fondée il y a plus de 10 ans, SAGER a débuté comme une petite entreprise familiale avec une vision claire : fournir des boissons de qualité et un service exceptionnel à la communauté de Cotonou. Aujourd'hui, nous sommes fiers d'être devenus le leader régional de la distribution de boissons et de gaz domestique.</p>
-                        </div>
-                        <div class="about-mission">
-                            <h3><i class="fas fa-bullseye"></i> Notre Mission</h3>
-                            <p>Être le partenaire de confiance de nos clients en fournissant des produits de qualité supérieure à des prix compétitifs, avec un service de livraison rapide et fiable. Nous nous engageons à dépasser les attentes de nos clients particuliers et professionnels.</p>
-                        </div>
-                        <div class="about-values">
-                            <h3><i class="fas fa-heart"></i> Nos Valeurs</h3>
-                            <div class="values-list">
-                                <div class="value-item">
-                                    <i class="fas fa-shield-alt"></i>
-                                    <span>Qualité garantie</span>
-                                </div>
-                                <div class="value-item">
-                                    <i class="fas fa-handshake"></i>
-                                    <span>Service client</span>
-                                </div>
-                                <div class="value-item">
-                                    <i class="fas fa-leaf"></i>
-                                    <span>Respect environnement</span>
-                                </div>
-                                <div class="value-item">
-                                    <i class="fas fa-clock"></i>
-                                    <span>Ponctualité</span>
-                                </div>
-                            </div>
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Contactez-Nous</h2>
+            <p class="section-subtitle">Nous sommes là pour répondre à tous vos besoins</p>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <h3 style="margin-bottom: 2rem; color: #333;">Informations de Contact</h3>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <strong>Adresse</strong><br>
+                            Ayélawadjè, 1ère voie à droite en venant de Midombo<br>
+                            Cotonou, Bénin
                         </div>
                     </div>
-                    <div class="about-image">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.40%20AM-uBRukbqKQHM4lRHsRRU8kv42xg0E9S.jpeg" alt="Entrepôt SAGER avec stock de boissons">
-                        <div class="image-overlay">
-                            <div class="overlay-content">
-                                <h4>Notre Entrepôt</h4>
-                                <p>Plus de 1000m² de stockage climatisé</p>
-                            </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <strong>Téléphone</strong><br>
+                            +229 01 96 46 66 25<br>
+                            <small>Disponible 7j/7 de 8h à 19h</small>
                         </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <strong>Email</strong><br>
+                            contact@sager.bj<br>
+                            <small>Réponse sous 48h garantie</small>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <strong>Horaires d'ouverture</strong><br>
+                            Lundi - Samedi: 08h00 - 19h00
+                        </div>
+                    </div>
+                    <div class="contact-buttons">
+                        <a href="https://wa.me/2290196466625" class="whatsapp-btn" target="_blank">
+                            <i class="fab fa-whatsapp"></i>
+                            WhatsApp
+                        </a>
+                        <a href="tel:+2290196466625" class="call-btn">
+                            <i class="fas fa-phone"></i>
+                            Appeler
+                        </a>
                     </div>
                 </div>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <i class="fas fa-truck"></i>
-                        <h3>Livraison Rapide</h3>
-                        <p>Service de livraison dans toute la région avec des délais respectés et un service client de qualité. Flotte de véhicules modernes et équipe dédiée.</p>
-                        <div class="feature-details">
-                            <span class="detail-item"><i class="fas fa-map-marker-alt"></i> Rayon 50km</span>
-                            <span class="detail-item"><i class="fas fa-clock"></i> 24h max</span>
-                        </div>
-                    </div>
-                    <div class="feature-card">
-                        <i class="fas fa-shield-alt"></i>
-                        <h3>Produits de Qualité</h3>
-                        <p>Nous sélectionnons rigoureusement nos fournisseurs pour garantir la fraîcheur et la qualité de nos produits. Contrôle qualité à chaque étape.</p>
-                        <div class="feature-details">
-                            <span class="detail-item"><i class="fas fa-certificate"></i> Certifié ISO</span>
-                            <span class="detail-item"><i class="fas fa-thermometer-half"></i> Chaîne du froid</span>
-                        </div>
-                    </div>
-                    <div class="feature-card">
-                        <i class="fas fa-users"></i>
-                        <h3>Service Client</h3>
-                        <p>Une équipe dédiée à votre service pour répondre à toutes vos questions et besoins spécifiques. Support disponible 6j/7.</p>
-                        <div class="feature-details">
-                            <span class="detail-item"><i class="fas fa-phone"></i> Hotline dédiée</span>
-                            <span class="detail-item"><i class="fas fa-comments"></i> Chat en ligne</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Products Section -->
-        <section id="produits" class="gallery">
-            <div class="container">
-                <h2 class="section-title">Nos Produits</h2>
-                <p class="section-subtitle">Une gamme complète pour tous vos besoins</p>
-                
-                <!-- Product Categories -->
-                <div class="product-categories">
-                    <button class="category-btn active" data-category="all">Tous les produits</button>
-                    <button class="category-btn" data-category="water">Eaux</button>
-                    <button class="category-btn" data-category="beverages">Boissons</button>
-                    <button class="category-btn" data-category="beer">Bières</button>
-                    <button class="category-btn" data-category="gas">Gaz</button>
-                </div>
-
-                <div class="gallery-grid">
-                    <div class="gallery-item" data-category="water">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.39%20AM-wW9qqwdT0BcVm47Uh1EaH1z58cWO0E.jpeg" alt="Packs d'eau en bouteilles">
-                        <div class="gallery-overlay">
-                            <h3>Eaux en Bouteilles</h3>
-                            <p>Large gamme d'eaux minérales et de source, disponibles en différents formats (0.5L, 1L, 1.5L)</p>
-                            <div class="product-brands">
-                                <span class="brand">Possotomé</span>
-                                <span class="brand">Awé</span>
-                                <span class="brand">Voltic</span>
+                <div class="contact-form-container">
+                    <h3>Envoyez-nous un message</h3>
+                    <form class="contact-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Nom complet</label>
+                                <input type="text" id="name" name="name" required>
                             </div>
-                            <div class="product-price">À partir de 250 FCFA</div>
-                        </div>
-                    </div>
-                    <div class="gallery-item" data-category="beer beverages">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.43%20AM-Lx9tURBN0Lq4fNyWWXqRuVQUGoEEAf.jpeg" alt="Caisses de bières et sodas">
-                        <div class="gallery-overlay">
-                            <h3>Bières et Sodas</h3>
-                            <p>Toutes les marques populaires de bières et sodas, fraîches et disponibles en gros et détail</p>
-                            <div class="product-brands">
-                                <span class="brand">Béninoise</span>
-                                <span class="brand">Coca-Cola</span>
-                                <span class="brand">Fanta</span>
-                            </div>
-                            <div class="product-price">À partir de 500 FCFA</div>
-                        </div>
-                    </div>
-                    <div class="gallery-item" data-category="beverages">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.43%20AM%20%281%29-iib34BZ7jw03tNcux6rdpnybcEwPbr.jpeg" alt="Stock de boissons diverses">
-                        <div class="gallery-overlay">
-                            <h3>Boissons Diverses</h3>
-                            <p>Jus de fruits, boissons énergisantes, thés glacés et autres rafraîchissements</p>
-                            <div class="product-brands">
-                                <span class="brand">Tampico</span>
-                                <span class="brand">Red Bull</span>
-                                <span class="brand">Lipton</span>
-                            </div>
-                            <div class="product-price">À partir de 300 FCFA</div>
-                        </div>
-                    </div>
-                    <div class="gallery-item" data-category="all">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.40%20AM-uBRukbqKQHM4lRHsRRU8kv42xg0E9S.jpeg" alt="Étalage de boissons organisé">
-                        <div class="gallery-overlay">
-                            <h3>Vente au Détail</h3>
-                            <p>Espace de vente organisé pour faciliter vos achats au détail avec conseil personnalisé</p>
-                            <div class="product-features">
-                                <span class="feature">Produits frais</span>
-                                <span class="feature">Conseil expert</span>
-                                <span class="feature">Promotions</span>
+                            <div class="form-group">
+                                <label for="phone">Téléphone</label>
+                                <input type="tel" id="phone" name="phone" required>
                             </div>
                         </div>
-                    </div>
-                    <div class="gallery-item" data-category="gas">
-                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-07-16%20at%207.07.42%20AM-6sNjtAG3G1VI8OfO8kYHh0b3rpiZ3p.jpeg" alt="Bouteilles de gaz domestique">
-                        <div class="gallery-overlay">
-                            <h3>Gaz Domestique</h3>
-                            <p>Bouteilles de gaz de différentes tailles pour tous vos besoins domestiques et professionnels</p>
-                            <div class="product-sizes">
-                                <span class="size">6kg</span>
-                                <span class="size">12kg</span>
-                                <span class="size">35kg</span>
-                            </div>
-                            <div class="product-price">À partir de 3 500 FCFA</div>
-                        </div>
-                    </div>
-                    <div class="gallery-item special-offer" data-category="all">
-                        <div class="special-content">
-                            <i class="fas fa-gift"></i>
-                            <h3>Offres Spéciales</h3>
-                            <p>Découvrez nos promotions du moment et nos packs avantageux</p>
-                            <div class="offer-list">
-                                <div class="offer-item">Pack famille eau + sodas</div>
-                                <div class="offer-item">Remise quantité gros</div>
-                                <div class="offer-item">Fidélité récompensée</div>
-                            </div>
-                            <a href="#contact" class="offer-btn">Voir les offres</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Testimonials Section -->
-        <section id="temoignages" class="testimonials">
-            <div class="container">
-                <h2 class="section-title">Ce que disent nos clients</h2>
-                <p class="section-subtitle">La satisfaction de nos clients est notre priorité</p>
-                <div class="testimonials-grid">
-                    <div class="testimonial-card">
-                        <div class="testimonial-content">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <p>"Service exceptionnel ! Livraison toujours à l'heure et produits de qualité. Je recommande vivement SAGER pour tous vos besoins en boissons."</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="author-info">
-                                <h4>Marie Adjovi</h4>
-                                <span>Restauratrice</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial-card">
-                        <div class="testimonial-content">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <p>"Client depuis 5 ans, jamais déçu ! Prix compétitifs, large choix et équipe très professionnelle. Le service de livraison est parfait."</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="author-info">
-                                <h4>Jean-Baptiste Koudou</h4>
-                                <span>Gérant d'hôtel</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial-card">
-                        <div class="testimonial-content">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <p>"Excellent rapport qualité-prix ! L'équipe est à l'écoute et trouve toujours des solutions adaptées à nos besoins. Très satisfait !"</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="author-info">
-                                <h4>Fatou Diallo</h4>
-                                <span>Particulier</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- FAQ Section -->
-        <section class="faq">
-            <div class="container">
-                <h2 class="section-title">Questions Fréquentes</h2>
-                <p class="section-subtitle">Trouvez rapidement les réponses à vos questions</p>
-                <div class="faq-grid">
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>Quels sont vos délais de livraison ?</h3>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Nous livrons dans un délai maximum de 24h dans toute la région de Cotonou. Pour les commandes urgentes, nous proposons un service express en moins de 4h (supplément appliqué).</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>Proposez-vous des tarifs préférentiels pour les gros volumes ?</h3>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Oui, nous avons des tarifs dégressifs selon les quantités commandées. Contactez-nous pour obtenir un devis personnalisé adapté à vos besoins professionnels.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>Comment fonctionne le système de consigne pour les bouteilles de gaz ?</h3>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Lors de votre premier achat, vous payez une consigne pour la bouteille. Ensuite, vous ne payez que le gaz lors des recharges. La consigne vous est remboursée si vous ne souhaitez plus utiliser nos services.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>Acceptez-vous les paiements par mobile money ?</h3>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Oui, nous acceptons tous les moyens de paiement : espèces, mobile money (MTN, Moov), virements bancaires et cartes bancaires pour les professionnels.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Newsletter Section -->
-        <section class="newsletter">
-            <div class="container">
-                <div class="newsletter-content">
-                    <div class="newsletter-text">
-                        <h2>Restez informé de nos offres</h2>
-                        <p>Inscrivez-vous à notre newsletter pour recevoir nos promotions exclusives et nouveautés</p>
-                    </div>
-                    <form class="newsletter-form">
                         <div class="form-group">
-                            <input type="email" placeholder="Votre adresse email" required>
-                            <button type="submit">
-                                <i class="fas fa-paper-plane"></i>
-                                S'inscrire
-                            </button>
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
                         </div>
-                        <p class="newsletter-privacy">Nous respectons votre vie privée. Pas de spam, désinscription facile.</p>
+                        <div class="form-group">
+                            <label for="subject">Sujet</label>
+                            <select id="subject" name="subject" required>
+                                <option value="">Choisissez un sujet</option>
+                                <option value="devis">Demande de devis</option>
+                                <option value="livraison">Information livraison</option>
+                                <option value="produit">Question produit</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-paper-plane"></i>
+                            Envoyer le message
+                        </button>
                     </form>
                 </div>
             </div>
-        </section>
-
-        <!-- Contact Section -->
-        <section id="contact" class="contact">
-            <div class="container">
-                <h2 class="section-title">Contactez-Nous</h2>
-                <p class="section-subtitle">Nous sommes là pour répondre à tous vos besoins</p>
-                <div class="contact-content">
-                    <div class="contact-info">
-                        <h3 style="margin-bottom: 2rem; color: #333;">Informations de Contact</h3>
-                        <div class="contact-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <div>
-                                <strong>Adresse</strong><br>
-                                Ayélawadjè, 1ère voie à droite en venant de Midombo<br>
-                                Cotonou, Bénin
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-phone"></i>
-                            <div>
-                                <strong>Téléphone</strong><br>
-                                +229 01 96 46 66 25<br>
-                                <small>Disponible 7j/7 de 8h à 19h</small>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-envelope"></i>
-                            <div>
-                                <strong>Email</strong><br>
-                                contact@sager.bj<br>
-                                <small>Réponse sous 24h garantie</small>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-clock"></i>
-                            <div>
-                                <strong>Horaires d'ouverture</strong><br>
-                                Lundi - Samedi: 08h00 - 19h00<br>
-                                Dimanche: Fermé
-                            </div>
-                        </div>
-                        <div class="contact-buttons">
-                            <a href="https://wa.me/2290196466625" class="whatsapp-btn" target="_blank">
-                                <i class="fab fa-whatsapp"></i>
-                                WhatsApp
-                            </a>
-                            <a href="tel:+2290196466625" class="call-btn">
-                                <i class="fas fa-phone"></i>
-                                Appeler
-                            </a>
-                        </div>
-                    </div>
-                    <div class="contact-form-container">
-                        <h3>Envoyez-nous un message</h3>
-                        <form class="contact-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="name">Nom complet</label>
-                                    <input type="text" id="name" name="name" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="phone">Téléphone</label>
-                                    <input type="tel" id="phone" name="phone" required>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" id="email" name="email" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="subject">Sujet</label>
-                                <select id="subject" name="subject" required>
-                                    <option value="">Choisissez un sujet</option>
-                                    <option value="devis">Demande de devis</option>
-                                    <option value="livraison">Information livraison</option>
-                                    <option value="produit">Question produit</option>
-                                    <option value="autre">Autre</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="message">Message</label>
-                                <textarea id="message" name="message" rows="5" required></textarea>
-                            </div>
-                            <button type="submit" class="submit-btn">
-                                <i class="fas fa-paper-plane"></i>
-                                Envoyer le message
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                <div class="map-container">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3979.8234567890123!2d9.7678901234567!3d4.0123456789012!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNMKwMDAnMjguNCJOIDnCsDQ2JzA0LjQiRQ!5e0!3m2!1sfr!2scm!4v1234567890123!5m2!1sfr!2scm" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Localisation SAGER"></iframe>
-                </div>
+            <div class="map-container">
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3979.8234567890123!2d9.7678901234567!3d4.0123456789012!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNMKwMDAnMjguNCJOIDnCsDQ2JzA0LjQiRQ!5e0!3m2!1sfr!2scm!4v1234567890123!5m2!1sfr!2scm"
+                    allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                    title="Localisation SAGER"></iframe>
             </div>
-        </section>
+        </div>
+    </section>
     </main>
 
     <!-- Footer -->
@@ -561,7 +384,7 @@
             <div class="footer-main">
                 <div class="footer-section">
                     <h3><i class="fas fa-store"></i> SAGER</h3>
-                    <p>Votre distributeur de confiance pour boissons, eaux, sodas, bières et gaz domestique depuis plus de 10 ans.</p>
+                    <p>Votre distributeur de confiance pour boissons, eaux, sodas, bières et gaz domestique</p>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-facebook"></i></a>
                         <a href="#"><i class="fab fa-instagram"></i></a>
@@ -965,7 +788,9 @@
             color: #666;
         }
 
-        .about-story, .about-mission, .about-values {
+        .about-story,
+        .about-mission,
+        .about-values {
             margin-bottom: 2rem;
         }
 
@@ -1172,14 +997,18 @@
             opacity: 0.9;
         }
 
-        .product-brands, .product-features, .product-sizes {
+        .product-brands,
+        .product-features,
+        .product-sizes {
             display: flex;
             gap: 0.5rem;
             margin-bottom: 1rem;
             flex-wrap: wrap;
         }
 
-        .brand, .feature, .size {
+        .brand,
+        .feature,
+        .size {
             background: rgba(255, 255, 255, 0.2);
             padding: 0.3rem 0.8rem;
             border-radius: 15px;
@@ -1495,7 +1324,8 @@
             margin-top: 2rem;
         }
 
-        .whatsapp-btn, .call-btn {
+        .whatsapp-btn,
+        .call-btn {
             flex: 1;
             text-align: center;
             padding: 1rem 1.5rem;
@@ -1519,7 +1349,8 @@
             color: white;
         }
 
-        .whatsapp-btn:hover, .call-btn:hover {
+        .whatsapp-btn:hover,
+        .call-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
@@ -1737,6 +1568,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -1748,6 +1580,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -1890,17 +1723,45 @@
             animation: fadeInUp 0.6s ease-out forwards;
         }
 
-        .gallery-item:nth-child(1) { animation-delay: 0.1s; }
-        .gallery-item:nth-child(2) { animation-delay: 0.2s; }
-        .gallery-item:nth-child(3) { animation-delay: 0.3s; }
-        .gallery-item:nth-child(4) { animation-delay: 0.4s; }
-        .gallery-item:nth-child(5) { animation-delay: 0.5s; }
-        .gallery-item:nth-child(6) { animation-delay: 0.6s; }
+        .gallery-item:nth-child(1) {
+            animation-delay: 0.1s;
+        }
 
-        .service-card:nth-child(1) { animation-delay: 0.1s; }
-        .service-card:nth-child(2) { animation-delay: 0.2s; }
-        .service-card:nth-child(3) { animation-delay: 0.3s; }
-        .service-card:nth-child(4) { animation-delay: 0.4s; }
+        .gallery-item:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .gallery-item:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .gallery-item:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .gallery-item:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .gallery-item:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .service-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .service-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .service-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .service-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
     </style>
 
     <script>
@@ -1909,12 +1770,12 @@
             question.addEventListener('click', () => {
                 const faqItem = question.parentElement;
                 const isActive = faqItem.classList.contains('active');
-                
+
                 // Close all FAQ items
                 document.querySelectorAll('.faq-item').forEach(item => {
                     item.classList.remove('active');
                 });
-                
+
                 // Open clicked item if it wasn't active
                 if (!isActive) {
                     faqItem.classList.add('active');
@@ -1926,11 +1787,11 @@
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const category = btn.dataset.category;
-                
+
                 // Update active button
                 document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
+
                 // Filter products
                 document.querySelectorAll('.gallery-item').forEach(item => {
                     if (category === 'all' || item.dataset.category.includes(category)) {
@@ -1945,13 +1806,13 @@
         // Counter Animation
         function animateCounters() {
             const counters = document.querySelectorAll('.stat-number[data-target]');
-            
+
             counters.forEach(counter => {
                 const target = parseInt(counter.dataset.target);
                 const duration = 2000;
                 const step = target / (duration / 16);
                 let current = 0;
-                
+
                 const timer = setInterval(() => {
                     current += step;
                     if (current >= target) {
@@ -1988,7 +1849,7 @@
 
         // Smooth scroll for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {

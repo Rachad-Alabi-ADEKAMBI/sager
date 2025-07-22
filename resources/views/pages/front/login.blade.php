@@ -1,168 +1,212 @@
-<main class="main-content">
-    <div class="login-container">
-        <div class="logo">
-            <h1>SAGER</h1>
-            <p>Système de Gestion de Stock</p>
-        </div>
+ <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
 
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
-            <div class="form-group">
-                <i class="fas fa-user"></i>
-                <input type="email" name="email" class="form-control" placeholder="Adresse email" required>
-            </div>
 
-            <div class="form-group">
-                <i class="fas fa-lock"></i>
-                <input type="password" name="password" class="form-control" placeholder="Mot de passe" required>
-            </div>
+ <main class="main-content">
+     <div class="login-container">
+         <div class="logo">
+             <h1>SAGER</h1>
+             <p>Système de Gestion de Stock</p>
+         </div>
 
-            <button type="submit" class="btn-login">
-                <i class="fas fa-sign-in-alt"></i> Se connecter
-            </button>
+         <form method="POST" action="{{ route('login') }}">
+             @csrf
+             <div class="form-group">
 
-            <div class="forgot-password">
-                <a href="{{ route('reset_password') }}">Mot de passe oublié ?</a>
-            </div>
-        </form>
+                 <input type="email" name="email" class="form-control" placeholder="Adresse email" required>
+             </div>
 
-    </div>
-</main>
+             <div class="form-group" style="position: relative;">
+                 <input type="password" name="password" id="password" class="form-control" placeholder="Mot de passe"
+                     required style="padding-right: 35px;">
 
-<style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+             </div>
 
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+             <button type="submit" class="btn-login">
+                 <i class="fas fa-sign-in-alt"></i> Se connecter
+             </button>
 
-    .login-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        width: 100%;
-        max-width: 400px;
-        animation: slideUp 0.6s ease-out;
-    }
+             <div class="forgot-password">
+                 <a href="{{ route('reset_password') }}">Mot de passe oublié ?</a>
+             </div>
+         </form>
 
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
+     </div>
+ </main>
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+ <script>
+     const togglePassword = document.getElementById('togglePassword');
+     const passwordInput = document.getElementById('password');
 
-    .logo {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
+     togglePassword.addEventListener('click', () => {
+         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+         passwordInput.setAttribute('type', type);
+         togglePassword.classList.toggle('fa-eye');
+         togglePassword.classList.toggle('fa-eye-slash');
+     });
+ </script>
 
-    .logo h1 {
-        color: #667eea;
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-    }
 
-    .logo p {
-        color: #666;
-        font-size: 0.9rem;
-    }
+ <style>
+     * {
+         margin: 0;
+         padding: 0;
+         box-sizing: border-box;
+     }
 
-    .form-group {
-        margin-bottom: 1.5rem;
-        position: relative;
-    }
+     body {
+         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+         min-height: 100vh;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+     }
 
-    .form-group i {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #667eea;
-        z-index: 1;
-    }
+     .login-container {
+         background: white;
+         padding: 2rem;
+         border-radius: 20px;
+         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+         width: 100%;
+         max-width: 400px;
+         animation: slideUp 0.6s ease-out;
+     }
 
-    .form-control {
-        width: 100%;
-        padding: 15px 15px 15px 45px;
-        border: 2px solid #e1e5e9;
-        border-radius: 10px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        background: #f8f9fa;
-    }
+     @keyframes slideUp {
+         from {
+             opacity: 0;
+             transform: translateY(30px);
+         }
 
-    .form-control:focus {
-        outline: none;
-        border-color: #667eea;
-        background: white;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
+         to {
+             opacity: 1;
+             transform: translateY(0);
+         }
+     }
 
-    .btn-login {
-        width: 100%;
-        padding: 15px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
+     .logo {
+         text-align: center;
+         margin-bottom: 2rem;
+     }
 
-    .btn-login:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-    }
+     .logo h1 {
+         color: #667eea;
+         font-size: 2.5rem;
+         font-weight: bold;
+         margin-bottom: 0.5rem;
+     }
 
-    .btn-login:active {
-        transform: translateY(0);
-    }
+     .logo p {
+         color: #666;
+         font-size: 0.9rem;
+     }
 
-    .forgot-password {
-        text-align: center;
-        margin-top: 1rem;
-    }
+     .form-group {
+         margin-bottom: 1.5rem;
+         position: relative;
+     }
 
-    .forgot-password a {
-        color: #667eea;
-        text-decoration: none;
-        font-size: 0.9rem;
-        transition: color 0.3s ease;
-    }
+     .form-group i {
+         position: absolute;
+         left: 15px;
+         top: 50%;
+         transform: translateY(-50%);
+         color: #667eea;
+         z-index: 1;
+     }
 
-    .forgot-password a:hover {
-        color: #764ba2;
-    }
+     .form-control {
+         width: 100%;
+         padding: 15px 15px 15px 45px;
+         border: 2px solid #e1e5e9;
+         border-radius: 10px;
+         font-size: 1rem;
+         transition: all 0.3s ease;
+         background: #f8f9fa;
+     }
 
-    @media (max-width: 480px) {
-        .login-container {
-            margin: 1rem;
-            padding: 1.5rem;
-        }
+     .form-control:focus {
+         outline: none;
+         border-color: #667eea;
+         background: white;
+         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+     }
 
-        .logo h1 {
-            font-size: 2rem;
-        }
-    }
-</style>
+     .btn-login {
+         width: 100%;
+         padding: 15px;
+         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+         color: white;
+         border: none;
+         border-radius: 10px;
+         font-size: 1rem;
+         font-weight: 600;
+         cursor: pointer;
+         transition: all 0.3s ease;
+         position: relative;
+         overflow: hidden;
+     }
+
+     .btn-login:hover {
+         transform: translateY(-2px);
+         box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+     }
+
+     .btn-login:active {
+         transform: translateY(0);
+     }
+
+     .forgot-password {
+         text-align: center;
+         margin-top: 1rem;
+     }
+
+     .forgot-password a {
+         color: #667eea;
+         text-decoration: none;
+         font-size: 0.9rem;
+         transition: color 0.3s ease;
+     }
+
+     .forgot-password a:hover {
+         color: #764ba2;
+     }
+
+     @media (max-width: 480px) {
+         .login-container {
+             margin: 1rem;
+             padding: 1.5rem;
+         }
+
+         .logo h1 {
+             font-size: 2rem;
+         }
+     }
+ </style>
+
+ <Style>
+     .form-group {
+         position: relative;
+     }
+
+     .form-group input {
+         padding-right: 35px;
+         cursor: text;
+         /* assure que curseur texte apparaisse sur input */
+     }
+
+     #togglePassword {
+         position: absolute;
+         right: 10px;
+         top: 50%;
+         transform: translateY(-50%);
+         cursor: pointer;
+         pointer-events: auto;
+         /* icône cliquable */
+     }
+
+     #togglePassword:hover {
+         color: #007bff;
+         /* optionnel : changer couleur au hover */
+     }
+ </Style>

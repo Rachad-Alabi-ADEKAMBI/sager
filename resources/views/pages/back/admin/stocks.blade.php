@@ -1,6 +1,8 @@
 @section('title', 'Gestion des Stocks - SAGER')
 
 <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
 
 
 @include('pages.back.admin.sidebar')
@@ -25,9 +27,17 @@
     <div class="stock-content">
         <div class="stock-header">
             <h2>Inventaire des Produits</h2>
-            <button class="btn-primary" onclick="openModal()">
-                <i class="fas fa-plus"></i> Ajouter un produit
-            </button>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="openModal()">
+                    <i class="fas fa-plus"></i> Ajouter un produit
+                </button>
+
+                <button class="btn btn-success"
+                    onclick="alert('Fonctionnalité d\'impression en cours de développement.')">
+                    <i class="fas fa-print"></i> Imprimer
+                </button>
+            </div>
+
         </div>
 
         <!-- Filters -->
@@ -64,7 +74,7 @@
         <div class="table-container">
             <div class="table-header">
                 <h3>Liste des Produits</h3>
-                <span>Total: {{ $products->count() }}</span>
+                <strong>Total: {{ $products->count() }}</strong>
             </div>
             <table class="table">
                 <thead>
@@ -81,34 +91,88 @@
                     @foreach ($products as $product)
                         <tr>
                             <td data-label="Nom"><strong>{{ $product->name }}</strong></td>
-                        <td data-label="Prix">
-    Detail: <strong>{{ number_format($product->price_detail, 2) }} FCFA</strong><br>
-    Semi-gros: <strong>{{ number_format($product->price_semi_bulk, 2) }} FCFA</strong><br>
-    Gros: <strong>{{ number_format($product->price_bulk, 2) }} FCFA</strong>
-</td>
+                            <td data-label="Prix">
+                                Detail: <strong>{{ number_format($product->price_detail, 2) }} FCFA</strong><br>
+                                Semi-gros: <strong>{{ number_format($product->price_semi_bulk, 2) }} FCFA</strong><br>
+                                Gros: <strong>{{ number_format($product->price_bulk, 2) }} FCFA</strong>
+                            </td>
 
                             <td data-label="Quantité">{{ $product->quantity }}</td>
-                           <td data-label="Statut">
-    @if ($product->quantity >= 5)
-        <span class="status-badge status-in-stock">En stock</span>
-    @elseif ($product->quantity < 5)
-        <span class="status-badge status-low-stock">Stock Faible</span>
-    @else
-        <span class="status-badge status-out-stock">Rupture de stock</span>
-    @endif
-</td>
+                            <td data-label="Statut">
+                                @if ($product->quantity >= 5)
+                                    <span class="status-badge status-in-stock">En stock</span>
+                                @elseif ($product->quantity < 5)
+                                    <span class="status-badge status-low-stock">Stock Faible</span>
+                                @else
+                                    <span class="status-badge status-out-stock">Rupture de stock</span>
+                                @endif
+                            </td>
                             <td data-label="Dernière MAJ">{{ $product->updated_at->format('d/m/Y') }}</td>
                             <td data-label="Actions">
                                 <div class="action-buttons">
-                                    <button class="btn-sm btn-edit" title="Modifier">
+                                    <button class="btn-sm btn-edit" title="Modifier" data-bs-toggle="modal"
+                                        data-bs-target="#editPriceModal{{ $product->id }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn-sm btn-delete" title="Supprimer">
+
+                                    <button class="btn-sm btn-delete" title="Supprimer"
+                                        onclick="alert('Fonctionnalité de suppression en cours de développement.')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
+
+                        <div class="modal fade" id="editPriceModal{{ $product->id }}" tabindex="-1"
+                            aria-labelledby="editPriceModalLabel{{ $product->id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+
+
+                                <form method="POST" action="">
+                                    @csrf
+                                    @method('PUT') <!-- ou POST selon ta route -->
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editPriceModalLabel{{ $product->id }}">
+                                                <strong style='color='red'>
+                                                    Fonctionnalité de modification des prix en cours de développement.
+                                                </strong>
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Fermer"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label for="price_detail_{{ $product->id }}" class="form-label">Prix
+                                                    détail</label>
+                                                <input type="number" step="0.01" name="price_detail"
+                                                    class="form-control" id="price_detail_{{ $product->id }}"
+                                                    value="{{ $product->price_detail }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="price_semi_bulk_{{ $product->id }}"
+                                                    class="form-label">Prix semi-gros</label>
+                                                <input type="number" step="0.01" name="price_semi_bulk"
+                                                    class="form-control" id="price_semi_bulk_{{ $product->id }}"
+                                                    value="{{ $product->price_semi_bulk }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="price_bulk_{{ $product->id }}" class="form-label">Prix
+                                                    gros</label>
+                                                <input type="number" step="0.01" name="price_bulk"
+                                                    class="form-control" id="price_bulk_{{ $product->id }}"
+                                                    value="{{ $product->price_bulk }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Annuler</button>
+                                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     @endforeach
                 </tbody>
 
@@ -178,6 +242,28 @@
         </form>
     </div>
 </div>
+
+<table id="printableProductTable" class="table d-none">
+    <thead>
+        <tr>
+            <th>Nom du produit</th>
+            <th>Stock restant</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach ($products as $product)
+            <tr>
+                <td>{{ $product->name }}</td>
+                <td>{{ $product->stock }}</td>
+            </tr>
+        @endforeach
+    </tbody>
+</table>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 
 <style>
     * {
@@ -815,4 +901,17 @@
         }
     });
 </script>
+
+
+<style>
+    <style>.modal {
+        z-index: 1050;
+    }
+
+    .modal-backdrop {
+        z-index: 1040;
+    }
+    }
+</style>
+
 </body>

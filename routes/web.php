@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Sale;
 use App\Models\SaleProduct;
-
+    use App\Models\Notification;
 
 Route::get('/', function () {
     return view('pages/front/home');
@@ -33,8 +33,11 @@ Route::get('/dashboardAdmin', function () {
     }
 
       $products = Product::all();
+      $sales = Sale::all();
+      $totalCA = Sale::sum('total'); // somme de la colonne 'total'
+     $notifications = Notification::latest()->take(5)->get();
 
-    return view('pages/back/admin/dashboardAdmin', compact('products'));
+    return view('pages/back/admin/dashboardAdmin', compact('products', 'sales', 'totalCA', 'notifications'));
 })->name('dashboardAdmin');
 
 
@@ -43,7 +46,7 @@ Route::get('/stocks', function () {
         return redirect()->route('login');
     }
 
-    $products = Product::all();
+    $products = Product::orderBy('id', 'desc')->get();
     return view('pages/back/admin/stocks', compact('products'));
 })->name('stocks');
 
@@ -154,6 +157,14 @@ Route::post('/sale', function (Request $request) {
 
         DB::commit();
 
+  
+
+// Ajoute l'opération dans la table des notifications
+Notification::create([
+    'description' => 'Facture N°' . $sale->id . '/' . now()->format('m') . '/' . now()->format('y') . '/FR-N pour ' .
+                     $sale->buyer_name . ' par ' . $sale->seller_name . '. Total : ' . $total . ' FCFA.',
+]);
+
         return response()->json([
             'message' => 'Vente enregistrée avec succès.',
             'sale_id' => $sale->id,
@@ -176,7 +187,17 @@ Route::post('/sale', function (Request $request) {
     if (!Auth::check() || Auth::user()->role !== 'seller') {
         return redirect()->route('login');
     }
-    return view('pages/back/seller/dashboard');
+
+     $sales = Sale::where('seller_name', Auth::user()->name)->orderBy('created_at', 'desc')->get();    
+
+    $salesNotifications = Sale::where('seller_name', Auth::user()->name)
+             ->latest()
+             ->take(5)
+             ->get();
+
+    $totalCA = \App\Models\Sale::where('seller_name', auth()->user()->name)->sum('total');
+
+    return view('pages/back/seller/dashboard', compact('sales', 'salesNotifications', 'totalCA'));
 })->name('dashboard');
 
 
@@ -231,6 +252,8 @@ Route::get('/userSales', function () {
     $sales = Sale::with('products')->where('seller_name', Auth::user()->name)->get();
     return response()->json($sales);
 })->name('userSales');
+
+
 
 /* end api routes*/
 

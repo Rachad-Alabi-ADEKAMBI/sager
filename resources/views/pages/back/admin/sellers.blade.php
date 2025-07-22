@@ -58,10 +58,10 @@
                         </div>
                     </div>
                     <div class="user-actions">
-                        <button class="btn-sm btn-view" onclick="viewUserActivity('{{ $user->name }}')">
+                        <button class="btn-sm btn-view" onclick="alert('Fonctionnalité en cours de développement.')">
                             <i class="fas fa-eye"></i> Voir activité
                         </button>
-                        <button class="btn-sm btn-ban">
+                        <button class="btn-sm btn-ban" onclick="alert('Fonctionnalité en cours de développement.')">
                             <i class="fas fa-ban"></i> Bannir
                         </button>
                     </div>

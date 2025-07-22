@@ -2,7 +2,7 @@
 
 
 <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 
@@ -32,7 +32,9 @@
             <div class="stat-card">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-value">200</div>
+                        <div class="stat-value">
+                            {{ $sales->count() }} ventes
+                        </div>
                         <div class="stat-label">Ventes ce mois</div>
                     </div>
                     <div class="stat-icon sales">
@@ -44,11 +46,11 @@
             <div class="stat-card">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-value">200 000 F CFA </div>
+                        <div class="stat-value"> {{ number_format($totalCA, 0, ',', ' ') }} FCFA </div>
                         <div class="stat-label">Chiffre d'affaires</div>
                     </div>
                     <div class="stat-icon revenue">
-                        <i class="fas fa-euro-sign"></i>
+                        <i class="fas fa-wallet"></i>
                     </div>
                 </div>
             </div>
@@ -59,40 +61,102 @@
             <div class="chart-card">
                 <div class="chart-header">
                     <h3>Évolution des ventes</h3>
-                    <select style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
-                        <option>7 derniers jours</option>
-                        <option>30 derniers jours</option>
-                        <option>3 derniers mois</option>
+                    <select id="dateRange" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="7">7 derniers jours</option>
+                        <option value="30">30 derniers jours</option>
+                        <option value="90">3 derniers mois</option>
                     </select>
                 </div>
-                <div class="chart-placeholder">
-                    <i class="fas fa-chart-line" style="margin-right: 0.5rem;"></i>
-                    Graphique des ventes
-                </div>
+                <canvas id="salesChart" style="width: 100%; height: 300px;"></canvas>
             </div>
+
+            @php
+                $salesByDate = $sales
+                    ->groupBy(fn($s) => $s->created_at->format('d/m'))
+                    ->map(fn($group) => $group->sum('total'))
+                    ->sortKeys();
+
+                $salesDates = $salesByDate->keys()->toArray();
+                $salesValues = $salesByDate->values()->toArray();
+            @endphp
+
+            <script>
+                const allDates = {!! json_encode($salesDates) !!};
+                const allValues = {!! json_encode($salesValues) !!};
+
+                const ctx = document.getElementById('salesChart').getContext('2d');
+                let chart;
+
+                function renderChart(days) {
+                    const dates = allDates.slice(-days);
+                    const values = allValues.slice(-days);
+
+                    if (chart) chart.destroy();
+
+                    chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: dates,
+                            datasets: [{
+                                label: 'Chiffre d\'affaires (FCFA)',
+                                data: values,
+                                borderColor: '#36a2eb',
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                fill: true,
+                                tension: 0.3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: val => val.toLocaleString('fr-FR') + ' FCFA'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                document.getElementById('dateRange').addEventListener('change', e => {
+                    renderChart(parseInt(e.target.value));
+                });
+
+                // Initial
+                renderChart(7);
+            </script>
 
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3>Vos ventes récente</h3>
+                    <h3>Vos ventes récentes</h3>
                 </div>
                 <ul class="activity-list">
-                    <li class="activity-item">
-                        <div class="activity-icon sale">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div>Nouvelle vente - Ordinateur Portable</div>
-                            <div class="activity-time">Il y a 5 minutes</div>
-                        </div>
-                    </li>
+                    @if ($sales->count() > 0)
+                        @foreach ($salesNotifications as $sale)
+                            <li class="activity-item">
+                                <div class="activity-icon sale">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+
+                                <div class="activity-content">
+                                    <div>Facture N° {{ $sale->id }}/07/25/FR-N à {{ $sale->buyer_name }}</div>
+                                    <div class="activity-time">
+                                        {{ $sale->created_at->format('d/m/Y H:i') }}
+                                    </div>
+                                </div>
+                            </li>
+                        @endforeach
+                    @else
+                        <li>Aucune vente pour le moment</li>
+                    @endif
                 </ul>
+
             </div>
         </div>
     </div>
 </main>
-
-
-
 
 
 <style>
@@ -408,25 +472,39 @@
 </style>
 
 
+<style>
+    #salesChart {
+        max-width: 600px;
+        width: 100%;
+        height: 500px;
+    }
 
-@section('scripts')
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('active');
+    @media (max-width: 480px) {
+        #salesChart {
+            height: 400px;
+            /* hauteur réduite pour mobile */
         }
+    }
+</style>
 
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const menuToggle = document.querySelector('.menu-toggle');
 
-            if (window.innerWidth <= 768 &&
-                !sidebar.contains(event.target) &&
-                !menuToggle.contains(event.target)) {
-                sidebar.classList.remove('active');
-            }
-        });
-    </script>
 
-@endsection
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('active');
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.querySelector('.menu-toggle');
+
+        if (window.innerWidth <= 768 &&
+            !sidebar.contains(event.target) &&
+            !menuToggle.contains(event.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+</script>

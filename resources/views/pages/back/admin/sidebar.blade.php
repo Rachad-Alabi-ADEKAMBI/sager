@@ -2,7 +2,7 @@
  <aside class="sidebar" id="sidebar">
      <div class="sidebar-header">
          <h2>
-             <a href="{{ route('home') }}">
+             <a href="{{ route('home') }}" style='color: white; text-decoration: none;'>
                  SAGER
              </a>
          </h2>
@@ -10,7 +10,7 @@
      <ul class="sidebar-menu">
          <li><a href="{{ route('dashboardAdmin') }}" class="active"><i class="fas fa-tachometer-alt"></i> Tableau de
                  bord</a></li>
-                         <li><a href="{{ route('sales') }}"><i class="fas fa-shopping-cart"></i> Ventes</a></li>
+         <li><a href="{{ route('sales') }}"><i class="fas fa-shopping-cart"></i> Ventes</a></li>
          <li><a href="{{ route('stocks') }}"><i class="fas fa-boxes"></i> Stock</a></li>
          <li><a href="{{ route('sellers') }}"><i class="fas fa-users"></i> Vendeurs</a></li>
 

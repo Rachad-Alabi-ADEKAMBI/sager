@@ -5,6 +5,25 @@
 
 @include('pages.back.seller.sidebar')
 
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('active');
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.querySelector('.menu-toggle');
+
+        if (window.innerWidth <= 768 &&
+            !sidebar.contains(event.target) &&
+            !menuToggle.contains(event.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+</script>
+
 <style>
     * {
         margin: 0;
@@ -635,20 +654,17 @@
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="btn-add-line" onclick="addProductLine()">
+                    <button type="button" class="btn-add-line"
+                        onclick="alert('Fonctionnalité en cours de développement.')">
                         <i class="fas fa-plus"></i> Ajouter une ligne
                     </button>
                 </div>
 
                 <!-- Cart Section -->
                 <div class="cart-section">
-                    <h4 style="margin-bottom: 1rem; color: #333;">Résumé de la commande</h4>
                     <div class="cart-summary">
-                        <div>
-                            <div class="cart-items-count" id="itemsCount">0 article(s)</div>
-                        </div>
                         <div class="cart-total" id="cartTotal">
-                            Total: @{{ formatAmount(total )}} FCFA
+                            Total: @{{ formatAmount(total) }} FCFA
                         </div>
                     </div>
                     <div style="text-align: center; margin-top: 1.5rem;">
@@ -662,6 +678,41 @@
         </div>
     </div>
 </main>
+<style>
+    .product-lines .form-group {
+        margin-right: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .product-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .product-line .form-control {
+        width: 150px;
+        max-width: 100%;
+    }
+
+    @media (max-width: 600px) {
+        .product-line {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .product-line .form-group {
+            width: 100%;
+        }
+
+        .product-line .form-control {
+            width: 100%;
+        }
+    }
+</style>
+
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -713,7 +764,7 @@
                     });
             },
             onProductChange() {
-               axios.get(`/product/${this.selectedProductId}`)
+                axios.get(`/product/${this.selectedProductId}`)
                     .then(response => {
                         this.product = response.data;
                         console.log('Produit sélectionné:', this.product);
@@ -781,7 +832,20 @@
                     })
                     .catch(error => {
                         console.error('Erreur lors de l\'enregistrement de la vente :', error);
-                        alert('Une erreur est survenue lors de l\'enregistrement de la vente.');
+
+                        let message = 'Une erreur est survenue lors de l\'enregistrement de la vente.';
+
+                        if (error.response && error.response.data) {
+                            const data = error.response.data;
+
+                            if (data.error) {
+                                message = data.error;
+                            } else if (data.message) {
+                                message = data.message;
+                            }
+                        }
+
+                        alert(message);
                     });
             },
             formatDateTime(datetime) {

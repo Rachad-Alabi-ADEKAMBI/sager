@@ -2,7 +2,7 @@
  <aside class="sidebar" id="sidebar">
      <div class="sidebar-header">
          <h2>
-             <a href="{{ route('home') }}">
+             <a href="{{ route('home') }}" style='color: white; text-decoration: none;'>
                  SAGER
              </a>
          </h2>
@@ -27,3 +27,22 @@
 
      </ul>
  </aside>
+
+ <script>
+     function toggleSidebar() {
+         const sidebar = document.getElementById('sidebar');
+         sidebar.classList.toggle('active');
+     }
+
+     // Close sidebar when clicking outside on mobile
+     document.addEventListener('click', function(event) {
+         const sidebar = document.getElementById('sidebar');
+         const menuToggle = document.querySelector('.menu-toggle');
+
+         if (window.innerWidth <= 768 &&
+             !sidebar.contains(event.target) &&
+             !menuToggle.contains(event.target)) {
+             sidebar.classList.remove('active');
+         }
+     });
+ </script>
