@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
-
+use App\Models\Notification;
 
 class ProductController extends BaseController
 {
@@ -36,29 +36,43 @@ class ProductController extends BaseController
             $data['photo'] = $request->file('photo')->store('products', 'public');
         }
 
-        Product::create($data);
+      try {
+    Product::create($data);
 
-        echo "<script>alert('Produit ajouté avec succès.'); window.location.href = '/stocks';</script>";
+    Notification::create([
+        'description' => 'Produit ' . $data['name'] . ' ajouté avec succès. Quantité : ' . $data['quantity'] . '.',
+    ]);
 
-        return redirect()->route('stocks');
+    return response()->json(['message' => 'Produit ajouté avec succès.'], 201); // Code 201 Created
+} catch (\Exception $e) {
+    return response()->json(['error' => 'Erreur lors de la création du produit.'], 500); // Code 500 Internal Server Error
+}
 
     }
 
     public function update(Request $request, $id)
-{
-    $request->validate([
-        'price_detail' => 'required|numeric',
-        'price_semi_bulk' => 'required|numeric',
-        'price_bulk' => 'required|numeric',
-    ]);
+    {
+        // Validation des données reçues
+        $validated = $request->validate([
+            'price_detail' => 'required|numeric|min:0',
+            'price_semi_bulk' => 'required|numeric|min:0',
+            'price_bulk' => 'required|numeric|min:0',
+        ]);
 
-    $product = Product::findOrFail($id);
-    $product->price_detail = $request->price_detail;
-    $product->price_semi_bulk = $request->price_semi_bulk;
-    $product->price_bulk = $request->price_bulk;
-    $product->save();
+        // Trouver le produit
+        $product = Product::findOrFail($id);
 
-    return redirect()->back()->with('success', 'Prix mis à jour.');
-}
+        // Mise à jour des prix
+        $product->price_detail = $validated['price_detail'];
+        $product->price_semi_bulk = $validated['price_semi_bulk'];
+        $product->price_bulk = $validated['price_bulk'];
+
+        $product->save();
+
+        return response()->json([
+            'message' => 'Prix mis à jour avec succès',
+            'product' => $product
+        ], 200);
+    }
 
 }

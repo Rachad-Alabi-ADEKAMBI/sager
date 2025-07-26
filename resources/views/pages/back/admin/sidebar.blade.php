@@ -11,7 +11,9 @@
          <li><a href="{{ route('dashboardAdmin') }}" class="active"><i class="fas fa-tachometer-alt"></i> Tableau de
                  bord</a></li>
          <li><a href="{{ route('sales') }}"><i class="fas fa-shopping-cart"></i> Ventes</a></li>
-         <li><a href="{{ route('stocks') }}"><i class="fas fa-boxes"></i> Stock</a></li>
+         <li><a href="{{ route('products') }}"><i class="fas fa-cubes"></i> Produits</a></li>
+         <li><a href="{{ route('stocks') }}"><i class="fas fa-clock"></i> Historique stock</a></li>
+
          <li><a href="{{ route('sellers') }}"><i class="fas fa-users"></i> Vendeurs</a></li>
 
          <li><a href="{{ route('home') }}"><i class="fas fa-home"></i> Accueil</a></li>

@@ -1,103 +1,25 @@
-@section('title', 'Historique du stock- SAGER')
-
-<link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-
+@extends('layouts.app')
 
 @include('pages.back.admin.sidebar')
 
-<!-- Main Content -->
+
+@section('title', 'Products')
+
 @section('content')
     <main class="main-content" id='app'>
 
-        <stocks-component>
+        <products-component>
 
     </main>
 @endsection
 
-<!-- Modal Ajouter Produit -->
-<div id="productModal" class="modal" style="max-width: 700px; margin: auto;">
-    <div class="modal-content" style="padding: 2rem;">
-        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>Ajouter un nouveau produit</h3>
-            <span class="close" onclick="closeModal()" style="cursor: pointer; font-size: 1.5rem;">&times;</span>
-        </div>
-        <form enctype="multipart/form-data" method="POST" action="/products">
-            @csrf
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label>Nom du produit</label>
-                <input name="name" type="text" class="form-control" required>
-            </div>
 
-            <div class="row" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                <div class="form-group" style="flex: 1 1 45%;">
-                    <label>Prix d'achat</label>
-                    <input name="purchase_price" type="number" class="form-control" step="0.01" required>
-                </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-                <div class="form-group" style="flex: 1 1 45%;">
-                    <label>Quantité</label>
-                    <input name="quantity" type="number" class="form-control" required>
-                </div>
-            </div>
-
-            <div class="row" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                <div class="form-group" style="flex: 1 1 30%;">
-                    <label>Prix détail</label>
-                    <input name="price_detail" type="number" class="form-control" step="0.01" required>
-                </div>
-
-                <div class="form-group" style="flex: 1 1 30%;">
-                    <label>Prix semi gros</label>
-                    <input name="price_semi_bulk" type="number" class="form-control" step="0.01" required>
-                </div>
-
-                <div class="form-group" style="flex: 1 1 30%;">
-                    <label>Prix gros</label>
-                    <input name="price_bulk" type="number" class="form-control" step="0.01" required>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label>Photo (Optionel)</label>
-                <input name="photo" type="file" accept="image/*" class="form-control">
-            </div>
-
-            <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
-                <button type="submit" class="btn-primary" style="flex: 1 1 45%; min-width: 120px;">
-                    <i class="fas fa-save"></i> Enregistrer
-                </button>
-                <button type="button" onclick="closeModal()"
-                    style="flex: 1 1 45%; min-width: 120px; background: #6c757d; color: white; border: none; padding: 0.75rem; border-radius: 10px; cursor: pointer;">
-                    Annuler
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<table id="printableProductTable" class="table d-none">
-    <thead>
-        <tr>
-            <th>Nom du produit</th>
-            <th>Stock restant</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach ($products as $product)
-            <tr>
-                <td>{{ $product->name }}</td>
-                <td>{{ $product->stock }}</td>
-            </tr>
-        @endforeach
-    </tbody>
-</table>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 
-
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 
 <style>
     * {
@@ -556,11 +478,13 @@
         left: 0;
         right: 0;
         bottom: 0;
-        display: none;
-        /* caché par défaut */
+        background-color: rgba(0, 0, 0, 0.5);
+        /* fond sombre semi-transparent */
+        display: flex;
+        /* pour centrage */
         justify-content: center;
         align-items: center;
-        z-index: 1000;
+        z-index: 1050;
     }
 
     .modal-content {
@@ -571,8 +495,9 @@
         padding: 2rem;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         position: relative;
+        color: #333;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-
 
     /* Header modal */
     .modal-header {
@@ -580,12 +505,14 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1.5rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.75rem;
+        font-weight: 600;
+        font-size: 1.5rem;
     }
 
     .modal-header h3 {
         margin: 0;
-        font-weight: 600;
-        font-size: 1.5rem;
         color: #333;
     }
 
@@ -594,6 +521,8 @@
         cursor: pointer;
         color: #888;
         transition: color 0.3s ease;
+        background: none;
+        border: none;
     }
 
     .modal-header .close:hover {
@@ -697,55 +626,3 @@
         }
     }
 </style>
-
-<script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('active');
-    }
-
-    function openModal() {
-        const modal = document.getElementById('productModal');
-        modal.style.display = 'flex'; // affiché en flex pour centrage
-    }
-
-    function closeModal() {
-        const modal = document.getElementById('productModal');
-        modal.style.display = 'none'; // caché
-    }
-
-    // Fermer modal en cliquant à l’extérieur
-    window.onclick = function(event) {
-        const modal = document.getElementById('productModal');
-        if (event.target == modal) {
-            closeModal();
-        }
-    }
-
-
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function(event) {
-        const sidebar = document.getElementById('sidebar');
-        const menuToggle = document.querySelector('.menu-toggle');
-
-        if (window.innerWidth <= 768 &&
-            !sidebar.contains(event.target) &&
-            !menuToggle.contains(event.target)) {
-            sidebar.classList.remove('active');
-        }
-    });
-</script>
-
-
-<style>
-    <style>.modal {
-        z-index: 1050;
-    }
-
-    .modal-backdrop {
-        z-index: 1040;
-    }
-    }
-</style>
-
-</body>

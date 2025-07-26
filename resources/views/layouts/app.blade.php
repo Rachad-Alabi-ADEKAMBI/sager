@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -5,11 +7,11 @@
     <meta charset="UTF-8">
     <title>@yield('title', 'Sager')</title>
 
-
+    @vite('resources/js/app.js')
 
     <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
 
-
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
@@ -36,7 +38,8 @@
 
 <body>
 
-    <!-- Header -->
+   <div id='app'>
+         <!-- Header -->
     <header class="header">
         <div class="nav-container">
             <div class="logo">SAGER</div>
@@ -102,6 +105,7 @@
             </p>
         </div>
     </footer>
+   </div>
 
     <script src="{{ asset('js/app.js') }}"></script>
 </body>

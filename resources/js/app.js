@@ -1,4 +1,11 @@
 import { createApp } from 'vue'
-import ExampleComponent from './components/ExampleComponent.vue'
+import SalesComponent from './components/admin/SalesComponent.vue'
+import ProductsComponent from './components/admin/ProductsComponent.vue'
+import StocksComponent from './components/admin/StocksComponent.vue'
 
-createApp(ExampleComponent).mount('#vue-app')
+const app = createApp({})
+app.component('sales-component', SalesComponent)
+app.component('products-component', ProductsComponent)
+app.component('stocks-component', StocksComponent)
+
+app.mount('#app')

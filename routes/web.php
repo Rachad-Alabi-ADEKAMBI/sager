@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Sale;
 use App\Models\SaleProduct;
-    use App\Models\Notification;
+use App\Models\Notification;
 
 Route::get('/', function () {
     return view('pages/front/home');
@@ -41,6 +41,16 @@ Route::get('/dashboardAdmin', function () {
 })->name('dashboardAdmin');
 
 
+Route::get('/products', function () {
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return redirect()->route('login');
+    }
+
+    $products = Product::orderBy('id', 'desc')->get();
+    return view('pages/back/admin/products');
+})->name('products');
+
+
 Route::get('/stocks', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
         return redirect()->route('login');
@@ -54,6 +64,9 @@ Route::get('/stocks', function () {
 Route::post('/products', [ProductController::class, 'store'])
     ->middleware('auth')
     ->name('products.store');
+
+    Route::middleware('auth')->post('/products/{id}', [ProductController::class, 'update'])->name('products.update');
+
 
 
 Route::get('/sellers', function () {
@@ -159,11 +172,11 @@ Route::post('/sale', function (Request $request) {
 
   
 
-// Ajoute l'opération dans la table des notifications
-Notification::create([
-    'description' => 'Facture N°' . $sale->id . '/' . now()->format('m') . '/' . now()->format('y') . '/FR-N pour ' .
-                     $sale->buyer_name . ' par ' . $sale->seller_name . '. Total : ' . $total . ' FCFA.',
-]);
+        // Ajoute l'opération dans la table des notifications
+        Notification::create([
+            'description' => 'Facture N°' . $sale->id . '/' . now()->format('m') . '/' . now()->format('y') . '/FR-N pour ' .
+                            $sale->buyer_name . ' par ' . $sale->seller_name . '. Total : ' . $total . ' FCFA.',
+        ]);
 
         return response()->json([
             'message' => 'Vente enregistrée avec succès.',
@@ -252,6 +265,29 @@ Route::get('/userSales', function () {
     $sales = Sale::with('products')->where('seller_name', Auth::user()->name)->get();
     return response()->json($sales);
 })->name('userSales');
+
+
+     Route::get('/salesList', function () {
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return redirect()->route('login');
+    }
+
+    $sales = Sale::all();
+    return response()->json($sales);
+})->name('salesList');
+
+
+ Route::get('/saleDetails/{saleId}', function ($saleId) {
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return redirect()->route('login');
+    }
+
+$sale = Sale::with('products')->findOrFail($saleId);
+
+
+
+    return response()->json($sale);
+})->name('sale.details');
 
 
 
