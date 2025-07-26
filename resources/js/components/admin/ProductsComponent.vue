@@ -326,7 +326,7 @@
             <form
                 enctype="multipart/form-data"
                 method="POST"
-                @submit.prevent="submitForm"
+                @submit.prevent="addProductForm"
             >
                 <div class="form-group" style="margin-bottom: 1rem">
                     <label>Nom du produit</label>
@@ -804,6 +804,31 @@
                     })
                     .catch((error) => {
                         alert('Erreur lors de la suppression');
+                        console.error(error);
+                    });
+            },
+            addProductForm() {
+                const formData = new FormData();
+                formData.append('name', this.name);
+                formData.append('purchase_price', this.purchase_price);
+                formData.append('quantity', this.quantity);
+                formData.append('price_detail', this.price_detail);
+                formData.append('price_semi_bulk', this.price_semi_bulk);
+                formData.append('price_bulk', this.price_bulk);
+
+                axios
+                    .post('/products', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    })
+                    .then(() => {
+                        alert('Produit ajouté avec succès.');
+                        this.fetchProducts(); // si tu veux rafraîchir la liste
+                        this.closeModal(); // si tu veux fermer le modal après ajout
+                    })
+                    .catch((error) => {
+                        alert("Erreur lors de l'ajout du produit.");
                         console.error(error);
                     });
             },

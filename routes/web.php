@@ -107,16 +107,13 @@ Route::get('/settingsAdmin', function () {
     return view('pages/back/admin/settingsAdmin');
 })->name('settingsAdmin');
 
-
 Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.store');
-
-
 /*end admin routes*/
 
 
 
 /*routes for seller*/
-    Route::get('/sale', function () {
+Route::get('/sale', function () {
     if (!Auth::check() || Auth::user()->role !== 'seller') {
         return redirect()->route('login');
     }
@@ -125,7 +122,6 @@ Route::post('/users', [RegisteredUserController::class, 'store'])->name('users.s
       //get all the sales_id of the current 
     return view('pages/back/seller/sale', compact('products'));
 })->name('sale');
-
 
 Route::post('/sale', function (Request $request) {
     // Validation des données
@@ -224,7 +220,6 @@ Route::post('/sale', function (Request $request) {
     }
 });
 
-
  Route::get('/dashboard', function () {
     if (!Auth::check() || Auth::user()->role !== 'seller') {
         return redirect()->route('login');
@@ -242,7 +237,6 @@ Route::post('/sale', function (Request $request) {
     return view('pages/back/seller/dashboard', compact('sales', 'salesNotifications', 'totalCA'));
 })->name('dashboard');
 
-
 Route::get('/newInvoice', function (Request $request) {
     $sale = Sale::with('products')->findOrFail($request->sale_id);
 
@@ -257,7 +251,6 @@ Route::get('/newInvoice', function (Request $request) {
     }
     return view('pages/back/seller/settings');
 })->name('settings');
-
 /* end seller routes*/
 
 
@@ -284,6 +277,34 @@ Route::get('/newInvoice', function (Request $request) {
         return response()->json(['error' => 'Product not found'], 404);
     }
 })->name('product');
+
+// Liste de tous les stocks
+Route::get('/stocksList', function () {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $stocks = Stock::all();
+    return response()->json($stocks);
+})->name('stocksList');
+
+// Détails d’un stock par ID
+
+Route::get('/stock/{id}', function ($id) {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    // Recherche du stock lié à l'ID du produit
+    $stock = Stock::where('product_id', $id)->first();
+
+    if ($stock) {
+        return response()->json($stock->toArray());
+    } else {
+        return response()->json(['error' => 'Stock not found'], 404);
+    }
+})->name('stock');
+
 
 //user sales
 Route::get('/userSales', function () {
