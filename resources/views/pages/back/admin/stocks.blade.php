@@ -16,86 +16,6 @@
     </main>
 @endsection
 
-<!-- Modal Ajouter Produit -->
-<div id="productModal" class="modal" style="max-width: 700px; margin: auto;">
-    <div class="modal-content" style="padding: 2rem;">
-        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>Ajouter un nouveau produit</h3>
-            <span class="close" onclick="closeModal()" style="cursor: pointer; font-size: 1.5rem;">&times;</span>
-        </div>
-        <form enctype="multipart/form-data" method="POST" action="/products">
-            @csrf
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label>Nom du produit</label>
-                <input name="name" type="text" class="form-control" required>
-            </div>
-
-            <div class="row" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                <div class="form-group" style="flex: 1 1 45%;">
-                    <label>Prix d'achat</label>
-                    <input name="purchase_price" type="number" class="form-control" step="0.01" required>
-                </div>
-
-                <div class="form-group" style="flex: 1 1 45%;">
-                    <label>Quantité</label>
-                    <input name="quantity" type="number" class="form-control" required>
-                </div>
-            </div>
-
-            <div class="row" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                <div class="form-group" style="flex: 1 1 30%;">
-                    <label>Prix détail</label>
-                    <input name="price_detail" type="number" class="form-control" step="0.01" required>
-                </div>
-
-                <div class="form-group" style="flex: 1 1 30%;">
-                    <label>Prix semi gros</label>
-                    <input name="price_semi_bulk" type="number" class="form-control" step="0.01" required>
-                </div>
-
-                <div class="form-group" style="flex: 1 1 30%;">
-                    <label>Prix gros</label>
-                    <input name="price_bulk" type="number" class="form-control" step="0.01" required>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label>Photo (Optionel)</label>
-                <input name="photo" type="file" accept="image/*" class="form-control">
-            </div>
-
-            <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
-                <button type="submit" class="btn-primary" style="flex: 1 1 45%; min-width: 120px;">
-                    <i class="fas fa-save"></i> Enregistrer
-                </button>
-                <button type="button" onclick="closeModal()"
-                    style="flex: 1 1 45%; min-width: 120px; background: #6c757d; color: white; border: none; padding: 0.75rem; border-radius: 10px; cursor: pointer;">
-                    Annuler
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<table id="printableProductTable" class="table d-none">
-    <thead>
-        <tr>
-            <th>Nom du produit</th>
-            <th>Stock restant</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach ($products as $product)
-            <tr>
-                <td>{{ $product->name }}</td>
-                <td>{{ $product->stock }}</td>
-            </tr>
-        @endforeach
-    </tbody>
-</table>
-
-
-
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 
@@ -697,44 +617,6 @@
         }
     }
 </style>
-
-<script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('active');
-    }
-
-    function openModal() {
-        const modal = document.getElementById('productModal');
-        modal.style.display = 'flex'; // affiché en flex pour centrage
-    }
-
-    function closeModal() {
-        const modal = document.getElementById('productModal');
-        modal.style.display = 'none'; // caché
-    }
-
-    // Fermer modal en cliquant à l’extérieur
-    window.onclick = function(event) {
-        const modal = document.getElementById('productModal');
-        if (event.target == modal) {
-            closeModal();
-        }
-    }
-
-
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function(event) {
-        const sidebar = document.getElementById('sidebar');
-        const menuToggle = document.querySelector('.menu-toggle');
-
-        if (window.innerWidth <= 768 &&
-            !sidebar.contains(event.target) &&
-            !menuToggle.contains(event.target)) {
-            sidebar.classList.remove('active');
-        }
-    });
-</script>
 
 
 <style>

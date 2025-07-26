@@ -19,7 +19,6 @@ class SaleController extends Controller
         $data = $request->validate([
             'seller_name' => 'required|string',
             'buyer_name' => 'required|string',
-            'buyer_phone' => 'required|string',
             'products' => 'required|array',
             'products.*.id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
@@ -40,7 +39,6 @@ class SaleController extends Controller
         $sale = Sale::create([
             'seller_name' => $data['seller_name'],
             'buyer_name' => $data['buyer_name'],
-            'buyer_phone' => $data['buyer_phone'],
             'total' => $total,
         ]);
 

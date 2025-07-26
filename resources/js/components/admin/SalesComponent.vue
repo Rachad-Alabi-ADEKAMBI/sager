@@ -1,223 +1,300 @@
 <template>
-  <div>
-    <div class="sales-content">
+    <div>
+        <div class="sales-content">
+            <!-- Sales History -->
+            <div class="sales-history">
+                <div class="history-header">
+                    <h3>Historique des ventes</h3>
+                    <div>
+                        <select
+                            v-model="filterPeriod"
+                            style="
+                                padding: 0.5rem;
+                                border: 1px solid #ddd;
+                                border-radius: 5px;
+                                margin-right: 1rem;
+                            "
+                        >
+                            <option>Aujourd'hui</option>
+                            <option>Hier</option>
 
-      <!-- Sales History -->
-      <div class="sales-history">
-        <div class="history-header">
-          <h3>Historique des ventes</h3>
-          <div>
-            <select v-model="filterPeriod" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px; margin-right: 1rem;">
-               <option>Aujourd'hui</option>
-               <option>Hier</option>
-             
-              <option>Cette semaine</option>
-              <option>Ce mois</option>
-              <option>Toutes les ventes</option>
-              <option>À une date précise</option>
-            </select>
+                            <option>Cette semaine</option>
+                            <option>Ce mois</option>
+                            <option>Toutes les ventes</option>
+                            <option>À une date précise</option>
+                        </select>
 
-            <!-- Affiche uniquement si option sélectionnée -->
-            <div v-if="filterPeriod === 'À une date précise'" style="margin-top: 0.5rem;">
-              <input type="date" v-model="selectedDate" />
+                        <!-- Affiche uniquement si option sélectionnée -->
+                        <div
+                            v-if="filterPeriod === 'À une date précise'"
+                            style="margin-top: 0.5rem"
+                        >
+                            <input type="date" v-model="selectedDate" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table des ventes -->
+                <table class="table" v-if="sales.length > 0">
+                    <thead>
+                        <tr>
+                            <th>N° Facture</th>
+                            <th>Client</th>
+                            <th>Vendeur</th>
+                            <th>Date</th>
+                            <th>Montant</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="(sale, index) in filteredSales"
+                            :key="sale.id"
+                        >
+                            <td data-label="N° Facture">
+                                <strong>N° {{ sale.id }} /FR-N</strong>
+                            </td>
+                            <td data-label="Client">{{ sale.buyer_name }}</td>
+                            <td data-label="Vendeur">{{ sale.seller_name }}</td>
+                            <td data-label="Date">
+                                {{ formatDateTime(sale.created_at) }}
+                            </td>
+                            <td data-label="Montant">
+                                <strong>
+                                    {{ formatAmount(sale.total) }} FCFA
+                                </strong>
+                            </td>
+                            <td data-label="Actions">
+                                <button
+                                    class="invoice-btn"
+                                    @click="showSaleDetails(sale.id)"
+                                >
+                                    <i class="fas fa-eye"></i>
+                                    Voir
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+
+                    <tbody v-if="filteredSales.length === 0">
+                        <tr>
+                            <td colspan="6" class="no-sales-message">
+                                <strong>Aucune vente disponible</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Modal Détails Vente -->
+                <!-- Modal -->
+                <div class="modal fade" tabindex="-1" v-if="showSaleModal">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5>Détails de la vente</h5>
+                                <button
+                                    @click="closeSaleModal"
+                                    class="btn btn-close"
+                                >
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p>
+                                    <strong>Client :</strong>
+                                    {{ selectedSale.buyer_name }}
+                                </p>
+                                <p>
+                                    <strong>Vendeur :</strong>
+                                    {{ selectedSale.seller_name }}
+                                </p>
+                                <p>
+                                    <strong>Date :</strong>
+                                    {{
+                                        formatDateTime(selectedSale.created_at)
+                                    }}
+                                </p>
+                                <p>
+                                    <strong>Total :</strong>
+                                    {{ formatAmount(selectedSale.total) }} FCFA
+                                </p>
+                                <hr />
+                                <h6>Produits achetés :</h6>
+                                <ul>
+                                    <li
+                                        v-for="(
+                                            product, i
+                                        ) in selectedSale.products"
+                                        :key="i"
+                                    >
+                                        {{ product.name }} -
+                                        {{ product.pivot.quantity }} ×
+                                        {{
+                                            formatAmount(
+                                                Number(product.pivot.price)
+                                            )
+                                        }}
+                                        =
+                                        {{
+                                            formatAmount(
+                                                Number(product.pivot.price) *
+                                                    product.pivot.quantity
+                                            )
+                                        }}
+                                        FCFA
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="modal-footer">
+                                <button
+                                    @click="downloadInvoice"
+                                    class="btn-download"
+                                >
+                                    <i class="fas fa-download"></i>
+                                    Télécharger Facture
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-
-        <!-- Table des ventes -->
-        <table class="table" v-if="sales.length > 0">
-          <thead>
-            <tr>
-              <th>N° Facture</th>
-              <th>Client</th>
-              <th>Vendeur</th>
-              <th>Date</th>
-              <th>Montant</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(sale, index) in filteredSales" :key="sale.id">
-              <td data-label="N° Facture">
-                <strong>N° {{ sale.id }} /FR-N</strong>
-              </td>
-              <td data-label="Client">{{ sale.buyer_name }}</td>
-              <td data-label="Vendeur">{{ sale.seller_name }}</td>
-              <td data-label="Date">{{ formatDateTime(sale.created_at) }}</td>
-              <td data-label="Montant">
-                <strong>{{ formatAmount(sale.total) }} FCFA</strong>
-              </td>
-              <td data-label="Actions">
-                <button class="invoice-btn" @click="showSaleDetails(sale.id)">
-                  <i class="fas fa-eye"></i> Voir
-                </button>
-              </td>
-            </tr>
-          </tbody>
-
-          <tbody v-if="filteredSales.length === 0">
-            <tr>
-              <td colspan="6" class="no-sales-message">
-                <strong>Aucune vente disponible</strong>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Modal Détails Vente -->
-        <div class="modal fade" id="saleDetailModal" tabindex="-1" aria-labelledby="saleDetailLabel" aria-hidden="true">
-          <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="saleDetailLabel">Détails de la vente</h5>
-                <button type="button" class="btn btn-close" data-bs-dismiss="modal" aria-label="Fermer" style="background:none; border:none; font-size:1.2rem; color:#333;">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-              <div class="modal-body" v-if="selectedSale">
-                <p><strong>Client :</strong> {{ selectedSale.buyer_name }}</p>
-                <p><strong>Vendeur :</strong> {{ selectedSale.seller_name }}</p>
-                <p><strong>Date :</strong> {{ formatDateTime(selectedSale.created_at) }}</p>
-                <p><strong>Total :</strong> {{ formatAmount(selectedSale.total) }} FCFA</p>
-                <hr />
-                <h6>Produits achetés :</h6>
-                <ul>
-                  <li v-for="(product, index) in selectedSale.products" :key="index">
-                    {{ product.name }} - {{ product.pivot.quantity }} × {{ formatAmount(Number(product.pivot.price)) }} = {{ formatAmount(Number(product.pivot.price) * product.pivot.quantity) }} FCFA
-                  </li>
-                </ul>
-              </div>
-              <div class="modal-footer">
-                <button @click="downloadInvoice" class="btn-download">
-                  <i class="fas fa-download"></i> Télécharger Facture
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
     </div>
-  </div>
 </template>
 
-
-
-
 <script>
-export default {
-  name: "SalesComponent",
+    export default {
+        name: 'SalesComponent',
 
-  data() {
-    return {
-      message: "Bonjour depuis Vue !",
-      sales: [],
-        selectedSale: null,
-        selectedDate: null,
-      saleModalInstance: null,
-         filterPeriod: 'Toutes les ventes',
-    };
-  },
+        data() {
+            return {
+                message: 'Bonjour depuis Vue !',
+                sales: [],
+                selectedSale: null,
+                selectedDate: null,
+                saleModalInstance: null,
+                showSaleModal: false,
+                filterPeriod: 'Toutes les ventes',
+            };
+        },
 
-  mounted() {
-    this.fetchSalesData();
-  },
+        mounted() {
+            this.fetchSalesData();
+        },
 
-  methods: {
-    fetchSalesData() {
-      axios.get('/salesList')
-        .then(response => {
-          console.log(response.data);
-          this.sales = response.data;
-        })
-        .catch(error => {
-          console.error('Erreur lors de la récupération des données :', error);
-        });
-    },
-     formatDateTime(datetime) {
+        methods: {
+            fetchSalesData() {
+                axios
+                    .get('/salesList')
+                    .then((response) => {
+                        console.log(response.data);
+                        this.sales = response.data;
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Erreur lors de la récupération des données :',
+                            error
+                        );
+                    });
+            },
+            formatDateTime(datetime) {
                 const date = new Date(datetime);
                 const options = {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric',
                     hour: '2-digit',
-                    minute: '2-digit'
+                    minute: '2-digit',
                 };
                 return date.toLocaleString('fr-FR', options);
             },
             formatAmount(value) {
                 return Number(value).toLocaleString('fr-FR');
             },
-           showSaleDetails(saleId) {
-    axios.get(`/saleDetails/${saleId}`)
-        .then(response => {
-            this.selectedSale = response.data;
-            console.log(response.data);
+            showSaleDetails(saleId) {
+                axios
+                    .get(`/saleDetails/${saleId}`)
+                    .then((response) => {
+                        this.selectedSale = response.data;
+                        this.showSaleModal = true;
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Erreur chargement détails vente:',
+                            error
+                        );
+                    });
+            },
+            closeSaleModal() {
+                this.showSaleModal = false;
+                this.selectedSale = null;
+            },
+        },
+        computed: {
+            filteredSales() {
+                const now = new Date();
 
-            // Afficher le modal Bootstrap #saleDetailModal
-            const modal = new bootstrap.Modal(document.getElementById('saleDetailModal'));
-            modal.show();
-        })
-        .catch(error => {
-            console.error('Erreur lors de la récupération des détails de la vente :', error);
-    });
-    },
-  },
-  computed: {
-  filteredSales() {
-    const now = new Date();
+                return this.sales.filter((sale) => {
+                    const saleDate = new Date(sale.created_at);
 
-    return this.sales.filter(sale => {
-      const saleDate = new Date(sale.created_at);
+                    switch (this.filterPeriod) {
+                        case 'Hier': {
+                            const yesterday = new Date(now);
+                            yesterday.setDate(now.getDate() - 1);
+                            return (
+                                saleDate.toDateString() ===
+                                yesterday.toDateString()
+                            );
+                        }
+                        case "Aujourd'hui":
+                            return (
+                                saleDate.toDateString() === now.toDateString()
+                            );
 
-      switch (this.filterPeriod) {
-        case 'Hier': {
-          const yesterday = new Date(now);
-          yesterday.setDate(now.getDate() - 1);
-          return saleDate.toDateString() === yesterday.toDateString();
-        }
-        case 'Aujourd\'hui':
-          return saleDate.toDateString() === now.toDateString();
+                        case 'Cette semaine': {
+                            const firstDayOfWeek = new Date(now);
+                            firstDayOfWeek.setDate(
+                                now.getDate() - now.getDay() + 1
+                            );
+                            firstDayOfWeek.setHours(0, 0, 0, 0);
 
-        case 'Cette semaine': {
-          const firstDayOfWeek = new Date(now);
-          firstDayOfWeek.setDate(now.getDate() - now.getDay() + 1);
-          firstDayOfWeek.setHours(0,0,0,0);
+                            const lastDayOfWeek = new Date(firstDayOfWeek);
+                            lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
+                            lastDayOfWeek.setHours(23, 59, 59, 999);
 
-          const lastDayOfWeek = new Date(firstDayOfWeek);
-          lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
-          lastDayOfWeek.setHours(23,59,59,999);
+                            return (
+                                saleDate >= firstDayOfWeek &&
+                                saleDate <= lastDayOfWeek
+                            );
+                        }
 
-          return saleDate >= firstDayOfWeek && saleDate <= lastDayOfWeek;
-        }
+                        case 'Ce mois': {
+                            return (
+                                saleDate.getMonth() === now.getMonth() &&
+                                saleDate.getFullYear() === now.getFullYear()
+                            );
+                        }
 
-        case 'Ce mois': {
-          return saleDate.getMonth() === now.getMonth() &&
-                 saleDate.getFullYear() === now.getFullYear();
-        }
+                        case 'À une date précise': {
+                            if (!this.selectedDate) return true;
 
-       case 'À une date précise': {
-  if (!this.selectedDate) return true;
+                            const selected = new Date(this.selectedDate);
+                            selected.setHours(0, 0, 0, 0);
 
-  const selected = new Date(this.selectedDate);
-  selected.setHours(0, 0, 0, 0);
+                            const saleDay = new Date(sale.created_at);
+                            saleDay.setHours(0, 0, 0, 0);
 
-  const saleDay = new Date(sale.created_at);
-  saleDay.setHours(0, 0, 0, 0);
+                            return saleDay.getTime() === selected.getTime();
+                        }
 
-  return saleDay.getTime() === selected.getTime();
-}
-
-        case 'Toutes les ventes':
-        default:
-          return true;
-      }
-    });
-  }
-}
-
-  
-}
+                        case 'Toutes les ventes':
+                        default:
+                            return true;
+                    }
+                });
+            },
+        },
+    };
 </script>
 
 <style>
@@ -756,7 +833,6 @@ export default {
 <style>
     /* Table responsive : sur petits écrans */
     @media (max-width: 768px) {
-
         table.table,
         thead,
         tbody,
@@ -812,7 +888,6 @@ export default {
 
 <style>
     @media (max-width: 768px) {
-
         table.table,
         thead,
         tbody,
@@ -874,107 +949,104 @@ export default {
 </style>
 
 <style>
-/* Style général du modal */
-.modal-content {
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  padding: 1.5rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #fff;
-  color: #333;
-}
+    /* Style général du modal */
+    .modal-content {
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        padding: 1.5rem;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #fff;
+        color: #333;
+    }
 
-/* Titre du modal */
-.modal-header {
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 0.75rem;
-  position: relative;
-}
+    /* Titre du modal */
+    .modal-header {
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.75rem;
+        position: relative;
+    }
 
-/* Bouton croix fermer dans coin supérieur droit */
-.btn-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 28px;
-  height: 28px;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-  cursor: pointer;
-}
-.btn-close:hover {
-  opacity: 1;
-}
+    /* Bouton croix fermer dans coin supérieur droit */
+    .btn-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 28px;
+        height: 28px;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+        cursor: pointer;
+    }
+    .btn-close:hover {
+        opacity: 1;
+    }
 
-/* Contenu modal-body */
-.modal-body p {
-  margin-bottom: 0.6rem;
-  font-size: 1rem;
-}
+    /* Contenu modal-body */
+    .modal-body p {
+        margin-bottom: 0.6rem;
+        font-size: 1rem;
+    }
 
-/* Liste produits */
-.modal-body ul {
-  list-style-type: disc;
-  margin-left: 1.2rem;
-  margin-top: 0.4rem;
-  color: #444;
-}
+    /* Liste produits */
+    .modal-body ul {
+        list-style-type: disc;
+        margin-left: 1.2rem;
+        margin-top: 0.4rem;
+        color: #444;
+    }
 
-/* Bouton "Télécharger Facture" */
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid #ddd;
-  padding-top: 1rem;
-}
+    /* Bouton "Télécharger Facture" */
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        border-top: 1px solid #ddd;
+        padding-top: 1rem;
+    }
 
-.modal-footer .btn-download {
-  background-color: #007bff;
-  color: white;
-  padding: 0.5rem 1.25rem;
-  border: none;
-  border-radius: 5px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
+    .modal-footer .btn-download {
+        background-color: #007bff;
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 5px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
 
-.modal-footer .btn-download:hover {
-  background-color: #0056b3;
-}
-
+    .modal-footer .btn-download:hover {
+        background-color: #0056b3;
+    }
 </style>
 
 <style>
     .filter-select {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  margin-bottom: 1rem;
-  min-width: 180px;
-}
+        padding: 0.5rem 1rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        min-width: 180px;
+    }
 
-.date-picker-container {
-  margin-bottom: 1.5rem;
-}
+    .date-picker-container {
+        margin-bottom: 1.5rem;
+    }
 
-.date-picker {
-  padding: 0.5rem 0.8rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  width: 180px;
-  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.1);
-  transition: border-color 0.3s ease;
-}
+    .date-picker {
+        padding: 0.5rem 0.8rem;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        width: 180px;
+        box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.1);
+        transition: border-color 0.3s ease;
+    }
 
-.date-picker:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 5px #007bffaa;
-}
-
+    .date-picker:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 5px #007bffaa;
+    }
 </style>
-

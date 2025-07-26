@@ -12,7 +12,7 @@
                  bord</a></li>
          <li><a href="{{ route('sales') }}"><i class="fas fa-shopping-cart"></i> Ventes</a></li>
          <li><a href="{{ route('products') }}"><i class="fas fa-cubes"></i> Produits</a></li>
-         <li><a href="{{ route('stocks') }}"><i class="fas fa-clock"></i> Historique stock</a></li>
+         <!--stocks-->
 
          <li><a href="{{ route('sellers') }}"><i class="fas fa-users"></i> Vendeurs</a></li>
 

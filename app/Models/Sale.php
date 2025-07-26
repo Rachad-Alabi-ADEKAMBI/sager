@@ -9,7 +9,6 @@ class Sale extends Model
     protected $fillable = [
         'seller_name',
         'buyer_name',
-        'buyer_phone',
         'total',
     ];
 

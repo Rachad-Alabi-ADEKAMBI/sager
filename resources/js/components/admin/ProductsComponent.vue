@@ -146,29 +146,43 @@
                             <td data-label="Actions">
                                 <div class="action-buttons">
                                     <button
+                                        class="btn-sm btn-edit btn-success"
+                                        style="
+                                            background-color: #28a745;
+                                            color: white;
+                                            border: none;
+                                        "
+                                        title="Historique"
+                                        @click="displayStock(product)"
+                                    >
+                                        <i class="fas fa-clock"></i>
+                                    </button>
+
+                                    <button
+                                        class="btn-sm btn-edit"
+                                        title="Comptabilité"
+                                        @click="displayTransactions(product)"
+                                        style="
+                                            background-color: #0056b3;
+                                            color: white;
+                                            border: none;
+                                        "
+                                    >
+                                        <i class="fas fa-money-bill"></i>
+                                    </button>
+
+                                    <button
                                         class="btn-sm btn-edit"
                                         title="Modifier"
                                         @click="openEditModal(product)"
                                     >
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button
-                                        class="btn-sm bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded"
-                                        title="Historique"
-                                        @click="displayStock(product)"
-                                    >
-                                        <i
-                                            class="fas fa-clock"
-                                            style="
-                                                color: green;
-                                                font-size: 1.2rem;
-                                            "
-                                        ></i>
-                                    </button>
 
                                     <button
                                         class="btn-sm btn-delete"
                                         title="Supprimer"
+                                        @click="openDeleteModal(product)"
                                     >
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -184,14 +198,19 @@
             <div class="table-container">
                 <div class="table-header">
                     <h3 style="display: flex; align-items: center; gap: 0.5rem">
-                        <i
-                            class="fas fa-arrow-left"
+                        <span
+                            @click="fetchProducts()"
                             style="
+                                display: flex;
+                                align-items: center;
                                 cursor: pointer;
                                 color: #007bff;
                                 font-weight: bold;
                             "
-                        ></i>
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                            <span style="margin-left: 5px">Retour</span>
+                        </span>
                         | Liste des opérations sur
                         <strong>gaz</strong>
                     </h3>
@@ -218,6 +237,63 @@
                             <td data-label="Quantité">{{ stock.quantite }}</td>
                             <td data-label="Stock final">
                                 <strong>{{ stock.stock_final }}</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="showTransactions" v-if="showTransactions">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 style="display: flex; align-items: center; gap: 0.5rem">
+                        <span
+                            @click="fetchProducts()"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                cursor: pointer;
+                                color: #007bff;
+                                font-weight: bold;
+                            "
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                            <span style="margin-left: 5px">Retour</span>
+                        </span>
+                        | Liste des opérations sur
+                        <strong>gaz</strong>
+                    </h3>
+                    <strong>Total: {{ stocks.length }}</strong>
+                </div>
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Solde initial</th>
+                            <th>Libellé</th>
+                            <th>Montant</th>
+                            <th>Solde final</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="transaction in transactions"
+                            :key="transaction.id"
+                        >
+                            <td data-label="Date">{{ transaction.date }}</td>
+                            <td data-label="Solde initial">
+                                <strong>{{ transaction.solde_initial }}</strong>
+                            </td>
+                            <td data-label="Libellé">
+                                {{ transaction.libelle }}
+                            </td>
+                            <td data-label="Montant">
+                                {{ transaction.montant }}
+                            </td>
+                            <td data-label="Solde final">
+                                <strong>{{ transaction.solde_final }}</strong>
                             </td>
                         </tr>
                     </tbody>
@@ -451,6 +527,61 @@
             </div>
         </div>
     </div>
+
+    <div v-if="showDeleteModal" class="modal" @click.self="closeDeleteModal">
+        <div class="modal-content" style="padding: 2rem; max-width: 400px">
+            <div class="modal-header">
+                <h3>Confirmer la suppression</h3>
+                <span
+                    class="close"
+                    @click="closeDeleteModal"
+                    style="cursor: pointer"
+                >
+                    &times;
+                </span>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Voulez-vous vraiment supprimer le produit
+                    <strong>{{ currentProduct.name }}</strong>
+                    ?
+                </p>
+            </div>
+            <div
+                style="
+                    margin-top: 1rem;
+                    display: flex;
+                    gap: 1rem;
+                    justify-content: flex-end;
+                "
+            >
+                <button
+                    @click="deleteProduct"
+                    style="
+                        background: #dc3545;
+                        color: #fff;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 5px;
+                    "
+                >
+                    Supprimer
+                </button>
+                <button
+                    @click="closeDeleteModal"
+                    style="
+                        background: #6c757d;
+                        color: #fff;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 5px;
+                    "
+                >
+                    Annuler
+                </button>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script>
@@ -481,7 +612,26 @@
                         quantite: -30,
                         stock_final: 120,
                     },
-                ], // ajout pour stocker les opérations de stock
+                ],
+                transactions: [
+                    {
+                        id: 1,
+                        date: '2023-10-01',
+                        solde_initial: 1000,
+                        libelle: 'Achat de marchandises',
+                        montant: -200,
+                        solde_final: 800,
+                    },
+                    {
+                        id: 2,
+                        date: '2023-10-05',
+                        solde_initial: 800,
+                        libelle: 'Vente de marchandises',
+                        montant: 500,
+                        solde_final: 1300,
+                    },
+                ],
+                showTransactions: false,
                 name: '',
                 purchase_price: '',
                 quantity: '',
@@ -496,6 +646,7 @@
                 editedPriceDetail: null,
                 editedPriceSemiBulk: null,
                 editedPriceBulk: null,
+                showDeleteModal: false,
             };
         },
 
@@ -507,6 +658,7 @@
             fetchProducts() {
                 this.showProducts = true;
                 this.showStock = false;
+                this.showTransactions = false;
                 axios
                     .get('/productsList')
                     .then((response) => {
@@ -624,6 +776,36 @@
             displayStock(product) {
                 this.showStock = true;
                 this.showProducts = false;
+                this.showTransactions = false;
+            },
+            displayTransactions(product) {
+                this.showTransactions = true;
+                this.showProducts = false;
+                this.showStock = false;
+            },
+            openDeleteModal(product) {
+                this.currentProduct = product;
+                this.showDeleteModal = true;
+            },
+            closeDeleteModal() {
+                this.showDeleteModal = false;
+                this.currentProduct = null;
+            },
+            deleteProduct() {
+                axios
+                    .delete(`/products/${this.currentProduct.id}`)
+                    .then(() => {
+                        // Actualise la liste, ferme le modal
+                        alert(
+                            `Le produit ${this.currentProduct.name} a été supprimé avec succès.`
+                        );
+                        this.fetchProducts();
+                        this.closeDeleteModal();
+                    })
+                    .catch((error) => {
+                        alert('Erreur lors de la suppression');
+                        console.error(error);
+                    });
             },
         },
         computed: {

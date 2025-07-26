@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Sale;
 use App\Models\SaleProduct;
 use App\Models\Notification;
+use App\Http\Controllers\StockController;
+use App\Models\Stock;
 
 Route::get('/', function () {
     return view('pages/front/home');
@@ -56,8 +58,7 @@ Route::get('/stocks', function () {
         return redirect()->route('login');
     }
 
-    $products = Product::orderBy('id', 'desc')->get();
-    return view('pages/back/admin/stocks', compact('products'));
+    return view('pages/back/admin/stocks');
 })->name('stocks');
 
 
@@ -68,6 +69,20 @@ Route::post('/products', [ProductController::class, 'store'])
     Route::middleware('auth')->post('/products/{id}', [ProductController::class, 'update'])->name('products.update');
 
 
+   Route::delete('/products/{id}', function ($id, Request $request) {
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return redirect()->route('login');
+    }
+
+    $product = Product::findOrFail($id);
+    $product->delete();
+
+    if ($request->wantsJson()) {
+        return response()->json(['message' => 'Produit supprimé avec succès.']);
+    }
+
+    return back()->with('success', 'Produit supprimé avec succès.');
+})->name('products.destroy');
 
 Route::get('/sellers', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
@@ -117,7 +132,7 @@ Route::post('/sale', function (Request $request) {
     $validated = $request->validate([
         'seller_name' => 'required|string',
         'buyer_name' => 'required|string',
-        'buyer_phone' => 'required|string',
+        'buyer_phone' => 'nullable|string',
         'products' => 'required|array|min:1',
         'products.*.product_id' => 'required|exists:products,id',
         'products.*.quantity' => 'required|integer|min:1',
@@ -126,51 +141,66 @@ Route::post('/sale', function (Request $request) {
 
     DB::beginTransaction();
 
-    try {
-        // Calcul du total
-        $total = collect($validated['products'])->sum(function ($item) {
-            return $item['quantity'] * $item['price'];
-        });
+                try {
+                    // Calcul du total
+                    $total = collect($validated['products'])->sum(function ($item) {
+                        return $item['quantity'] * $item['price'];
+                    });
 
-        // Création de la vente
-        $sale = Sale::create([
-            'seller_name' => $validated['seller_name'],
-            'buyer_name' => $validated['buyer_name'],
-            'buyer_phone' => $validated['buyer_phone'],
-            'total' => $total,
-        ]);
+                    // Création de la vente
+                    $sale = Sale::create([
+                        'seller_name' => $validated['seller_name'],
+                        'buyer_name' => $validated['buyer_name'],
+                        'buyer_phone' => $validated['buyer_phone'],
+                        'total' => $total,
+                    ]);
 
-        $details = [];
+                    $details = [];
 
-        foreach ($validated['products'] as $item) {
-            $product = Product::findOrFail($item['product_id']);
+                    foreach ($validated['products'] as $item) {
+                        $product = Product::findOrFail($item['product_id']);
 
-            // Vérifie le stock
-            if ($product->quantity < $item['quantity']) {
-                throw new \Exception("Stock insuffisant pour le produit: {$product->name}");
-            }
+                        $initial_quantity = $product->quantity;
 
-            // Création de la ligne de vente
-            $saleProduct = SaleProduct::create([
-                'sale_id' => $sale->id,
-                'product_id' => $product->id,
+                        // Vérifie le stock
+                        if ($product->quantity < $item['quantity']) {
+                            throw new \Exception("Stock insuffisant pour le produit: {$product->name}");
+                        }
+
+                        // Création de la ligne de vente
+                        $saleProduct = SaleProduct::create([
+                            'sale_id' => $sale->id,
+                            'product_id' => $product->id,
+                            'quantity' => $item['quantity'],
+                            'price' => $item['price'],
+                        ]);
+
+                        // Mise à jour du stock
+                        $product->decrement('quantity', $item['quantity']);
+
+                        $details[] = [
+                            'product' => $product->name,
+                            'quantity_sold' => $item['quantity'],
+                            'price' => $item['price']
+                        ];
+
+                        //insertion dans la table des stocks
+                        $final_quantity = $initial_quantity - $item['quantity'];
+
+                        Stock::create([
+                'date' => now()->toDateString(),
+                'initial_stock' => $initial_quantity,
+                'label' => 'Vente produit ' . $product->name,
                 'quantity' => $item['quantity'],
-                'price' => $item['price'],
+                'final_stock' => $final_quantity,
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'sale_id' => $sale->id,
+                'seller_name' => $sale->seller_name,
             ]);
-
-            // Mise à jour du stock
-            $product->decrement('quantity', $item['quantity']);
-
-            $details[] = [
-                'product' => $product->name,
-                'quantity_sold' => $item['quantity'],
-                'price' => $item['price']
-            ];
         }
 
         DB::commit();
-
-  
 
         // Ajoute l'opération dans la table des notifications
         Notification::create([
@@ -193,7 +223,6 @@ Route::post('/sale', function (Request $request) {
         ], 500);
     }
 });
-
 
 
  Route::get('/dashboard', function () {
@@ -288,6 +317,8 @@ $sale = Sale::with('products')->findOrFail($saleId);
 
     return response()->json($sale);
 })->name('sale.details');
+
+Route::post('/stocks', [StockController::class, 'store']);
 
 
 

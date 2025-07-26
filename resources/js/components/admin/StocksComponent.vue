@@ -4,7 +4,7 @@
             <button class="menu-toggle" @click="toggleSidebar">
                 <i class="fas fa-bars"></i>
             </button>
-            <h1>Historique du tock</h1>
+            <h1>Historique du stock</h1>
         </div>
         <div class="user-info">
             <span>Administrateur</span>
@@ -32,7 +32,8 @@
             </div>
         </div>
 
-        <div class="showProducts" <!-- Filtres -->
+        <!-- Filtres -->
+        <div class="showProducts">
             <div class="filters">
                 <div class="filters-grid">
                     <div class="form-group">
@@ -66,12 +67,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="stock in stocks" :key="stock.id">
+                        <tr v-for="stock in filteredProducts" :key="stock.id">
                             <td data-label="Date">{{ stock.date }}</td>
                             <td data-label="Produit">
                                 <strong>{{ stock.product_name }}</strong>
                             </td>
-
                             <td data-label="Stock initial">
                                 <strong>{{ stock.stock_initial }}</strong>
                             </td>
@@ -86,6 +86,7 @@
             </div>
         </div>
 
+        <!-- Affichage spécifique pour "gaz" -->
         <div class="showStock">
             <div class="table-container">
                 <div class="table-header">
@@ -142,7 +143,6 @@
                 message: 'Bonjour depuis Vue !',
                 products: [], // ajout pour stocker les produits,
                 showProducts: true,
-                showStock: false,
                 stocks: [
                     {
                         id: 1,
@@ -169,10 +169,9 @@
         },
 
         methods: {
-            fetchProducts() {
-                this.showStock = false;
+            fetchStocks() {
                 axios
-                    .get('/stocksList)
+                    .get('/stocksList')
                     .then((response) => {
                         console.log(response.data);
                         this.stocks = response.data;
@@ -204,7 +203,6 @@
                 this.showStock = true;
                 this.showProducts = false;
             },
-
         },
     };
 </script>
