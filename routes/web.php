@@ -15,6 +15,7 @@ use App\Models\SaleProduct;
 use App\Models\Notification;
 use App\Http\Controllers\StockController;
 use App\Models\Stock;
+use Illuminate\Support\Carbon;
 
 Route::get('/', function () {
     return view('pages/front/home');
@@ -31,16 +32,30 @@ Route::get('/home', function () {
 
 Route::get('/dashboardAdmin', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
-        return redirect()->route('login'); // Redirige vers login
+        return redirect()->route('login');
     }
 
-      $products = Product::all();
-      $sales = Sale::all();
-      $totalCA = Sale::sum('total'); // somme de la colonne 'total'
-     $notifications = Notification::latest()->take(5)->get();
+    $products = Product::all();
+    $sales = Sale::all();
+    $totalCA = Sale::sum('total');
 
-    return view('pages/back/admin/dashboardAdmin', compact('products', 'sales', 'totalCA', 'notifications'));
+    $today = Carbon::today();
+
+    $salesCountToday = Sale::whereDate('created_at', $today)->count();
+    $salesAmountToday = Sale::whereDate('created_at', $today)->sum('total');
+
+    $notifications = Notification::latest()->take(5)->get();
+
+    return view('pages/back/admin/dashboardAdmin', compact(
+        'products',
+        'sales',
+        'totalCA',
+        'salesCountToday',
+        'salesAmountToday',
+        'notifications'
+    ));
 })->name('dashboardAdmin');
+
 
 
 Route::get('/products', function () {
@@ -220,22 +235,45 @@ Route::post('/sale', function (Request $request) {
     }
 });
 
- Route::get('/dashboard', function () {
+
+
+
+Route::get('/dashboard', function () {
     if (!Auth::check() || Auth::user()->role !== 'seller') {
         return redirect()->route('login');
     }
 
-     $sales = Sale::where('seller_name', Auth::user()->name)->orderBy('created_at', 'desc')->get();    
+    $user = Auth::user();
+    $today = Carbon::today();
 
-    $salesNotifications = Sale::where('seller_name', Auth::user()->name)
-             ->latest()
-             ->take(5)
-             ->get();
+    $sales = Sale::where('seller_name', $user->name)
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-    $totalCA = \App\Models\Sale::where('seller_name', auth()->user()->name)->sum('total');
+    $salesCountToday = Sale::where('seller_name', $user->name)
+        ->whereDate('created_at', $today)
+        ->count();
 
-    return view('pages/back/seller/dashboard', compact('sales', 'salesNotifications', 'totalCA'));
+    $salesAmountToday = Sale::where('seller_name', $user->name)
+        ->whereDate('created_at', $today)
+        ->sum('total');
+
+    $salesNotifications = Sale::where('seller_name', $user->name)
+        ->latest()
+        ->take(5)
+        ->get();
+
+    $totalCA = Sale::where('seller_name', $user->name)->sum('total');
+
+    return view('pages/back/seller/dashboard', compact(
+        'sales',
+        'salesCountToday',
+        'salesAmountToday',
+        'salesNotifications',
+        'totalCA'
+    ));
 })->name('dashboard');
+
 
 Route::get('/newInvoice', function (Request $request) {
     $sale = Sale::with('products')->findOrFail($request->sale_id);
@@ -278,6 +316,31 @@ Route::get('/newInvoice', function (Request $request) {
     }
 })->name('product');
 
+//Route pour avoir les sellers
+Route::get('/sellersList', function () {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $sellers = User::all(); // ou un filtre si besoin (ex: ->where('role', 'seller')->get())
+    return response()->json($sellers);
+})->name('sellersList');
+
+
+Route::get('/seller/{id}', function ($id) {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $seller = User::find($id);
+    if ($seller) {
+        return response()->json($seller->toArray());
+    } else {
+        return response()->json(['error' => 'Seller not found'], 404);
+    }
+})->name('seller');
+
+
 // Liste de tous les stocks
 Route::get('/stocksList', function () {
     if (!Auth::check()) {
@@ -296,7 +359,7 @@ Route::get('/stock/{id}', function ($id) {
     }
 
     // Recherche du stock lié à l'ID du produit
-    $stock = Stock::where('product_id', $id)->first();
+    $stock = Stock::where('product_id', $id)->orderBy('id', 'desc')->get();
 
     if ($stock) {
         return response()->json($stock->toArray());
@@ -305,16 +368,26 @@ Route::get('/stock/{id}', function ($id) {
     }
 })->name('stock');
 
+//mise a jour du stock
+Route::post('/products/{id}/stock', [ProductController::class, 'updateStock']);
 
-//user sales
-Route::get('/userSales', function () {
+
+//seller sales
+Route::get('/sellerSalesList', function (Request $request) {
     if (!Auth::check()) {
         return redirect()->route('login');
     }
 
-    $sales = Sale::with('products')->where('seller_name', Auth::user()->name)->get();
+    $user = Auth::user();
+
+    $sales = Sale::with('products')
+        ->where('seller_name', $user->name)
+        ->orderBy('id', 'desc')  // Tri par id décroissant
+        ->get();
+
     return response()->json($sales);
-})->name('userSales');
+})->name('sellerSalesList');
+
 
 
      Route::get('/salesList', function () {
@@ -322,7 +395,7 @@ Route::get('/userSales', function () {
         return redirect()->route('login');
     }
 
-    $sales = Sale::all();
+    $sales = Sale::orderBy('id', 'desc')->get();
     return response()->json($sales);
 })->name('salesList');
 
@@ -340,6 +413,10 @@ $sale = Sale::with('products')->findOrFail($saleId);
 })->name('sale.details');
 
 Route::post('/stocks', [StockController::class, 'store']);
+
+
+//accounting datas
+Route::get('/accounting/{id}', [ProductController::class, 'getAccountingData']);
 
 
 

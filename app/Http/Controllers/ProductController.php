@@ -7,7 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use App\Models\Notification;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\SaleController;
 use App\Models\Stock;
+use App\Models\Sale;
+use App\Models\SaleProduct;
 
 
 class ProductController extends BaseController
@@ -65,29 +68,134 @@ public function store(Request $request)
 }
 
 
-    public function update(Request $request, $id)
+   public function update(Request $request, $id)
+{
+    // Validation des données reçues
+    $validated = $request->validate([
+        'price_detail' => 'required|numeric|min:0',
+        'price_semi_bulk' => 'required|numeric|min:0',
+        'price_bulk' => 'required|numeric|min:0',
+    ]);
+
+    // Trouver le produit
+    $product = Product::findOrFail($id);
+
+    // Récupération des anciens prix
+    $oldDetail = $product->price_detail;
+    $oldSemiBulk = $product->price_semi_bulk;
+    $oldBulk = $product->price_bulk;
+
+    // Mise à jour des prix
+    $product->price_detail = $validated['price_detail'];
+    $product->price_semi_bulk = $validated['price_semi_bulk'];
+    $product->price_bulk = $validated['price_bulk'];
+
+    // Construction du message de notification
+    $messages = [];
+
+    if ($oldDetail != $validated['price_detail']) {
+        $messages[] = 'détail: ' . $oldDetail . ' → ' . $validated['price_detail'];
+    }
+    if ($oldSemiBulk != $validated['price_semi_bulk']) {
+        $messages[] = 'semi-gros: ' . $oldSemiBulk . ' → ' . $validated['price_semi_bulk'];
+    }
+    if ($oldBulk != $validated['price_bulk']) {
+        $messages[] = 'gros: ' . $oldBulk . ' → ' . $validated['price_bulk'];
+    }
+
+    $product->save();
+
+    // Créer une notification seulement si au moins un prix a changé
+    if (!empty($messages)) {
+        $label = 'Mise à jour des prix pour le produit "' . $product->name . '": ' . implode('; ', $messages);
+        Notification::create([
+            'description' => $label,
+        ]);
+    }
+
+    return response()->json([
+        'message' => 'Prix mis à jour avec succès',
+        'product' => $product
+    ], 200);
+}
+
+
+    public function updateStock(Request $request, $id)
     {
-        // Validation des données reçues
-        $validated = $request->validate([
-            'price_detail' => 'required|numeric|min:0',
-            'price_semi_bulk' => 'required|numeric|min:0',
-            'price_bulk' => 'required|numeric|min:0',
+        $request->validate([
+            'quantity' => 'required|integer|min:1',
         ]);
 
-        // Trouver le produit
         $product = Product::findOrFail($id);
 
-        // Mise à jour des prix
-        $product->price_detail = $validated['price_detail'];
-        $product->price_semi_bulk = $validated['price_semi_bulk'];
-        $product->price_bulk = $validated['price_bulk'];
+        $initial_quantity = $product->quantity;
+        $added_quantity = $request->input('quantity');
 
+        $product->quantity += $added_quantity;
         $product->save();
 
-        return response()->json([
-            'message' => 'Prix mis à jour avec succès',
-            'product' => $product
-        ], 200);
+        $label = "Mise à jour du stock de {$product->name}. Quantité ajoutée : {$added_quantity}.";
+
+        Stock::create([
+            'date' => now()->toDateString(),
+            'initial_stock' => $initial_quantity,
+            'label' => $label,
+            'quantity' => $added_quantity,
+            'final_stock' => $product->quantity,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'sale_id' => null,
+            'seller_name' => null,
+        ]);
+
+        Notification::create([
+            'description' => $label,
+        ]);
+
+        return response()->json(['message' => 'Stock ajouté avec succès.']);
     }
+
+
+public function getAccountingData($id)
+{
+    $product = Product::findOrFail($id);
+
+    // Récupérer toutes les lignes de vente avec date et id liés à ce produit
+    $sales = SaleProduct::where('product_id', $id)->get();
+
+    $totalQuantity = $sales->sum('quantity');
+
+    $totalRevenue = $sales->sum(function ($sale) {
+        return $sale->quantity * $sale->price;
+    });
+
+    $totalCost = $product->purchase_price * $totalQuantity;
+
+    $profit = $totalRevenue - $totalCost;
+
+    // Ajouter le détail des ventes pour l'affichage ligne par ligne
+    $salesDetails = $sales->map(function ($sale) use ($product) {
+        return [
+            'id' => $sale->id,
+            'quantity' => $sale->quantity,
+            'price' => $sale->price,
+            'created_at' => $sale->created_at->toDateTimeString(),
+            'total_sale' => $sale->quantity * $sale->price,
+            'total_cost' => $product->purchase_price * $sale->quantity,
+            'profit' => $sale->quantity * $sale->price - $product->purchase_price * $sale->quantity,
+        ];
+    });
+
+    return response()->json([
+        'total_quantity_sold' => $totalQuantity,
+        'total_revenue' => $totalRevenue,
+        'total_cost' => $totalCost,
+        'profit' => $profit,
+        'sales_details' => $salesDetails,
+    ]);
+}
+
+
+
 
 }

@@ -80,7 +80,7 @@
                     <strong>Total: {{ filteredProducts.length }}</strong>
                 </div>
 
-                <table class="table" v-if="products.length > 0">
+                <table class="table" v-if="filteredProducts.length > 0">
                     <thead>
                         <tr>
                             <th>Nom</th>
@@ -153,7 +153,7 @@
                                             border: none;
                                         "
                                         title="Historique"
-                                        @click="displayStock(product)"
+                                        @click="displayStock(product.id)"
                                     >
                                         <i class="fas fa-clock"></i>
                                     </button>
@@ -161,7 +161,7 @@
                                     <button
                                         class="btn-sm btn-edit"
                                         title="Comptabilité"
-                                        @click="displayTransactions(product)"
+                                        @click="displayAccounting(product)"
                                         style="
                                             background-color: #0056b3;
                                             color: white;
@@ -169,6 +169,18 @@
                                         "
                                     >
                                         <i class="fas fa-money-bill"></i>
+                                    </button>
+
+                                    <button
+                                        class="btn-sm"
+                                        style="
+                                            background-color: #6f42c1;
+                                            color: white;
+                                        "
+                                        title="Ajouter du stock"
+                                        @click="openAddStockModal(product)"
+                                    >
+                                        <i class="fas fa-plus"></i>
                                     </button>
 
                                     <button
@@ -191,9 +203,17 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <strong
+                    v-if="filteredProducts.length == 0"
+                    class="mx-auto text-center"
+                >
+                    Aucun produit disponible
+                </strong>
             </div>
         </div>
 
+        <!--stocks-->
         <div class="showStock" v-if="showStock">
             <div class="table-container">
                 <div class="table-header">
@@ -212,7 +232,7 @@
                             <span style="margin-left: 5px">Retour</span>
                         </span>
                         | Liste des opérations sur
-                        <strong>gaz</strong>
+                        <strong>{{ stocks[0]?.product_name }}</strong>
                     </h3>
                     <strong>Total: {{ stocks.length }}</strong>
                 </div>
@@ -229,14 +249,16 @@
                     </thead>
                     <tbody>
                         <tr v-for="stock in stocks" :key="stock.id">
-                            <td data-label="Date">{{ stock.date }}</td>
-                            <td data-label="Stock initial">
-                                <strong>{{ stock.stock_initial }}</strong>
+                            <td data-label="Date">
+                                {{ formatDateTime(stock.date) }}
                             </td>
-                            <td data-label="Libellé">{{ stock.libelle }}</td>
-                            <td data-label="Quantité">{{ stock.quantite }}</td>
+                            <td data-label="Stock initial">
+                                <strong>{{ stock.initial_stock }}</strong>
+                            </td>
+                            <td data-label="Libellé">{{ stock.label }}</td>
+                            <td data-label="Quantité">{{ stock.quantity }}</td>
                             <td data-label="Stock final">
-                                <strong>{{ stock.stock_final }}</strong>
+                                <strong>{{ stock.final_stock }}</strong>
                             </td>
                         </tr>
                     </tbody>
@@ -244,7 +266,8 @@
             </div>
         </div>
 
-        <div class="showTransactions" v-if="showTransactions">
+        <!-- Volet Comptabilité -->
+        <div class="showAccounting" v-if="showAccounting">
             <div class="table-container">
                 <div class="table-header">
                     <h3 style="display: flex; align-items: center; gap: 0.5rem">
@@ -261,39 +284,97 @@
                             <i class="fas fa-arrow-left"></i>
                             <span style="margin-left: 5px">Retour</span>
                         </span>
-                        | Liste des opérations sur
-                        <strong>gaz</strong>
+                        | Rentabilité de
+                        <strong>{{ selectedProduct.name }}</strong>
                     </h3>
-                    <strong>Total: {{ stocks.length }}</strong>
+                    <button @click="showAccounting = false" class="btn-close">
+                        Fermer
+                    </button>
                 </div>
 
+                <!-- Tableau résumé comptabilité -->
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Solde initial</th>
-                            <th>Libellé</th>
-                            <th>Montant</th>
-                            <th>Solde final</th>
+                            <th data-label="PA Unitaire">PA Unitaire</th>
+                            <th data-label="Qté vendue">Qté vendue</th>
+                            <th data-label="Total ventes">Total ventes</th>
+                            <th data-label="Coût total">Coût total</th>
+                            <th data-label="Bénéfice">Bénéfice</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr
-                            v-for="transaction in transactions"
-                            :key="transaction.id"
-                        >
-                            <td data-label="Date">{{ transaction.date }}</td>
-                            <td data-label="Solde initial">
-                                <strong>{{ transaction.solde_initial }}</strong>
+                        <tr>
+                            <td data-label="PA Unitaire">
+                                {{
+                                    formatAmount(selectedProduct.purchase_price)
+                                }}
+                                FCFA
                             </td>
-                            <td data-label="Libellé">
-                                {{ transaction.libelle }}
+                            <td data-label="Qté vendue">
+                                {{
+                                    formatAmount(
+                                        accountingData.total_quantity_sold
+                                    )
+                                }}
                             </td>
-                            <td data-label="Montant">
-                                {{ transaction.montant }}
+                            <td data-label="Total ventes">
+                                {{ formatAmount(accountingData.total_revenue) }}
+                                FCFA
                             </td>
-                            <td data-label="Solde final">
-                                <strong>{{ transaction.solde_final }}</strong>
+                            <td data-label="Coût total">
+                                {{ formatAmount(accountingData.total_cost) }}
+                                FCFA
+                            </td>
+                            <td data-label="Bénéfice">
+                                <strong>
+                                    {{ formatAmount(accountingData.profit) }}
+                                    FCFA
+                                </strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Tableau détaillé des opérations -->
+                <h4 style="margin-top: 2rem; padding: 5px">
+                    Tableau détaillé des ventes de
+                    {{ selectedProduct.name }}
+                </h4>
+                <br />
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th data-label="Date">Date</th>
+                            <th data-label="PA Unitaire">Date</th>
+                            <th data-label="Qté vendue">Qté vendue</th>
+                            <th data-label="Prix unitaire vente">
+                                Prix unitaire vente
+                            </th>
+                            <th data-label="Total vente">Total vente</th>
+                            <th data-label="Bénéfice">Bénéfice</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(op, index) in salesDetails" :key="index">
+                            <td data-label="Date">
+                                {{ formatDateTime(op.created_at) }}
+                            </td>
+                            <td data-label="PA Unitaire">
+                                {{
+                                    formatAmount(selectedProduct.purchase_price)
+                                }}
+                                FCFA
+                            </td>
+                            <td data-label="Qté vendue">{{ op.quantity }}</td>
+                            <td data-label="Prix unitaire vente">
+                                {{ formatAmount(op.price) }} FCFA
+                            </td>
+                            <td data-label="Total vente">
+                                {{ formatAmount(op.total_sale) }} FCFA
+                            </td>
+                            <td data-label="Bénéfice">
+                                {{ formatAmount(op.profit) }} FCFA
                             </td>
                         </tr>
                     </tbody>
@@ -454,6 +535,45 @@
         </div>
     </div>
 
+    <!--modal add stock-->
+    <div v-if="showAddStockModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>
+                Ajouter du stock pour
+                <strong>{{ selectedProduct.name }}</strong>
+            </h3>
+
+            <form @submit.prevent="submitAddStockForm">
+                <div class="form-group">
+                    <label>Quantité à ajouter</label>
+                    <input
+                        v-model.number="stockQuantity"
+                        type="number"
+                        min="1"
+                        class="form-control"
+                        required
+                    />
+                </div>
+
+                <div
+                    class="form-actions"
+                    style="margin-top: 1rem; display: flex; gap: 1rem"
+                >
+                    <button type="submit" class="btn btn-primary">
+                        Ajouter
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        @click="closeAddStockModal"
+                    >
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div v-if="showEditModal" class="modal" @click.self="closeEditModal">
         <div class="modal-content" style="padding: 2rem; max-width: 400px">
             <div class="modal-header">
@@ -595,24 +715,8 @@
                 showModal: null,
                 showProducts: true,
                 showStock: false,
-                stocks: [
-                    {
-                        id: 1,
-                        date: '2023-10-01',
-                        stock_initial: 100,
-                        libelle: 'Réception de marchandises',
-                        quantite: 50,
-                        stock_final: 150,
-                    },
-                    {
-                        id: 2,
-                        date: '2023-10-05',
-                        stock_initial: 150,
-                        libelle: 'Vente de marchandises',
-                        quantite: -30,
-                        stock_final: 120,
-                    },
-                ],
+                stocks: [],
+                salesDetails: [],
                 transactions: [
                     {
                         id: 1,
@@ -631,7 +735,7 @@
                         solde_final: 1300,
                     },
                 ],
-                showTransactions: false,
+                showAccounting: false,
                 name: '',
                 purchase_price: '',
                 quantity: '',
@@ -647,6 +751,15 @@
                 editedPriceSemiBulk: null,
                 editedPriceBulk: null,
                 showDeleteModal: false,
+                showAddStockModal: false,
+                selectedProduct: {},
+                stockQuantity: 1,
+                accountingData: {
+                    total_quantity_sold: 0,
+                    total_revenue: 0,
+                    total_cost: 0,
+                    profit: 0,
+                },
             };
         },
 
@@ -658,7 +771,7 @@
             fetchProducts() {
                 this.showProducts = true;
                 this.showStock = false;
-                this.showTransactions = false;
+                this.showTAccounting = false;
                 axios
                     .get('/productsList')
                     .then((response) => {
@@ -773,16 +886,45 @@
                         });
                 }
             },
-            displayStock(product) {
+            displayStock(product_id) {
+                axios
+                    .get(`/stock/${product_id}`)
+                    .then((response) => {
+                        console.log(response.data);
+                        this.stocks = response.data;
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Erreur lors de la récupération des données :',
+                            error
+                        );
+                    });
+
                 this.showStock = true;
                 this.showProducts = false;
                 this.showTransactions = false;
             },
-            displayTransactions(product) {
+            displayAccounting(product) {
+                this.selectedProduct = product;
                 this.showTransactions = true;
                 this.showProducts = false;
                 this.showStock = false;
+
+                axios
+                    .get(`/accounting/${product.id}`)
+                    .then((response) => {
+                        this.accountingData = response.data;
+                        this.salesDetails = response.data.sales_details || [];
+                        this.showAccounting = true;
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Erreur lors de la récupération des données comptables :',
+                            error
+                        );
+                    });
             },
+
             openDeleteModal(product) {
                 this.currentProduct = product;
                 this.showDeleteModal = true;
@@ -830,6 +972,38 @@
                     .catch((error) => {
                         alert("Erreur lors de l'ajout du produit.");
                         console.error(error);
+                    });
+            },
+            openAddStockModal(product) {
+                this.selectedProduct = product;
+                this.selectedProductId = product.id;
+                this.stockQuantity = 1;
+                this.showAddStockModal = true;
+            },
+
+            closeAddStockModal() {
+                this.showAddStockModal = false;
+                this.selectedProduct = {};
+                this.stockQuantity = 1;
+            },
+
+            submitAddStockForm() {
+                axios
+                    .post(`/products/${this.selectedProductId}/stock`, {
+                        product_id: this.selectedProduct.id,
+                        quantity: this.stockQuantity,
+                    })
+                    .then(() => {
+                        alert('Stock ajouté avec succès.');
+                        this.closeAddStockModal();
+                        this.fetchProducts(); // ou autre action de mise à jour
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Erreur lors de l’ajout du stock :',
+                            error
+                        );
+                        alert('Erreur lors de l’ajout du stock.');
                     });
             },
         },
@@ -909,5 +1083,27 @@
         padding: 2rem;
         max-width: 700px;
         width: 100%;
+    }
+</style>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 400px;
     }
 </style>

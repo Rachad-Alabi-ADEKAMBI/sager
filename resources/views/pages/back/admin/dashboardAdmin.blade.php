@@ -42,9 +42,11 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-value">
-                            {{ $sales->count() }}
+                            {{ $salesCountToday }}
                         </div>
-                        <div class="stat-label">Ventes ce mois</div>
+                        <div class="stat-label">
+                            Vente{{ $salesCountToday > 1 ? 's' : '' }} aujourd'hui
+                        </div>
                     </div>
                     <div class="stat-icon sales">
                         <i class="fas fa-shopping-cart"></i>
@@ -56,7 +58,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-value">
-                            {{ number_format($totalCA, 0, ',', ' ') }} FCFA
+                            {{ number_format($salesAmountToday, 0, ',', ' ') }} FCFA
                         </div>
                         <div class="stat-label">Chiffre d'affaires</div>
                     </div>

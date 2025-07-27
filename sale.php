@@ -181,7 +181,22 @@
             <!-- Sales History -->
             <div class="sales-history">
                 <div class="history-header">
-                    <h3>Historique de mes ventes ( {{ sales.length }} )</h3>
+                    <h3>Historique de mes ventes</h3>
+                    <div>
+                        <select
+                            style="
+                                padding: 0.5rem;
+                                border: 1px solid #ddd;
+                                border-radius: 5px;
+                                margin-right: 1rem;
+                            "
+                        >
+                            <option>Aujourd'hui</option>
+                            <option>Cette semaine</option>
+                            <option>Ce mois</option>
+                            <option>Toutes les ventes</option>
+                        </select>
+                    </div>
                 </div>
                 <table class="table">
                     <thead>
@@ -194,7 +209,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="sale in paginatedSales" :key="sale.id">
+                        <tr v-for="sale in sales" :key="sale.id">
                             <td data-label="N° Facture">
                                 <strong>#INV-{{ sale.id }}</strong>
                             </td>
@@ -210,7 +225,7 @@
                             <td data-label="Actions">
                                 <button
                                     class="invoice-btn"
-                                    @click="viewInvoice(sale)"
+                                    @click="viewInvoice(sale.id)"
                                 >
                                     <i class="fas fa-eye"></i>
                                     Voir
@@ -226,96 +241,6 @@
                         </tr>
                     </tbody>
                 </table>
-
-                <div
-                    class="pagination"
-                    style="margin-top: 1rem; text-align: center"
-                >
-                    <button
-                        :disabled="currentPage === 1"
-                        @click="currentPage--"
-                        class="pagination-btn"
-                    >
-                        ← Précédent
-                    </button>
-
-                    <button
-                        v-for="page in totalPages"
-                        :key="page"
-                        @click="currentPage = page"
-                        :class="[
-                            'pagination-btn',
-                            { active: currentPage === page },
-                        ]"
-                    >
-                        {{ page }}
-                    </button>
-
-                    <button
-                        :disabled="currentPage === totalPages"
-                        @click="currentPage++"
-                        class="pagination-btn"
-                    >
-                        Suivant →
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal Détails de la vente -->
-        <div v-if="showSaleModal" class="modal-overlay">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h5>Détails de la vente</h5>
-                    <button @click="closeSaleModal" class="modal-close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>
-                        <strong>Client :</strong>
-                        {{ selectedSale.buyer_name }}
-                    </p>
-                    <p>
-                        <strong>Vendeur :</strong>
-                        {{ selectedSale.seller_name }}
-                    </p>
-                    <p>
-                        <strong>Date :</strong>
-                        {{ formatDateTime(selectedSale.created_at) }}
-                    </p>
-                    <p>
-                        <strong>Total :</strong>
-                        {{ formatAmount(selectedSale.total) }} FCFA
-                    </p>
-                    <hr />
-                    <h6>Produits achetés :</h6>
-                    <ul>
-                        <li
-                            v-for="(product, i) in selectedSale.products"
-                            :key="i"
-                        >
-                            {{ product.name }} - {{ product.pivot.quantity }} ×
-                            {{ formatAmount(Number(product.pivot.price)) }} =
-                            {{
-                                formatAmount(
-                                    Number(product.pivot.price) *
-                                        product.pivot.quantity
-                                )
-                            }}
-                            FCFA
-                        </li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button
-                        @click="printInvoice(selectedSale.id)"
-                        class="btn-download"
-                    >
-                        <i class="fas fa-print"></i>
-                        Imprimer Facture
-                    </button>
-                </div>
             </div>
         </div>
     </main>
@@ -334,25 +259,12 @@
                 productLines: [],
                 total: 0,
                 sales: [],
-                salesPerPage: 5,
-                currentPage: 1,
-                showSaleModal: false,
-                selectedSale: null,
             };
         },
 
         mounted() {
             this.fetchSalesData();
             this.addProductLine(); // initialiser avec une ligne
-        },
-        computed: {
-            paginatedSales() {
-                const start = (this.currentPage - 1) * this.salesPerPage;
-                return this.sales.slice(start, start + this.salesPerPage);
-            },
-            totalPages() {
-                return Math.ceil(this.sales.length / this.salesPerPage);
-            },
         },
 
         methods: {
@@ -462,8 +374,12 @@
                 return date.toLocaleString('fr-FR', options);
             },
 
-            printInvoice(sale_id) {
-                console.log('Imprimer facture:', sale_id);
+            viewInvoice(sale) {
+                console.log('Voir facture:', sale.id);
+            },
+
+            printInvoice(sale) {
+                console.log('Imprimer facture:', sale.id);
             },
 
             submitForm() {
@@ -517,72 +433,6 @@
                         alert(message);
                     });
             },
-
-            viewInvoice(sale) {
-                this.selectedSale = sale;
-                this.showSaleModal = true;
-            },
-            closeSaleModal() {
-                this.showSaleModal = false;
-                this.selectedSale = null;
-            },
         },
     };
 </script>
-
-<style>
-    .pagination-btn {
-        margin: 0 4px;
-        padding: 6px 12px;
-        border: 1px solid #ddd;
-        background: #f9f9f9;
-        cursor: pointer;
-        border-radius: 4px;
-    }
-
-    .pagination-btn.active {
-        background-color: #007bff;
-        color: #fff;
-        font-weight: bold;
-    }
-
-    .pagination-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 999;
-    }
-
-    .modal-container {
-        background: #fff;
-        border-radius: 10px;
-        width: 90%;
-        max-width: 600px;
-        padding: 1.5rem;
-    }
-
-    .modal-header,
-    .modal-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .modal-close {
-        background: none;
-        border: none;
-        font-size: 1.2rem;
-        cursor: pointer;
-    }
-</style>

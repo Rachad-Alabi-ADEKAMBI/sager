@@ -187,10 +187,7 @@
             <button class="action-button" onclick="window.print()">
                 <i class="fas fa-print"></i> Imprimer
             </button>
-            <a href="download" class="action-button">
-                <i class="fas fa-download"></i> Télécharger
-            </a>
-            <a href="{{ route('sale') }}" class="action-button">
+            <a href="javascript:history.back()" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Retour
             </a>
         </div>

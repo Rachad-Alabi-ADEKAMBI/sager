@@ -86,7 +86,6 @@
                 </table>
 
                 <!-- Modal Détails Vente -->
-                <!-- Modal -->
                 <div class="modal fade" tabindex="-1" v-if="showSaleModal">
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
