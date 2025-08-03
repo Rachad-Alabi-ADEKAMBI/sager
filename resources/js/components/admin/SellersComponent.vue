@@ -15,14 +15,21 @@
                     v-for="seller in sellers"
                     :key="seller.id"
                 >
-                    <div class="user-status status-active">Actif</div>
+                    <div
+                        class="user-status"
+                        :class="{
+                            'status-active': seller.status === 'active',
+                            'status-banned': seller.status === 'banned',
+                        }"
+                    >
+                        {{ seller.status === 'active' ? 'Actif' : 'Banni' }}
+                    </div>
                     <div class="user-card-header">
                         <div class="user-card-avatar">
                             <i class="fas fa-user"></i>
                         </div>
                         <div class="user-card-info">
                             <h3>{{ seller.name }}</h3>
-                            <p>{{ seller.role || 'Rôle non défini' }}</p>
                         </div>
                     </div>
                     <div class="user-details">
@@ -32,20 +39,7 @@
                                 {{ seller.email }}
                             </span>
                         </div>
-                        <div class="user-detail-item">
-                            <span class="user-detail-label">
-                                Dernière connexion:
-                            </span>
-                            <span class="user-detail-value">
-                                {{ seller.last_login || 'Non disponible' }}
-                            </span>
-                        </div>
-                        <div class="user-detail-item">
-                            <span class="user-detail-label">Opérations:</span>
-                            <span class="user-detail-value">
-                                {{ seller.operations_count || 0 }} cette semaine
-                            </span>
-                        </div>
+                        <div class="user-detail-item"></div>
                     </div>
                     <div class="user-actions">
                         <button
@@ -200,6 +194,7 @@
                             id="banReason"
                             v-model="banReason"
                             class="form-control"
+                            placeholder="Entrez le motif du bannissement ici. ecrivez au moins 10 caractères."
                             rows="4"
                             required
                         ></textarea>

@@ -275,8 +275,8 @@ Route::get('/dashboard', function () {
 })->name('dashboard');
 
 
-Route::get('/newInvoice', function (Request $request) {
-    $sale = Sale::with('products')->findOrFail($request->sale_id);
+Route::get('/newInvoice/{sale_id}', function ($sale_id) {
+    $sale = Sale::with('products')->findOrFail($sale_id);
 
     return view('pages/back/seller/newInvoice', [
         'sale' => $sale,
@@ -322,7 +322,7 @@ Route::get('/sellersList', function () {
         return redirect()->route('login');
     }
 
-    $sellers = User::all(); // ou un filtre si besoin (ex: ->where('role', 'seller')->get())
+    $sellers = User::where('role', '!=', 'admin')->get();
     return response()->json($sellers);
 })->name('sellersList');
 
@@ -434,19 +434,48 @@ Route::get('/sellers/{id}/sales', function ($id) {
 });
 
 
+//bannir un vendeur 
+Route::post('/sellers/{id}/ban', function (Request $request, $id) {
+    // 1. Vérification de l'authentification et du rôle
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return response()->json(['error' => 'Accès non autorisé.'], 403);
+    }
+    
+    // 2. Validation de la requête
+    $request->validate([
+        'reason' => 'required|string|min:10',
+    ]);
+
+    // 3. Recherche de l'utilisateur à bannir
+    $seller = User::find($id);
+
+    if (!$seller) {
+        return response()->json(['error' => 'Utilisateur non trouvé.'], 404);
+    }
+
+    // 4. Mettre à jour l'utilisateur pour le "bannir"
+    // Vous devez avoir un champ `is_banned` ou similaire dans votre table `users`.
+    // J'utilise ici un exemple de champ `status` et un champ `ban_reason`.
+    $seller->status = 'banned'; // Assurez-vous que ce champ existe dans votre modèle User.
+    $seller->ban_reason = $request->input('reason');
+    $seller->save();
+
+    // 5. Déconnecter l'utilisateur banni si nécessaire
+    // Si l'utilisateur banni est actuellement connecté, cela le déconnecte.
+    if ($seller->id === Auth::id()) {
+        Auth::logout();
+    }
+
+    return response()->json(['message' => 'Utilisateur banni avec succès.'], 200);
+});
+
+
 //accounting datas
 Route::get('/accounting/{id}', [ProductController::class, 'getAccountingData']);
 
 
 
 /* end api routes*/
-
-
-
-
-
-
-
 
 Route::post('/logout', function () {
     Auth::logout();

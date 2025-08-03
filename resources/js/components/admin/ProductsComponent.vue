@@ -9,10 +9,13 @@
                 </button>
 
                 <button
-                    class="btn btn-success"
-                    @click="
+                    class=""
+                    syle="background-color: #0e65b1ff; color: white; border: none; 
+                    padding: 0.75rem; border-radius: 10px; cursor: pointer;
+                    "
+                    onclick="
                         alert(
-                            'Fonctionnalité d\'impression en cours de développement.'
+                            'Impression en cours ...'
                         )
                     "
                 >
@@ -702,24 +705,7 @@
                 showStock: false,
                 stocks: [],
                 salesDetails: [],
-                transactions: [
-                    {
-                        id: 1,
-                        date: '2023-10-01',
-                        solde_initial: 1000,
-                        libelle: 'Achat de marchandises',
-                        montant: -200,
-                        solde_final: 800,
-                    },
-                    {
-                        id: 2,
-                        date: '2023-10-05',
-                        solde_initial: 800,
-                        libelle: 'Vente de marchandises',
-                        montant: 500,
-                        solde_final: 1300,
-                    },
-                ],
+                transactions: [],
                 showAccounting: false,
                 name: '',
                 purchase_price: '',

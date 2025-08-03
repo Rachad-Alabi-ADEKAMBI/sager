@@ -1,7 +1,6 @@
 <template>
     <div>
         <div class="sales-content">
-            <!-- Sales History -->
             <div class="sales-history">
                 <div class="history-header">
                     <h3>Historique des ventes</h3>
@@ -24,7 +23,6 @@
                             <option>À une date précise</option>
                         </select>
 
-                        <!-- Affiche uniquement si option sélectionnée -->
                         <div
                             v-if="filterPeriod === 'À une date précise'"
                             style="margin-top: 0.5rem"
@@ -34,8 +32,7 @@
                     </div>
                 </div>
 
-                <!-- Table des ventes -->
-                <table class="table" v-if="sales.length > 0">
+                <table class="table" v-if="paginatedSales.length > 0">
                     <thead>
                         <tr>
                             <th>N° Facture</th>
@@ -48,7 +45,7 @@
                     </thead>
                     <tbody>
                         <tr
-                            v-for="(sale, index) in filteredSales"
+                            v-for="(sale, index) in paginatedSales"
                             :key="sale.id"
                         >
                             <td data-label="N° Facture">
@@ -69,23 +66,64 @@
                                     class="invoice-btn"
                                     @click="showSaleDetails(sale.id)"
                                 >
-                                    <i class="fas fa-eye"></i>
+                                    <i
+                                        class="fas fa-eye"
+                                        style="margin: 2px"
+                                    ></i>
                                     Voir
                                 </button>
                             </td>
                         </tr>
                     </tbody>
-
-                    <tbody v-if="filteredSales.length === 0">
-                        <tr>
-                            <td colspan="6" class="no-sales-message">
-                                <strong>Aucune vente disponible</strong>
-                            </td>
-                        </tr>
-                    </tbody>
                 </table>
+                <div v-else class="no-sales-message">
+                    <strong>
+                        Aucune vente disponible pour la période sélectionnée
+                    </strong>
+                </div>
 
-                <!-- Modal Détails Vente -->
+                <div class="pagination-container" v-if="totalPages > 1">
+                    <ul class="pagination">
+                        <li
+                            class="page-item"
+                            :class="{ disabled: currentPage === 1 }"
+                        >
+                            <a
+                                class="page-link"
+                                href="#"
+                                @click.prevent="goToPage(currentPage - 1)"
+                            >
+                                Précédent
+                            </a>
+                        </li>
+                        <li
+                            class="page-item"
+                            v-for="page in totalPages"
+                            :key="page"
+                            :class="{ active: currentPage === page }"
+                        >
+                            <a
+                                class="page-link"
+                                href="#"
+                                @click.prevent="goToPage(page)"
+                            >
+                                {{ page }}
+                            </a>
+                        </li>
+                        <li
+                            class="page-item"
+                            :class="{ disabled: currentPage === totalPages }"
+                        >
+                            <a
+                                class="page-link"
+                                href="#"
+                                @click.prevent="goToPage(currentPage + 1)"
+                            >
+                                Suivant
+                            </a>
+                        </li>
+                    </ul>
+                </div>
                 <div class="modal fade" tabindex="-1" v-if="showSaleModal">
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
@@ -146,11 +184,11 @@
                             </div>
                             <div class="modal-footer">
                                 <button
-                                    @click="downloadInvoice"
+                                    @click="printInvoice(selectedSale.id)"
                                     class="btn-download"
                                 >
                                     <i class="fas fa-download"></i>
-                                    Télécharger Facture
+                                    Imprimer Facture
                                 </button>
                             </div>
                         </div>
@@ -174,6 +212,10 @@
                 saleModalInstance: null,
                 showSaleModal: false,
                 filterPeriod: 'Toutes les ventes',
+
+                // AJOUTÉ POUR LA PAGINATION
+                currentPage: 1,
+                perPage: 10, // Nombre d'éléments par page
             };
         },
 
@@ -228,10 +270,21 @@
                 this.showSaleModal = false;
                 this.selectedSale = null;
             },
+            printInvoice(saleId) {
+                window.location.href = `/newInvoice/${saleId}`;
+            },
+
+            // AJOUTÉ POUR LA PAGINATION: Méthode pour changer de page
+            goToPage(page) {
+                if (page >= 1 && page <= this.totalPages) {
+                    this.currentPage = page;
+                }
+            },
         },
         computed: {
             filteredSales() {
                 const now = new Date();
+                this.currentPage = 1; // Réinitialise la pagination à la page 1 à chaque changement de filtre
 
                 return this.sales.filter((sale) => {
                     const saleDate = new Date(sale.created_at);
@@ -291,6 +344,18 @@
                             return true;
                     }
                 });
+            },
+
+            // AJOUTÉ: Propriété calculée pour le nombre total de pages
+            totalPages() {
+                return Math.ceil(this.filteredSales.length / this.perPage);
+            },
+
+            // AJOUTÉ: Propriété calculée pour les ventes de la page actuelle
+            paginatedSales() {
+                const start = (this.currentPage - 1) * this.perPage;
+                const end = start + this.perPage;
+                return this.filteredSales.slice(start, end);
             },
         },
     };
@@ -1003,7 +1068,7 @@
     }
 
     .modal-footer .btn-download {
-        background-color: #007bff;
+        background-color: #764ba2;
         color: white;
         padding: 0.5rem 1.25rem;
         border: none;
@@ -1045,7 +1110,65 @@
 
     .date-picker:focus {
         outline: none;
-        border-color: #007bff;
-        box-shadow: 0 0 5px #007bffaa;
+        border-color: #764ba2;
+        box-shadow: 0 0 5px #764ba2aa;
+    }
+</style>
+
+<style>
+    /* Styles pour la pagination */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        background-color: #fff;
+    }
+
+    .page-item {
+        display: inline;
+    }
+
+    .page-link {
+        color: #495057;
+        padding: 10px 15px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+        border: 1px solid #dee2e6;
+    }
+
+    .page-item:first-child .page-link {
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+    }
+
+    .page-item:last-child .page-link {
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+    }
+
+    .page-item.active .page-link {
+        background-color: #764ba2;
+        color: white;
+        border-color: #764ba2;
+        font-weight: bold;
+    }
+
+    .page-item.disabled .page-link {
+        color: #6c757d;
+        cursor: not-allowed;
+        background-color: #e9ecef;
+    }
+
+    .page-item:not(.active) .page-link:hover {
+        background-color: #f8f9fa;
     }
 </style>
