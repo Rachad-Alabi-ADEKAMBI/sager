@@ -3,11 +3,24 @@
 @include('pages.back.admin.sidebar')
 
 
-@section('title', 'Products')
+@section('title', 'Gestion de stock')
 
 @section('content')
     <main class="main-content" id='app'>
-
+        <header class="header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="menu-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Historique des ventes</h1>
+            </div>
+            <div class="user-info">
+                <span>Administrateur</span>
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </header>
         <products-component>
 
     </main>
@@ -32,67 +45,6 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         background: #f5f6fa;
         color: #333;
-    }
-
-    /* Sidebar (same as dashboard) */
-    .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 250px;
-        height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        transition: all 0.3s ease;
-        z-index: 1000;
-    }
-
-    .sidebar-header {
-        padding: 2rem 1rem;
-        text-align: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .sidebar-header h2 {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .sidebar-menu {
-        list-style: none;
-        padding: 1rem 0;
-    }
-
-    .sidebar-menu li {
-        margin: 0.5rem 0;
-    }
-
-    .sidebar-menu a {
-        display: flex;
-        align-items: center;
-        padding: 1rem 1.5rem;
-        color: white;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        border-left: 3px solid transparent;
-    }
-
-    .sidebar-menu a:hover,
-    .sidebar-menu a.active {
-        background: rgba(255, 255, 255, 0.1);
-        border-left-color: white;
-    }
-
-    .sidebar-menu i {
-        margin-right: 1rem;
-        width: 20px;
-    }
-
-    /* Main Content */
-    .main-content {
-        margin-left: 250px;
-        min-height: 100vh;
-        transition: all 0.3s ease;
     }
 
     .header {

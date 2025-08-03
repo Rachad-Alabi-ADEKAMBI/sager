@@ -1,19 +1,4 @@
 <template>
-    <header class="header">
-        <div style="display: flex; align-items: center; gap: 1rem">
-            <button class="menu-toggle" @click="toggleSidebar">
-                <i class="fas fa-bars"></i>
-            </button>
-            <h1>Gestion du Stock</h1>
-        </div>
-        <div class="user-info">
-            <span>Administrateur</span>
-            <div class="user-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-        </div>
-    </header>
-
     <div class="stock-content">
         <div class="stock-header">
             <h2>Inventaire des Produits</h2>
@@ -346,7 +331,7 @@
                     <thead>
                         <tr>
                             <th data-label="Date">Date</th>
-                            <th data-label="PA Unitaire">Date</th>
+                            <th data-label="PA Unitaire">PA Unitaire</th>
                             <th data-label="Qté vendue">Qté vendue</th>
                             <th data-label="Prix unitaire vente">
                                 Prix unitaire vente

@@ -406,13 +406,32 @@ Route::get('/sellerSalesList', function (Request $request) {
     }
 
 $sale = Sale::with('products')->findOrFail($saleId);
-
-
-
     return response()->json($sale);
 })->name('sale.details');
 
 Route::post('/stocks', [StockController::class, 'store']);
+//all the sales of an user based on his id
+Route::get('/sellers/{id}/sales', function ($id) {
+    // Vérifier si l'utilisateur est authentifié pour accéder à cette route
+    if (!Auth::check()) {
+        return response()->json(['error' => 'Non authentifié.'], 401);
+    }
+    
+    // Rechercher le vendeur par son ID
+    $seller = User::find($id);
+
+    // Si le vendeur n'existe pas, renvoyer une erreur 404
+    if (!$seller) {
+        return response()->json(['error' => 'Vendeur non trouvé.'], 404);
+    }
+
+    // Récupérer les ventes du vendeur en utilisant son nom
+    $sales = Sale::where('seller_name', $seller->name)
+                 ->orderBy('created_at', 'desc')
+                 ->get();
+
+    return response()->json($sales);
+});
 
 
 //accounting datas

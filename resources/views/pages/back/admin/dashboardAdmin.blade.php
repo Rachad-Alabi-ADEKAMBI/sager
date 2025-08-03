@@ -1,8 +1,8 @@
 @section('title', 'Tableau de bord administrateur')
 
+
+
 <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
-
-
 
 @include('pages.back.admin.sidebar')
 
