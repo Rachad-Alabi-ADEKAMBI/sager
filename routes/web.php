@@ -371,6 +371,11 @@ Route::get('/stock/{id}', function ($id) {
 //mise a jour du stock
 Route::post('/products/{id}/stock', [ProductController::class, 'updateStock']);
 
+//annulation de la MAJ
+Route::post('/revertAddStock', [App\Http\Controllers\ProductController::class, 'revertAddStock'])
+    ->middleware('auth')
+    ->name('revertAddStock');
+
 
 //seller sales
 Route::get('/sellerSalesList', function (Request $request) {
@@ -496,5 +501,5 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store'])
 })->middleware('guest')->name('reset_password');
 
 
-
+//nouvelle vente
 Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');

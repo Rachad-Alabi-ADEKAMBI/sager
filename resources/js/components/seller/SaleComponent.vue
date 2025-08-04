@@ -463,7 +463,7 @@
             },
 
             printInvoice(sale_id) {
-                console.log('Imprimer facture:', sale_id);
+                window.location.href = `/newInvoice/${sale_id}`;
             },
 
             submitForm() {

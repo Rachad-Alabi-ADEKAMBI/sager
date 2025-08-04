@@ -10,8 +10,13 @@
 
                 <button
                     class=""
-                    syle="background-color: #0e65b1ff; color: white; border: none; 
-                    padding: 0.75rem; border-radius: 10px; cursor: pointer;
+                    style="
+                        background-color: #0e65b1ff;
+                        color: white;
+                        border: none;
+                        padding: 0.75rem;
+                        border-radius: 10px;
+                        cursor: pointer;
                     "
                     onclick="
                         alert(
@@ -233,12 +238,13 @@
                             <th>Libellé</th>
                             <th>Quantité</th>
                             <th>Stock final</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="stock in stocks" :key="stock.id">
+                        <tr v-for="(stock, index) in stocks" :key="stock.id">
                             <td data-label="Date">
-                                {{ formatDateTime(stock.date) }}
+                                {{ formatDateTime(stock.created_at) }}
                             </td>
                             <td data-label="Stock initial">
                                 <strong>{{ stock.initial_stock }}</strong>
@@ -247,6 +253,24 @@
                             <td data-label="Quantité">{{ stock.quantity }}</td>
                             <td data-label="Stock final">
                                 <strong>{{ stock.final_stock }}</strong>
+                            </td>
+                            <td data-label="Actions">
+                                <button
+                                    v-if="index === firstRelevantIndex"
+                                    class="btn-sm"
+                                    style="
+                                        background-color: #6f42c1;
+                                        color: white;
+                                    "
+                                    title="Annuler l'opération"
+                                    @click="
+                                        openRevertAddStockModal(
+                                            stock.product_id
+                                        )
+                                    "
+                                >
+                                    <i class="fas fa-undo"></i>
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -562,6 +586,46 @@
         </div>
     </div>
 
+    <!--modal revert add stock-->
+    <div v-if="showRevertAddStockModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>
+                Annuler cette opération d'ajout de stock pour
+                <strong>{{ selectedProduct.name }}</strong>
+                ?
+                <span
+                    class="close"
+                    @click="closeRevertAddStockModal"
+                    style="cursor: pointer; float: right; font-size: 1.5rem"
+                >
+                    &times;
+                </span>
+            </h3>
+
+            <form @submit.prevent="submitRevertAddStockForm">
+                <div
+                    class="form-actions"
+                    style="margin-top: 1rem; display: flex; gap: 1rem"
+                >
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                        style="background: red"
+                    >
+                        Oui
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        @click="closeRevertAddStockModal"
+                    >
+                        Non
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div v-if="showEditModal" class="modal" @click.self="closeEditModal">
         <div class="modal-content" style="padding: 2rem; max-width: 400px">
             <div class="modal-header">
@@ -725,6 +789,7 @@
                 showAddStockModal: false,
                 selectedProduct: {},
                 stockQuantity: 1,
+                showRevertAddStockModal: false,
                 accountingData: {
                     total_quantity_sold: 0,
                     total_revenue: 0,
@@ -955,7 +1020,7 @@
             closeAddStockModal() {
                 this.showAddStockModal = false;
                 this.selectedProduct = {};
-                this.stockQuantity = 1;
+                this.stockQuantity = 0;
             },
 
             submitAddStockForm() {
@@ -975,6 +1040,63 @@
                             error
                         );
                         alert('Erreur lors de l’ajout du stock.');
+                    });
+            },
+            openRevertAddStockModal(product_id) {
+                this.selectedProductId = product_id;
+                this.showRevertAddStockModal = true;
+                console.log('Id produit à annuler :', product_id);
+                axios
+                    .get(`/product/${this.selectedProductId}`, {})
+                    .then((response) => {
+                        this.selectedProduct = response.data;
+                        console.log(
+                            'Produit sélectionné:',
+                            this.selectedProduct
+                        );
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Erreur suppression:',
+                            error.response.data
+                        );
+                    });
+            },
+            closeRevertAddStockModal() {
+                this.showRevertAddStockModal = false;
+                this.selectedProduct = {};
+            },
+            submitRevertAddStockForm() {
+                axios
+                    .post('/revertAddStock', {
+                        product_id: this.selectedProductId,
+                    })
+                    .then((response) => {
+                        alert(
+                            "Opération d'annulation réussie !",
+                            response.data
+                        );
+
+                        // 1. Mettez à jour le tableau du stock pour refléter le changement
+                        this.displayStock(this.selectedProductId);
+
+                        // 2. Fermez la modale d'annulation
+                        this.closeRevertAddStockModal();
+
+                        // 3. (Optionnel) Affichez une notification de succès à l'utilisateur
+                        // Par exemple : alert('Opération annulée avec succès !');
+                    })
+                    .catch((error) => {
+                        console.error(
+                            "Erreur lors de l'annulation de l'opération:",
+                            error
+                        );
+
+                        // 1. (Optionnel) Affichez un message d'erreur à l'utilisateur
+                        // Par exemple : alert('Erreur : ' + error.response.data.message);
+
+                        // 2. Fermez la modale même en cas d'erreur
+                        this.closeRevertAddStockModal();
                     });
             },
         },
@@ -1030,6 +1152,13 @@
                 }
 
                 return filtered;
+            },
+            firstRelevantIndex() {
+                // Trouve l'index du premier élément qui commence par le texte souhaité.
+                // Si aucun élément n'est trouvé, il retourne -1.
+                return this.stocks.findIndex((stock) =>
+                    stock.label.startsWith('Mise à jour du stock de ')
+                );
             },
         },
     };

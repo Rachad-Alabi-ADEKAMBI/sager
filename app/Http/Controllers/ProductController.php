@@ -11,6 +11,8 @@ use App\Http\Controllers\SaleController;
 use App\Models\Stock;
 use App\Models\Sale;
 use App\Models\SaleProduct;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 
 class ProductController extends BaseController
@@ -195,7 +197,83 @@ public function getAccountingData($id)
     ]);
 }
 
+  public function revertAddStock(Request $request)
+    {
+        // 1. Validation de l'ID du produit
+        $validated = $request->validate([
+            'product_id' => 'required|integer|exists:products,id',
+        ]);
 
+        DB::beginTransaction();
+
+        try {
+            // 2. Récupérer le produit concerné
+            $product = Product::findOrFail($validated['product_id']);
+
+            // 3. Trouver la dernière opération d'ajout de stock pour ce produit
+            $lastStockEntry = Stock::where('product_id', $product->id)
+                ->where('label', 'like', 'Mise à jour du stock de %')
+                ->where('quantity', '>', 0) // Pour s'assurer que c'était bien un ajout
+                ->latest()
+                ->first();
+
+            // 4. Vérifier si une opération à annuler a été trouvée
+            if (!$lastStockEntry) {
+                DB::rollBack();
+                return response()->json([
+                    'error' => 'Opération non trouvée',
+                    'message' => 'Aucune opération d\'ajout de stock récente n\'a été trouvée pour ce produit.',
+                ], 404);
+            }
+
+            // 5. Vérifier si le stock actuel est suffisant
+            if ($product->quantity < $lastStockEntry->quantity) {
+                DB::rollBack();
+                return response()->json([
+                    'error' => 'Stock insuffisant',
+                    'message' => "Impossible d'annuler l'opération. Le stock actuel est inférieur à la quantité à retirer."
+                ], 409);
+            }
+
+            // 6. Mettre à jour le stock du produit
+            $initialQuantity = $product->quantity;
+            $product->quantity -= $lastStockEntry->quantity;
+            $product->save();
+
+            // 7. Enregistrer une nouvelle opération dans la table `stocks`
+            $label = "Annulation de l'opération de mise à jour du stock.";
+            Stock::create([
+                'date' => Carbon::now()->toDateString(),
+                'initial_stock' => $initialQuantity,
+                'label' => $label,
+                'quantity' => -$lastStockEntry->quantity, // Quantité négative pour indiquer le retrait
+                'final_stock' => $product->quantity,
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'sale_id' => null,
+                'seller_name' => null,
+            ]);
+
+            // 8. Enregistrer une notification
+            Notification::create([
+                'description' => "Opération annulée pour le produit '{$product->name}'. Quantité retirée : {$lastStockEntry->quantity}.",
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Opération d\'ajout de stock annulée avec succès.',
+                'product' => $product,
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Échec de l\'annulation de l\'opération.',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
 
 }

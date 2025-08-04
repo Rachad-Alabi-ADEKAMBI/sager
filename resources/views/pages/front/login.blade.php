@@ -1,212 +1,214 @@
- <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
+<!DOCTYPE html>
+<html lang="fr">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - SAGER</title>
+    <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
- <main class="main-content">
-     <div class="login-container">
-         <div class="logo">
-             <h1>SAGER</h1>
-             <p>Système de Gestion de Stock</p>
-         </div>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-         <form method="POST" action="{{ route('login') }}">
-             @csrf
-             <div class="form-group">
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            animation: slideUp 0.6s ease-out;
+        }
 
-                 <input type="email" name="email" class="form-control" placeholder="Adresse email" required>
-             </div>
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
 
-             <div class="form-group" style="position: relative;">
-                 <input type="password" name="password" id="password" class="form-control" placeholder="Mot de passe"
-                     required style="padding-right: 35px;">
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-             </div>
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
 
-             <button type="submit" class="btn-login">
-                 <i class="fas fa-sign-in-alt"></i> Se connecter
-             </button>
+        .logo h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
 
-             <div class="forgot-password">
-                 <a href="{{ route('reset_password') }}">Mot de passe oublié ?</a>
-             </div>
-         </form>
+        .logo p {
+            color: #666;
+            font-size: 0.9rem;
+        }
 
-     </div>
- </main>
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
 
- <script>
-     const togglePassword = document.getElementById('togglePassword');
-     const passwordInput = document.getElementById('password');
+        .form-group .form-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            z-index: 1;
+        }
 
-     togglePassword.addEventListener('click', () => {
-         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-         passwordInput.setAttribute('type', type);
-         togglePassword.classList.toggle('fa-eye');
-         togglePassword.classList.toggle('fa-eye-slash');
-     });
- </script>
+        .form-control {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
 
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
 
- <style>
-     * {
-         margin: 0;
-         padding: 0;
-         box-sizing: border-box;
-     }
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-     body {
-         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-         min-height: 100vh;
-         display: flex;
-         align-items: center;
-         justify-content: center;
-     }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
 
-     .login-container {
-         background: white;
-         padding: 2rem;
-         border-radius: 20px;
-         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-         width: 100%;
-         max-width: 400px;
-         animation: slideUp 0.6s ease-out;
-     }
+        .btn-login:active {
+            transform: translateY(0);
+        }
 
-     @keyframes slideUp {
-         from {
-             opacity: 0;
-             transform: translateY(30px);
-         }
+        .forgot-password {
+            text-align: center;
+            margin-top: 1rem;
+        }
 
-         to {
-             opacity: 1;
-             transform: translateY(0);
-         }
-     }
+        .forgot-password a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
 
-     .logo {
-         text-align: center;
-         margin-bottom: 2rem;
-     }
+        .forgot-password a:hover {
+            color: #764ba2;
+        }
 
-     .logo h1 {
-         color: #667eea;
-         font-size: 2.5rem;
-         font-weight: bold;
-         margin-bottom: 0.5rem;
-     }
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
 
-     .logo p {
-         color: #666;
-         font-size: 0.9rem;
-     }
+            .logo h1 {
+                font-size: 2rem;
+            }
+        }
 
-     .form-group {
-         margin-bottom: 1.5rem;
-         position: relative;
-     }
+        /* Styles spécifiques pour l'icône de l'œil */
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            transition: color 0.3s ease;
+        }
 
-     .form-group i {
-         position: absolute;
-         left: 15px;
-         top: 50%;
-         transform: translateY(-50%);
-         color: #667eea;
-         z-index: 1;
-     }
+        .password-toggle:hover {
+            color: #667eea;
+        }
+    </style>
+</head>
 
-     .form-control {
-         width: 100%;
-         padding: 15px 15px 15px 45px;
-         border: 2px solid #e1e5e9;
-         border-radius: 10px;
-         font-size: 1rem;
-         transition: all 0.3s ease;
-         background: #f8f9fa;
-     }
+<body>
 
-     .form-control:focus {
-         outline: none;
-         border-color: #667eea;
-         background: white;
-         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-     }
+    <main class="main-content">
+        <div class="login-container">
+            <div class="logo">
+                <h1>SAGER</h1>
+                <p>Système de Gestion de Stock</p>
+            </div>
 
-     .btn-login {
-         width: 100%;
-         padding: 15px;
-         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-         color: white;
-         border: none;
-         border-radius: 10px;
-         font-size: 1rem;
-         font-weight: 600;
-         cursor: pointer;
-         transition: all 0.3s ease;
-         position: relative;
-         overflow: hidden;
-     }
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+                <div class="form-group">
+                    <i class="fas fa-envelope form-icon"></i>
+                    <input type="email" name="email" class="form-control" placeholder="Adresse email" required>
+                </div>
 
-     .btn-login:hover {
-         transform: translateY(-2px);
-         box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-     }
+                <div class="form-group">
+                    <i class="fas fa-lock form-icon"></i>
+                    <input type="password" name="password" id="password" class="form-control"
+                        placeholder="Mot de passe" required>
+                    <i class="fas fa-eye password-toggle" id="togglePassword"></i>
+                </div>
 
-     .btn-login:active {
-         transform: translateY(0);
-     }
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Se connecter
+                </button>
 
-     .forgot-password {
-         text-align: center;
-         margin-top: 1rem;
-     }
+                <div class="forgot-password">
+                    <a href="{{ route('reset_password') }}">Mot de passe oublié ?</a>
+                </div>
+            </form>
 
-     .forgot-password a {
-         color: #667eea;
-         text-decoration: none;
-         font-size: 0.9rem;
-         transition: color 0.3s ease;
-     }
+        </div>
+    </main>
 
-     .forgot-password a:hover {
-         color: #764ba2;
-     }
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
 
-     @media (max-width: 480px) {
-         .login-container {
-             margin: 1rem;
-             padding: 1.5rem;
-         }
+        togglePassword.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
 
-         .logo h1 {
-             font-size: 2rem;
-         }
-     }
- </style>
+            // Change l'icône de l'œil
+            togglePassword.classList.toggle('fa-eye');
+            togglePassword.classList.toggle('fa-eye-slash');
+        });
+    </script>
 
- <Style>
-     .form-group {
-         position: relative;
-     }
+</body>
 
-     .form-group input {
-         padding-right: 35px;
-         cursor: text;
-         /* assure que curseur texte apparaisse sur input */
-     }
-
-     #togglePassword {
-         position: absolute;
-         right: 10px;
-         top: 50%;
-         transform: translateY(-50%);
-         cursor: pointer;
-         pointer-events: auto;
-         /* icône cliquable */
-     }
-
-     #togglePassword:hover {
-         color: #007bff;
-         /* optionnel : changer couleur au hover */
-     }
- </Style>
+</html>
