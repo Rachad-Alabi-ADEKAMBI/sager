@@ -68,3 +68,27 @@
          }
      });
  </script>
+
+ <style>
+     /* Par défaut sur desktop */
+     .sidebar {
+         width: 250px;
+         position: fixed;
+         left: 0;
+         top: 0;
+         bottom: 0;
+         color: white;
+         transition: transform 0.3s ease;
+     }
+
+     /* En mode mobile, sidebar cachée par défaut */
+     @media (max-width: 768px) {
+         .sidebar {
+             transform: translateX(-100%);
+         }
+
+         .sidebar.active {
+             transform: translateX(0);
+         }
+     }
+ </style>

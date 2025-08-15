@@ -3,7 +3,7 @@
 
 <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 
 @include('pages.back.seller.sidebar')

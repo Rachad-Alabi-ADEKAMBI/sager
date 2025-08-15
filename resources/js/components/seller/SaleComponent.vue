@@ -1,23 +1,7 @@
 <template>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <main class="main-content" id="app">
-        <header class="header">
-            <div style="display: flex; align-items: center; gap: 1rem">
-                <button class="menu-toggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>Nouvelle vente</h1>
-            </div>
-            <div class="user-info">
-                <span>{{ seller_name }}</span>
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-            </div>
-        </header>
-
         <div class="sales-content">
-            <div class="sales-header"></div>
-
             <!-- Sales Form -->
             <div class="sales-form">
                 <h3 style="margin-bottom: 1.5rem; color: #333">
@@ -59,6 +43,7 @@
                                         v-model="line.productId"
                                         @change="onProductChange(index)"
                                         class="form-control product-select"
+                                        style="width: 150px"
                                     >
                                         <option disabled value="">
                                             Sélectionner un produit
@@ -467,6 +452,7 @@
             },
 
             submitForm() {
+                if (this.isSubmitting) return;
                 if (!this.customer_name || this.customer_name.trim() === '') {
                     alert('Veuillez entrer le nom du client.');
                     return;
@@ -484,6 +470,8 @@
                         return;
                     }
                 }
+
+                this.isSubmitting = true;
 
                 const saleData = {
                     seller_name: this.seller_name,
@@ -515,6 +503,8 @@
                         }
 
                         alert(message);
+
+                        this.isSubmitting = false;
                     });
             },
 

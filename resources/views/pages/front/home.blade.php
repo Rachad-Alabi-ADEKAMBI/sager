@@ -1,6 +1,8 @@
 <head>
     <meta charset="UTF-8">
     <title>@yield('title', 'Sager')</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 
     @vite('resources/js/app.js')
 
@@ -35,41 +37,7 @@
     <header class="header">
         <div class="nav-container">
             <div class="logo">SAGER</div>
-            <nav>
-                <ul class="nav-menu">
 
-                    @auth
-                        @if (auth()->user() && auth()->user()->role == 'admin')
-                            <li><a href="{{ route('dashboardAdmin') }}"><i class="fas fa-tachometer-alt"></i> Tableau de
-                                    bord</a></li>
-                        @else
-                            <li><a href="{{ route('dashboard') }}"><i class="fas fa-tachometer-alt"></i> Tableau de
-                                    bord</a>
-                            </li>
-                        @endif
-
-
-                        <li>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: inline;">
-                                @csrf
-                                <button type="submit" class="logout-button"
-                                    style="background: none; border: none; color: inherit; cursor: pointer; font-weight: bold;
-                                    font-size: 0.9rem; padding: 0;">
-                                    <i class="fas fa-sign-out-alt"></i> Déconnexion
-                                </button>
-                            </form>
-                        </li>
-                    @endauth
-
-
-                </ul>
-            </nav>
-            @guest
-                <div class="user-info">
-                    <a href="/login" style="color: white;"><i class="fas fa-sign-in-alt"></i>
-                        Connexion</a>
-                </div>
-            @endguest
         </div>
     </header>
     <!-- Hero Section -->
@@ -478,15 +446,6 @@
                 </ul>
             </div>
             <div class="footer-section">
-                <h4>Produits</h4>
-                <ul>
-                    <li><a href="#produits">Eaux en Bouteilles</a></li>
-                    <li><a href="#produits">Bières et Sodas</a></li>
-                    <li><a href="#produits">Boissons Diverses</a></li>
-                    <li><a href="#produits">Gaz Domestique</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
                 <h4>Contact</h4>
                 <div class="footer-contact">
                     <p><i class="fas fa-map-marker-alt"></i> Ayélawadjè, Cotonou</p>
@@ -496,14 +455,46 @@
                 </div>
             </div>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 SAGER. Tous droits réservés.</p>
-            <div class="footer-links">
-                <a href="#">Mentions légales</a>
-                <a href="#">Politique de confidentialité</a>
-                <a href="#">CGV</a>
+
+        <nav>
+
+            @auth
+                @if (auth()->user() && auth()->user()->role == 'admin')
+                    <a href="{{ route('dashboardAdmin') }}" style="color: white; text-decoration: none;"><i
+                            class="fas fa-tachometer-alt"></i>
+                        Tableau de
+                        bord |</a>
+                @else
+                    <a href="{{ route('dashboard') }}" style="color: white; text-decoration: none;"><i
+                            class="fas fa-tachometer-alt"></i>
+                        Tableau de
+                        bord |</a>
+                @endif
+
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: inline;">
+                    @csrf
+                    <button type="submit" class="logout-button"
+                        style="background: none; border: none; color: inherit; cursor: pointer; font-weight: bold;
+                                    font-size: 0.9rem; padding: 0;">
+                        <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    </button>
+                </form>
+            @endauth
+
+            @guest
+                <div class="">
+                    <a href="/login" style="color: white; text-decoration: none;"><i class="fas fa-sign-in-alt"></i>
+                        Connexion</a>
+                </div>
+            @endguest
+            <div class="footer-bottom">
+                <p>&copy; 2024 SAGER. Tous droits réservés.</p>
+                <div class="footer-links">
+                    <a href="#">Mentions légales</a>
+                    <a href="#">Politique de confidentialité</a>
+                    <a href="#">CGV</a>
+                </div>
             </div>
-        </div>
     </div>
 </footer>
 
@@ -514,11 +505,111 @@
         box-sizing: border-box;
     }
 
+    @media screen and (max-width: 400px) {
+
+        /* Turn all major grids into simple block stacks */
+        .services-grid,
+        .gallery-grid,
+        .about-content,
+        .contact-content,
+        .newsletter-content,
+        .features-grid,
+        .testimonials-grid,
+        .stats-grid,
+        .footer-main,
+        .form-row {
+            display: block !important;
+            display: none;
+        }
+
+        /* Ensure children fill the width and stack */
+        .services-grid>*,
+        .gallery-grid>*,
+        .about-content>*,
+        .contact-content>*,
+        .newsletter-content>*,
+        .features-grid>*,
+        .testimonials-grid>*,
+        .stats-grid>*,
+        .footer-main>*,
+        .form-row>* {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* Hero: stack buttons vertically and make full width */
+        .hero-buttons {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0.75rem !important;
+        }
+
+        .hero-buttons .cta-button {
+            width: 100% !important;
+            justify-content: center !important;
+        }
+
+        /* Categories: compact and scrollable if overflow */
+        .product-categories {
+            justify-content: flex-start !important;
+            overflow-x: auto !important;
+            gap: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .category-btn {
+            white-space: nowrap !important;
+        }
+
+        /* Gallery visuals on tiny screens */
+        .gallery-item img {
+            width: 100% !important;
+            height: 220px !important;
+            object-fit: cover !important;
+        }
+
+        .gallery-overlay {
+            padding: 2rem 1rem 1rem !important;
+        }
+
+        /* Contact: stack action buttons */
+        .contact-buttons {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0.75rem !important;
+        }
+
+        .whatsapp-btn,
+        .call-btn,
+        .submit-btn {
+            width: 100% !important;
+        }
+
+        /* Footer: stack sections and links */
+        .footer-bottom {
+            display: block !important;
+            text-align: center !important;
+            padding-top: 1.25rem !important;
+        }
+
+        .footer-links a {
+            display: block !important;
+            margin: 0.5rem 0 !important;
+        }
+    }
+
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         line-height: 1.6;
         color: #333;
         overflow-x: hidden;
+    }
+
+    .gallery-item img {
+        margin: 3px;
     }
 
     /* Header */
@@ -1840,6 +1931,8 @@
         animation-delay: 0.4s;
     }
 </style>
+
+
 
 <script>
     // FAQ Toggle

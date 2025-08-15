@@ -38,6 +38,7 @@
                         <label>Rechercher</label>
                         <input
                             type="text"
+                            style="width: 200px"
                             class="form-control"
                             placeholder="Nom du produit..."
                             v-model="searchQuery"
@@ -46,7 +47,11 @@
                     <div class="form-group">
                         <label>Statut</label>
 
-                        <select class="form-control" v-model="statusFilter">
+                        <select
+                            class="form-control"
+                            v-model="statusFilter"
+                            style="width: 200px"
+                        >
                             <option>Tous les statuts</option>
                             <option>En stock (plus de 5)</option>
                             <option>Stock faible (entre 1 et 5)</option>
@@ -55,7 +60,11 @@
                     </div>
                     <div class="form-group">
                         <label>Trier par</label>
-                        <select class="form-control" v-model="sortOption">
+                        <select
+                            class="form-control"
+                            v-model="sortOption"
+                            style="width: 200px"
+                        >
                             <option>Nom (A-Z)</option>
                             <option>Nom (Z-A)</option>
                             <option>Prix (croissant)</option>
@@ -1205,5 +1214,18 @@
         border-radius: 10px;
         width: 90%;
         max-width: 400px;
+    }
+</style>
+
+<style>
+    .action-buttons {
+        max-width: 200px;
+        display: flex;
+        flex-wrap: wrap; /* Permet le retour à la ligne */
+        gap: 5px;
+    }
+
+    .action-buttons button {
+        flex: 0 0 auto; /* Empêche l'étirement des boutons */
     }
 </style>

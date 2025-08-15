@@ -158,6 +158,37 @@
             color: #667eea;
         }
     </style>
+
+    <style>
+        @media screen and (max-width: 400px) {
+            .login-container {
+                margin: 0.5rem;
+                padding: 1rem;
+                max-width: 90%;
+                /* Réduit la largeur */
+            }
+
+            .logo h1 {
+                font-size: 1.8rem;
+                /* Texte plus petit */
+            }
+
+            .form-control {
+                padding: 12px 12px 12px 40px;
+                /* Champs un peu plus compacts */
+                font-size: 0.9rem;
+            }
+
+            .btn-login {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+
+            .forgot-password a {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
