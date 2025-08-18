@@ -1,3 +1,5 @@
+@extends('layouts.app')
+
 @section('title', 'Paramètres du compte - SAGER')
 
 <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
@@ -12,10 +14,10 @@
             <button class="menu-toggle" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i>
             </button>
-            <h1>Paramètres du compte</h1>
+            <h1>Paramètres</h1>
         </div>
         <div class="user-info">
-            <span>Administrateur</span>
+            <span>Admin</span>
             <div class="user-avatar">
                 <i class="fas fa-user"></i>
             </div>
@@ -27,6 +29,7 @@
         <h3 style="margin-bottom: 1.5rem;">Modifier les Paramètres du compte</h3>
         <form action="" method="POST">
             @csrf
+
             <div class="form-group">
                 <label for="old_password">Ancien mot de passe</label>
                 <input type="password" id="old_password" name="old_password" class="form-control" required>
@@ -36,10 +39,11 @@
                 <input type="password" id="new_password" name="new_password" class="form-control" required>
             </div>
             <div class="form-group">
-                <label for="password_confirmation">Confirmer le mot de passe</label>
-                <input type="password" id="password_confirmation" name="password_confirmation" class="form-control"
-                    required>
+                <label for="new_password_confirmation">Confirmer le mot de passe</label>
+                <input type="password" id="new_password_confirmation" name="new_password_confirmation"
+                    class="form-control" required>
             </div>
+
             <div style="display: flex; justify-content: center; margin-top: 2rem;">
                 <button type="submit" class="btn-primary" style="min-width: 200px;">
                     <i class="fas fa-save"></i> Modifier le mot de passe

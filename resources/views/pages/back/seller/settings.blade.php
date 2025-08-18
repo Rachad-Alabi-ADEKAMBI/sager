@@ -12,7 +12,7 @@
             <button class="menu-toggle" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i>
             </button>
-            <h1>Paramètres du compte</h1>
+            <h1>Paramètres</h1>
         </div>
         <div class="user-info">
             <span>{{ auth()->user()->name }}</span>

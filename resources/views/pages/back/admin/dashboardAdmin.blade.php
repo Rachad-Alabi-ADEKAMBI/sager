@@ -13,10 +13,10 @@
             <button class="menu-toggle" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i>
             </button>
-            <h1>Tableau de Bord</h1>
+            <h1>Gestion Sager</h1>
         </div>
         <div class="user-info">
-            <span>Administrateur</span>
+            <span>Admin</span>
             <div class="user-avatar">
                 <i class="fas fa-user"></i>
             </div>
@@ -33,7 +33,9 @@
                         <div class="stat-label">Produits en stock</div>
                     </div>
                     <div class="stat-icon products">
-                        <i class="fas fa-boxes"></i>
+                        <a href="{{ route('products') }}" style="hover: font-weight: bold">
+                            <i class="fas fa-boxes" style="color: white"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -49,7 +51,9 @@
                         </div>
                     </div>
                     <div class="stat-icon sales">
-                        <i class="fas fa-shopping-cart"></i>
+                        <a href="{{ route('sales') }}" style="hover: font-weight: bold">
+                            <i class="fas fa-shopping-cart" style="color: white"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -63,7 +67,9 @@
                         <div class="stat-label">Chiffre d'affaires</div>
                     </div>
                     <div class="stat-icon revenue">
-                        <i class="fas fa-wallet"></i>
+                        <a href="{{ route('sales') }}" style="hover: font-weight: bold">
+                            <i class="fas fa-wallet" style="color: white"></i>
+                        </a>
                     </div>
                 </div>
             </div>

@@ -15,7 +15,7 @@
             <button class="menu-toggle" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i>
             </button>
-            <h1>Tableau de Bord</h1>
+            <h1>Espace Vendeur</h1>
         </div>
         <div class="user-info">
             <span>{{ auth()->user()->name }}</span>

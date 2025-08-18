@@ -12,10 +12,10 @@
                 <button class="menu-toggle" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1>Historique des ventes</h1>
+                <h1>Ventes</h1>
             </div>
             <div class="user-info">
-                <span>Administrateur</span>
+                <span>Admin</span>
                 <div class="user-avatar">
                     <i class="fas fa-user"></i>
                 </div>

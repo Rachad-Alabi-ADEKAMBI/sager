@@ -14,6 +14,7 @@ use App\Models\Sale;
 use App\Models\SaleProduct;
 use App\Models\Notification;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\SettingsController;
 use App\Models\Stock;
 use Illuminate\Support\Carbon;
 
@@ -503,3 +504,8 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store'])
 
 //nouvelle vente
 Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');
+
+//mise a jour du password
+Route::post('/settings/password', [SettingsController::class, 'updatePassword'])
+    ->name('settings.updatePassword')
+    ->middleware('auth');

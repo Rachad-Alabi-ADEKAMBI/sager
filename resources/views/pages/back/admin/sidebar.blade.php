@@ -28,16 +28,19 @@
                  <i class="fas fa-users"></i> Vendeurs
              </a>
          </li>
-         <li>
-             <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">
-                 <i class="fas fa-home"></i> Accueil
-             </a>
-         </li>
+
          <li>
              <a href="{{ route('settingsAdmin') }}" class="{{ request()->routeIs('settingsAdmin') ? 'active' : '' }}">
                  <i class="fas fa-cog"></i> Paramètres du compte
              </a>
          </li>
+
+         <li>
+             <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">
+                 <i class="fas fa-home"></i> Accueil
+             </a>
+         </li>
+
          <li>
              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                  <i class="fas fa-sign-out-alt"></i> Déconnexion

@@ -75,7 +75,11 @@
                                             :value="line.product.price_detail"
                                         >
                                             Détail
-                                            {{ line.product.price_detail }}
+                                            {{
+                                                formatAmount(
+                                                    line.product.price_detail
+                                                )
+                                            }}
                                         </option>
                                         <option
                                             :value="
@@ -83,12 +87,21 @@
                                             "
                                         >
                                             Semi gros
-                                            {{ line.product.price_semi_bulk }}
+                                            {{
+                                                formatAmount(
+                                                    line.product.price_semi_bulk
+                                                )
+                                            }}
                                         </option>
                                         <option
                                             :value="line.product.price_bulk"
                                         >
-                                            Gros {{ line.product.price_bulk }}
+                                            Gros
+                                            {{
+                                                formatAmount(
+                                                    line.product.price_bulk
+                                                )
+                                            }}
                                         </option>
                                     </select>
                                 </div>
@@ -491,10 +504,7 @@
                         window.location.reload();
                     })
                     .catch((error) => {
-                        console.error(
-                            "Erreur lors de l'enregistrement de la vente :",
-                            error
-                        );
+                        console.error(error);
                         let message = 'Une erreur est survenue.';
 
                         if (error.response && error.response.data) {
@@ -502,7 +512,7 @@
                             message = data.error || data.message || message;
                         }
 
-                        alert(message);
+                        alert(error.response.data.message);
 
                         this.isSubmitting = false;
                     });
