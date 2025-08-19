@@ -36,7 +36,9 @@
 <main class="main">
     <header class="header">
         <div class="nav-container">
-            <div class="logo">SAGER</div>
+            <div class="logo">SAGE<a href="{{ route('login') }}"
+                    style="color: white; text-decoration: none; margin-left: -7px">R</a>
+            </div>
 
         </div>
     </header>

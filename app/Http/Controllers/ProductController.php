@@ -275,5 +275,32 @@ public function getAccountingData($id)
         }
     }
 
+public function destroy($id, Request $request)
+{
+    try {
+        $product = Product::findOrFail($id);
+        $product->delete();
+
+        Notification::create([
+            'description' => 'Produit ' . $product->name . ' supprimé.',
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Produit supprimé avec succès.'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Erreur de suppression: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+
 
 }
+
+
+

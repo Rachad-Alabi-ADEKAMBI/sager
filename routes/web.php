@@ -78,27 +78,9 @@ Route::get('/stocks', function () {
 })->name('stocks');
 
 
-Route::post('/products', [ProductController::class, 'store'])
+Route::delete('/products/{id}', [ProductController::class, 'destroy'])
     ->middleware('auth')
-    ->name('products.store');
-
-    Route::middleware('auth')->post('/products/{id}', [ProductController::class, 'update'])->name('products.update');
-
-
-   Route::delete('/products/{id}', function ($id, Request $request) {
-    if (!Auth::check() || Auth::user()->role !== 'admin') {
-        return redirect()->route('login');
-    }
-
-    $product = Product::findOrFail($id);
-    $product->delete();
-
-    if ($request->wantsJson()) {
-        return response()->json(['message' => 'Produit supprimé avec succès.']);
-    }
-
-    return back()->with('success', 'Produit supprimé avec succès.');
-})->name('products.destroy');
+    ->name('products.destroy');
 
 Route::get('/sellers', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
@@ -139,6 +121,7 @@ Route::get('/sale', function () {
     return view('pages/back/seller/sale', compact('products'));
 })->name('sale');
 
+//faire une vente
 Route::post('/sale', function (Request $request) {
     // Validation des données
     $validated = $request->validate([
@@ -165,6 +148,7 @@ Route::post('/sale', function (Request $request) {
                         'buyer_name' => $validated['buyer_name'],
                         'buyer_phone' => $validated['buyer_phone'],
                         'total' => $total,
+                         'status' => 'done', // <-- ajout du status
                     ]);
 
                     $details = [];
@@ -237,6 +221,73 @@ Route::post('/sale', function (Request $request) {
 });
 
 
+//annuler une vente
+// annuler une vente
+Route::delete('/invoices/{id}', function ($id, Request $request) {
+    DB::beginTransaction();
+
+    try {
+        $sale = Sale::findOrFail($id);
+        $saleProducts = SaleProduct::where('sale_id', $sale->id)->get();
+
+        // Vérification des stocks avant annulation
+        foreach ($saleProducts as $item) {
+            $product = Product::findOrFail($item->product_id);
+            if ($product->quantity < $item->quantity) {
+                return response()->json([
+                    'error' => 'Stock insuffisant',
+                    'message' => "Impossible d'annuler la facture. Stock actuel insuffisant pour le produit '{$product->name}'."
+                ], 409);
+            }
+        }
+
+        // Tous les stocks sont suffisants, on peut annuler
+        foreach ($saleProducts as $item) {
+            $product = Product::findOrFail($item->product_id);
+            $initial_quantity = $product->quantity;
+
+            // Remise du stock
+            $product->increment('quantity', $item->quantity);
+
+            // Enregistrement dans Stock
+            Stock::create([
+                'date' => now()->toDateString(),
+                'initial_stock' => $initial_quantity,
+                'label' => 'Annulation de la facture N°' . $id . ' pour ' 
+                    . $sale->buyer_name . ' par ' 
+                    . (Auth::user()->role === 'admin' ? 'admin' : $sale->seller_name) . '.',
+                'quantity' => $item->quantity,
+                'final_stock' => $product->quantity,
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'sale_id' => $sale->id,
+                'seller_name' => $sale->seller_name,
+            ]);
+        }
+
+        // Mettre à jour le status de la vente
+        $sale->status = 'cancelled';
+        $sale->save();
+
+        // Notification pour justifier l'annulation sans supprimer la vente
+        Notification::create([
+            'description' => 'Annulation de la facture N°' . $id . ' pour ' 
+                . $sale->buyer_name . ' par ' 
+                . (Auth::user()->role === 'admin' ? 'admin' : $sale->seller_name) . '.',
+        ]);
+
+        DB::commit();
+
+        return response()->json(['message' => 'Facture annulée avec succès. Stock remis à jour et status modifié.']);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'error' => 'Échec de l\'annulation de la facture.',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+})->name('invoices.cancel')->middleware('auth');
+
 
 
 Route::get('/dashboard', function () {
@@ -261,7 +312,7 @@ Route::get('/dashboard', function () {
 
     $salesNotifications = Sale::where('seller_name', $user->name)
         ->latest()
-        ->take(5)
+        ->take(20)
         ->get();
 
     $totalCA = Sale::where('seller_name', $user->name)->sum('total');
