@@ -294,14 +294,16 @@ Route::get('/newInvoice/{sale_id}', function ($sale_id) {
 
 
 /* api routes */
-     Route::get('/productsList', function () {
+//get products list
+Route::get('/productsList', function () {
     if (!Auth::check()) {
         return redirect()->route('login');
     }
 
-    $products = Product::all();
+    $products = Product::orderBy('id', 'desc')->get(); // tri décroissant par id
     return response()->json($products);
 })->name('productsList');
+
 
 
   Route::get('/product/{id}', function ($id) {

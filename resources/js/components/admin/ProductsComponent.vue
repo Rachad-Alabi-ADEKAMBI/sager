@@ -1013,6 +1013,14 @@
                         alert('Produit ajouté avec succès.');
                         this.fetchProducts(); // si tu veux rafraîchir la liste
                         this.closeModal(); // si tu veux fermer le modal après ajout
+
+                        // Réinitialiser le formulaire
+                        this.name = '';
+                        this.purchase_price = '';
+                        this.quantity = '';
+                        this.price_detail = '';
+                        this.price_semi_bulk = '';
+                        this.price_bulk = '';
                     })
                     .catch((error) => {
                         alert("Erreur lors de l'ajout du produit.");

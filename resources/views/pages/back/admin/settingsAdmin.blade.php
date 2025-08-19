@@ -27,21 +27,29 @@
     <section
         style="max-width: 500px; margin: 3rem auto; background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
         <h3 style="margin-bottom: 1.5rem;">Modifier les Paramètres du compte</h3>
-        <form action="" method="POST">
+        <form id="passwordForm" action="{{ route('settings.updatePassword') }}" method="POST">
             @csrf
 
-            <div class="form-group">
+            <div class="form-group" style="position: relative;">
                 <label for="old_password">Ancien mot de passe</label>
                 <input type="password" id="old_password" name="old_password" class="form-control" required>
+                <i class="fas fa-eye toggle-password" data-target="old_password"
+                    style="position: absolute; right: 10px; top: 38px; cursor: pointer;"></i>
             </div>
-            <div class="form-group">
+
+            <div class="form-group" style="position: relative;">
                 <label for="new_password">Nouveau mot de passe</label>
                 <input type="password" id="new_password" name="new_password" class="form-control" required>
+                <i class="fas fa-eye toggle-password" data-target="new_password"
+                    style="position: absolute; right: 10px; top: 38px; cursor: pointer;"></i>
             </div>
-            <div class="form-group">
+
+            <div class="form-group" style="position: relative;">
                 <label for="new_password_confirmation">Confirmer le mot de passe</label>
                 <input type="password" id="new_password_confirmation" name="new_password_confirmation"
                     class="form-control" required>
+                <i class="fas fa-eye toggle-password" data-target="new_password_confirmation"
+                    style="position: absolute; right: 10px; top: 38px; cursor: pointer;"></i>
             </div>
 
             <div style="display: flex; justify-content: center; margin-top: 2rem;">
@@ -50,6 +58,7 @@
                 </button>
             </div>
         </form>
+
     </section>
 </main>
 
@@ -526,42 +535,46 @@
     }
 </style>
 
-
 <script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('active');
-    }
+    // Toggle password visibility
+    document.querySelectorAll(".toggle-password").forEach(icon => {
+        icon.addEventListener("click", function() {
+            const input = document.getElementById(this.dataset.target);
+            if (input.type === "password") {
+                input.type = "text";
+                this.classList.remove("fa-eye");
+                this.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                this.classList.remove("fa-eye-slash");
+                this.classList.add("fa-eye");
+            }
+        });
+    });
 
-    function openModal() {
-        document.getElementById('userModal').style.display = 'block';
-    }
+    // Submit form via fetch avec alert
+    document.getElementById('passwordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
 
-    function closeModal() {
-        document.getElementById('userModal').style.display = 'none';
-    }
+        const formData = new FormData(this);
 
-    function viewUserActivity(userName) {
-        alert(`Affichage de l'activité de ${userName}`);
-    }
-
-    // Close modal when clicking outside
-    window.onclick = function(event) {
-        const modal = document.getElementById('userModal');
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
-    }
-
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function(event) {
-        const sidebar = document.getElementById('sidebar');
-        const menuToggle = document.querySelector('.menu-toggle');
-
-        if (window.innerWidth <= 768 &&
-            !sidebar.contains(event.target) &&
-            !menuToggle.contains(event.target)) {
-            sidebar.classList.remove('active');
-        }
+        fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.messages.join("\n"));
+                if (data.status === 'success') {
+                    window.location.reload(); // Recharge la page après succès
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Une erreur est survenue.');
+            });
     });
 </script>
