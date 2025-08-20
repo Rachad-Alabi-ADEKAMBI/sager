@@ -78,9 +78,15 @@ Route::get('/stocks', function () {
 })->name('stocks');
 
 
-Route::delete('/products/{id}', [ProductController::class, 'destroy'])
+//delete a product
+Route::post('/products/{id}/delete', [ProductController::class, 'destroy'])
     ->middleware('auth')
     ->name('products.destroy');
+
+// update product prices
+Route::post('/products/{id}/update-prices', [ProductController::class, 'updatePrices'])
+    ->middleware('auth')
+    ->name('products.updatePrices');
 
 Route::get('/sellers', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
@@ -221,7 +227,6 @@ Route::post('/sale', function (Request $request) {
 });
 
 
-//annuler une vente
 // annuler une vente
 Route::delete('/invoices/{id}', function ($id, Request $request) {
     DB::beginTransaction();
@@ -356,6 +361,15 @@ Route::get('/productsList', function () {
 })->name('productsList');
 
 
+//add a product
+Route::post('/products', function (\Illuminate\Http\Request $request) {
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return response()->json(['error' => 'Accès interdit'], 403);
+    }
+
+    return app(\App\Http\Controllers\ProductController::class)->store($request);
+})->name('products.store');
+
 
   Route::get('/product/{id}', function ($id) {
     if (!Auth::check()) {
@@ -430,7 +444,6 @@ Route::post('/revertAddStock', [App\Http\Controllers\ProductController::class, '
     ->middleware('auth')
     ->name('revertAddStock');
 
-
 //seller sales
 Route::get('/sellerSalesList', function (Request $request) {
     if (!Auth::check()) {
@@ -448,8 +461,7 @@ Route::get('/sellerSalesList', function (Request $request) {
 })->name('sellerSalesList');
 
 
-
-     Route::get('/salesList', function () {
+Route::get('/salesList', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
         return redirect()->route('login');
     }
@@ -464,7 +476,7 @@ Route::get('/sellerSalesList', function (Request $request) {
         return redirect()->route('login');
     }
 
-$sale = Sale::with('products')->findOrFail($saleId);
+    $sale = Sale::with('products')->findOrFail($saleId);
     return response()->json($sale);
 })->name('sale.details');
 

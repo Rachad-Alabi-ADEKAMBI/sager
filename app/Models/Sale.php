@@ -10,6 +10,7 @@ class Sale extends Model
         'seller_name',
         'buyer_name',
         'total',
+         'status', // ajouté
     ];
 
     public function products()

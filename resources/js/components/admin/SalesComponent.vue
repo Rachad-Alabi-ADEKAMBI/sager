@@ -72,6 +72,24 @@
                                     ></i>
                                     Voir
                                 </button>
+
+                                <button
+                                    v-if="sale.status === 'done'"
+                                    class="cancel-btn"
+                                    @click="cancelInvoice(sale.id)"
+                                    style="
+                                        background: #dc3545;
+                                        color: white;
+                                        border: none;
+                                        padding: 0.5rem 1rem;
+                                        border-radius: 5px;
+                                        cursor: pointer;
+                                        margin: 5px;
+                                    "
+                                >
+                                    <i class="fas fa-times"></i>
+                                    Annuler
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -266,6 +284,23 @@
                         );
                     });
             },
+            cancelInvoice(id) {
+                if (!confirm('Voulez-vous vraiment annuler cette facture ?')) {
+                    return;
+                }
+
+                axios
+                    .delete(`/invoices/${id}`)
+                    .then(() => {
+                        alert('Facture annulée avec succès.');
+                        this.fetchSalesData();
+                    })
+                    .catch((error) => {
+                        alert("Erreur lors de l'annulation de la facture.");
+                        console.error(error);
+                    });
+            },
+
             closeSaleModal() {
                 this.showSaleModal = false;
                 this.selectedSale = null;

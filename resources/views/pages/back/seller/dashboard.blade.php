@@ -38,7 +38,9 @@
                         <div class="stat-label">Ventes aujourdhui</div>
                     </div>
                     <div class="stat-icon sales">
-                        <i class="fas fa-shopping-cart"></i>
+                        <a href="{{ route('sale') }}">
+                            <i class="fas fa-shopping-cart" style="color: white; cursor: hover;"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -50,7 +52,9 @@
                         <div class="stat-label">Chiffre d'affaires</div>
                     </div>
                     <div class="stat-icon revenue">
-                        <i class="fas fa-wallet"></i>
+                        <a href="{{ route('sale') }}">
+                            <i class="fas fa-wallet" style="color: white; cursor: hover;"></i>
+                        </a>
                     </div>
                 </div>
             </div>

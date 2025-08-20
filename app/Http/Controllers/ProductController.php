@@ -70,7 +70,7 @@ public function store(Request $request)
 }
 
 
-   public function update(Request $request, $id)
+   public function updatePrices(Request $request, $id)
 {
     // Validation des données reçues
     $validated = $request->validate([
@@ -297,8 +297,6 @@ public function destroy($id, Request $request)
         ], 500);
     }
 }
-
-
 
 }
 

@@ -9,6 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,9 +17,10 @@
         rel="stylesheet">
 
     <meta name="description"
-        content="SAGER, votre distributeur de confiance pour boissons, eaux, sodas, bières et gaz domestique. Vente en gros et détail avec livraison rapide. Contactez-nous au +237 XXX XXX XXX">
+        content="SAGER, votre distributeur de confiance pour boissons, eaux, sodas, bières et gaz domestique. 
+        Vente en gros et détail avec livraison rapide. Contactez-nous au +229  01 96 46 66 25">
     <meta name="keywords"
-        content="distributeur boissons, vente gaz domestique, eau en gros, sodas, bières, livraison boissons, SAGER Cameroun">
+        content="distributeur boissons, vente gaz domestique, eau en gros, sodas, bières, livraison boissons, SAGER Bénin">
     <meta name="author" content="SAGER">
     <meta name="robots" content="index, follow">
 
@@ -48,6 +50,11 @@
 
     <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        axios.defaults.headers.common['X-CSRF-TOKEN'] =
+            document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    </script>
 
 </body>
 

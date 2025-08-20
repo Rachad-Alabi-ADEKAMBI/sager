@@ -654,7 +654,7 @@
                         type="number"
                         class="form-control"
                         v-model.number="editedPriceDetail"
-                        :placeholder="currentProduct.price_detail"
+                        :placeholder="formatAmount(currentProduct.price_detail)"
                         min="0"
                         step="0.01"
                     />
@@ -908,18 +908,15 @@
                     };
 
                     axios
-                        .post(`/products/${productId}`, payload)
+                        .post(`/products/${productId}/update-prices`, payload)
                         .then((response) => {
-                            // Mise à jour locale des données si besoin
+                            alert('Prix mis à jour avec succès.');
                             this.currentProduct.price_detail =
                                 this.editedPriceDetail;
                             this.currentProduct.price_semi_bulk =
                                 this.editedPriceSemiBulk;
                             this.currentProduct.price_bulk =
                                 this.editedPriceBulk;
-
-                            // affiche un message en alert que la modification a marche
-
                             this.closeEditModal();
                         })
                         .catch((error) => {
@@ -927,10 +924,11 @@
                                 'Erreur lors de la mise à jour des prix :',
                                 error
                             );
-                            // Gestion d'erreur (alerte, message, etc.)
+                            alert('Erreur lors de la mise à jour des prix.');
                         });
                 }
             },
+
             displayStock(product_id) {
                 axios
                     .get(`/stock/${product_id}`)
@@ -980,17 +978,25 @@
             },
             deleteProduct() {
                 axios
-                    .delete(`/products/${this.currentProduct.id}`)
+                    .post(`/products/${this.currentProduct.id}/delete`)
                     .then(() => {
                         // Actualise la liste, ferme le modal
                         alert(
                             `Le produit ${this.currentProduct.name} a été supprimé avec succès.`
                         );
-                        this.fetchProducts();
+                        this.fetchProducts(); //relaod plutot la page window.location.reload()
                         this.closeDeleteModal();
                     })
                     .catch((error) => {
-                        alert('Erreur lors de la suppression');
+                        if (
+                            error.response &&
+                            error.response.data &&
+                            error.response.data.message
+                        ) {
+                            alert(error.response.data.message);
+                        } else {
+                            alert('Erreur lors de la suppression.');
+                        }
                         console.error(error);
                     });
             },
