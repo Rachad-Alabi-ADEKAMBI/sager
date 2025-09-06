@@ -5,7 +5,7 @@
             <!-- Sales Form -->
             <div class="sales-form">
                 <h3 style="margin-bottom: 1.5rem; color: #333">
-                    Informations de la vente
+                    Informations de la facture proforma
                 </h3>
 
                 <form @submit.prevent="submitForm">
@@ -106,15 +106,12 @@
                                     </select>
                                 </div>
 
-                                <!-- Quantité décimale -->
+                                <!-- Quantité -->
                                 <div class="form-group">
                                     <label>Quantité</label>
                                     <input
                                         type="number"
                                         class="form-control quantity-input"
-                                        min="0.01"
-                                        step="0.01"
-                                        :max="line.product?.quantity || 0"
                                         v-model.number="line.quantity"
                                         style="width: 100px"
                                         @input="onQuantityChange(index)"
@@ -170,7 +167,7 @@
                         <div style="text-align: center; margin-top: 1.5rem">
                             <button class="btn-primary" type="submit">
                                 <i class="fas fa-check"></i>
-                                Finaliser la vente
+                                Finaliser la facture proforma
                             </button>
                         </div>
                     </div>
@@ -180,12 +177,15 @@
             <!-- Sales History -->
             <div class="sales-history">
                 <div class="history-header">
-                    <h3>Historique de mes ventes ( {{ sales.length }} )</h3>
+                    <h3>
+                        Historique de mes factures proforma (
+                        {{ sales.length }} )
+                    </h3>
                 </div>
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>N° Facture</th>
+                            <th>N° Facture Proforma</th>
                             <th>Client</th>
                             <th>Date</th>
                             <th>Montant</th>
@@ -348,12 +348,12 @@
 
 <script>
     export default {
-        name: 'SaleComponent',
+        name: 'ProformaComponent',
 
         data() {
             return {
                 products: [],
-                seller_name: window.sellerName || '',
+                seller_name: 'john',
                 customer_name: 'test',
                 customer_phone: '5222',
                 productLines: [],
@@ -448,11 +448,6 @@
                 const line = this.productLines[index];
                 const available = line.product?.quantity || 0;
 
-                if (line.quantity > available) {
-                    alert(`Stock insuffisant, disponible : ${available}`);
-                    line.quantity = available;
-                }
-
                 this.updateTotal();
             },
 
@@ -513,7 +508,7 @@
 
                 this.isSubmitting = true;
 
-                const saleData = {
+                const proformaData = {
                     seller_name: this.seller_name,
                     buyer_name: this.customer_name,
                     buyer_phone: this.customer_phone,
@@ -524,10 +519,12 @@
                     })),
                 };
 
+                console.log('Données envoyées au backend :', proformaData);
+
                 axios
-                    .post('/sale', saleData)
+                    .post('/proforma', proformaData)
                     .then((response) => {
-                        alert('Vente enregistrée avec succès !');
+                        alert('Facture proforma enregistrée avec succès !');
                         window.location.reload();
                     })
                     .catch((error) => {
@@ -572,6 +569,63 @@
         },
     };
 </script>
+
+<style>
+    .pagination-btn {
+        margin: 0 4px;
+        padding: 6px 12px;
+        border: 1px solid #ddd;
+        background: #f9f9f9;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .pagination-btn.active {
+        background-color: #007bff;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+    }
+
+    .modal-container {
+        background: #fff;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 600px;
+        padding: 1.5rem;
+    }
+
+    .modal-header,
+    .modal-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+</style>
 
 <style>
     .pagination-btn {

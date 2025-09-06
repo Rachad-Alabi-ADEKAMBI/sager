@@ -17,12 +17,14 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\SettingsController;
 use App\Models\Stock;
 use Illuminate\Support\Carbon;
+use App\Http\Controllers\ProformaController;
+
 
 Route::get('/', function () {
     return view('pages/front/home');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::get('/home', function () {
     return view('pages/front/home');
@@ -100,7 +102,7 @@ Route::get('/sales', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
         return redirect()->route('login');
     }
-   $sales = Sale::with('products')->orderBy('created_at', 'desc')->get();
+    $sales = Sale::with('products')->orderBy('created_at', 'desc')->get();
     return view('pages/back/admin/sales', compact('sales'));
 })->name('sales');
 
@@ -121,11 +123,34 @@ Route::get('/sale', function () {
     if (!Auth::check() || Auth::user()->role !== 'seller') {
         return redirect()->route('login');
     }
-      $products = Product::all();
+    $products = Product::all();
 
-      //get all the sales_id of the current 
+    //get all the sales_id of the current 
     return view('pages/back/seller/sale', compact('products'));
 })->name('sale');
+
+Route::get('/proforma', function () {
+    if (!Auth::check() || Auth::user()->role !== 'seller') {
+        return redirect()->route('login');
+    }
+    $products = Product::all();
+
+    //get all the sales_id of the current 
+    return view('pages/back/seller/proforma', compact('products'));
+})->name('proforma');
+
+Route::middleware(['auth'])->group(function () {
+
+// Create proforma invoice
+Route::post('/proforma', [ProformaController::class, 'store'])
+        ->name('proforma.store');
+
+// Optional: cancel a proforma
+Route::post('/proformas/{id}/cancel', [ProformaController::class, 'cancel'])
+        ->name('proformas.cancel');
+});
+
+
 
 //faire une vente
 Route::post('/sale', function (Request $request) {
@@ -136,60 +161,60 @@ Route::post('/sale', function (Request $request) {
         'buyer_phone' => 'nullable|string',
         'products' => 'required|array|min:1',
         'products.*.product_id' => 'required|exists:products,id',
-        'products.*.quantity' => 'required|integer|min:1',
+       'products.*.quantity'   => 'required|numeric|min:0.01',
         'products.*.price' => 'required|numeric|min:0',
     ]);
 
     DB::beginTransaction();
 
-                try {
-                    // Calcul du total
-                    $total = collect($validated['products'])->sum(function ($item) {
-                        return $item['quantity'] * $item['price'];
-                    });
+    try {
+        // Calcul du total
+        $total = collect($validated['products'])->sum(function ($item) {
+            return $item['quantity'] * $item['price'];
+        });
 
-                    // Création de la vente
-                    $sale = Sale::create([
-                        'seller_name' => $validated['seller_name'],
-                        'buyer_name' => $validated['buyer_name'],
-                        'buyer_phone' => $validated['buyer_phone'],
-                        'total' => $total,
-                         'status' => 'done', // <-- ajout du status
-                    ]);
+        // Création de la vente
+        $sale = Sale::create([
+            'seller_name' => $validated['seller_name'],
+            'buyer_name' => $validated['buyer_name'],
+            'buyer_phone' => $validated['buyer_phone'],
+            'total' => $total,
+            'status' => 'done', // <-- ajout du status
+        ]);
 
-                    $details = [];
+        $details = [];
 
-                    foreach ($validated['products'] as $item) {
-                        $product = Product::findOrFail($item['product_id']);
+        foreach ($validated['products'] as $item) {
+            $product = Product::findOrFail($item['product_id']);
 
-                        $initial_quantity = $product->quantity;
+            $initial_quantity = $product->quantity;
 
-                        // Vérifie le stock
-                        if ($product->quantity < $item['quantity']) {
-                            throw new \Exception("Stock insuffisant pour le produit: {$product->name}");
-                        }
+            // Vérifie le stock
+            if ($product->quantity < $item['quantity']) {
+                throw new \Exception("Stock insuffisant pour le produit: {$product->name}");
+            }
 
-                        // Création de la ligne de vente
-                        $saleProduct = SaleProduct::create([
-                            'sale_id' => $sale->id,
-                            'product_id' => $product->id,
-                            'quantity' => $item['quantity'],
-                            'price' => $item['price'],
-                        ]);
+            // Création de la ligne de vente
+            $saleProduct = SaleProduct::create([
+                'sale_id' => $sale->id,
+                'product_id' => $product->id,
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+            ]);
 
-                        // Mise à jour du stock
-                        $product->decrement('quantity', $item['quantity']);
+            // Mise à jour du stock
+            $product->decrement('quantity', $item['quantity']);
 
-                        $details[] = [
-                            'product' => $product->name,
-                            'quantity_sold' => $item['quantity'],
-                            'price' => $item['price']
-                        ];
+            $details[] = [
+                'product' => $product->name,
+                'quantity_sold' => $item['quantity'],
+                'price' => $item['price']
+            ];
 
-                        //insertion dans la table des stocks
-                        $final_quantity = $initial_quantity - $item['quantity'];
+            //insertion dans la table des stocks
+            $final_quantity = $initial_quantity - $item['quantity'];
 
-                        Stock::create([
+            Stock::create([
                 'date' => now()->toDateString(),
                 'initial_stock' => $initial_quantity,
                 'label' => 'Vente produit ' . $product->name,
@@ -207,7 +232,7 @@ Route::post('/sale', function (Request $request) {
         // Ajoute l'opération dans la table des notifications
         Notification::create([
             'description' => 'Facture N°' . $sale->id . '/' . now()->format('m') . '/' . now()->format('y') . '/FR-N pour ' .
-                            $sale->buyer_name . ' par ' . $sale->seller_name . '. Total : ' . $total . ' FCFA.',
+                $sale->buyer_name . ' par ' . $sale->seller_name . '. Total : ' . $total . ' FCFA.',
         ]);
 
         return response()->json([
@@ -216,7 +241,6 @@ Route::post('/sale', function (Request $request) {
             'total' => $total,
             'products' => $details
         ], 200);
-
     } catch (\Exception $e) {
         DB::rollBack();
         return response()->json([
@@ -228,73 +252,13 @@ Route::post('/sale', function (Request $request) {
 
 
 // annuler une vente
-Route::delete('/invoices/{id}', function ($id, Request $request) {
-    DB::beginTransaction();
-
-    try {
-        $sale = Sale::findOrFail($id);
-        $saleProducts = SaleProduct::where('sale_id', $sale->id)->get();
-
-        // Vérification des stocks avant annulation
-        foreach ($saleProducts as $item) {
-            $product = Product::findOrFail($item->product_id);
-            if ($product->quantity < $item->quantity) {
-                return response()->json([
-                    'error' => 'Stock insuffisant',
-                    'message' => "Impossible d'annuler la facture. Stock actuel insuffisant pour le produit '{$product->name}'."
-                ], 409);
-            }
-        }
-
-        // Tous les stocks sont suffisants, on peut annuler
-        foreach ($saleProducts as $item) {
-            $product = Product::findOrFail($item->product_id);
-            $initial_quantity = $product->quantity;
-
-            // Remise du stock
-            $product->increment('quantity', $item->quantity);
-
-            // Enregistrement dans Stock
-            Stock::create([
-                'date' => now()->toDateString(),
-                'initial_stock' => $initial_quantity,
-                'label' => 'Annulation de la facture N°' . $id . ' pour ' 
-                    . $sale->buyer_name . ' par ' 
-                    . (Auth::user()->role === 'admin' ? 'admin' : $sale->seller_name) . '.',
-                'quantity' => $item->quantity,
-                'final_stock' => $product->quantity,
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'sale_id' => $sale->id,
-                'seller_name' => $sale->seller_name,
-            ]);
-        }
-
-        // Mettre à jour le status de la vente
-        $sale->status = 'cancelled';
-        $sale->save();
-
-        // Notification pour justifier l'annulation sans supprimer la vente
-        Notification::create([
-            'description' => 'Annulation de la facture N°' . $id . ' pour ' 
-                . $sale->buyer_name . ' par ' 
-                . (Auth::user()->role === 'admin' ? 'admin' : $sale->seller_name) . '.',
-        ]);
-
-        DB::commit();
-
-        return response()->json(['message' => 'Facture annulée avec succès. Stock remis à jour et status modifié.']);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return response()->json([
-            'error' => 'Échec de l\'annulation de la facture.',
-            'message' => $e->getMessage()
-        ], 500);
-    }
-})->name('invoices.cancel')->middleware('auth');
+Route::post('/invoices/{id}/cancel', [SaleController::class, 'cancel'])
+    ->name('invoices.cancel')
+    ->middleware('auth');
 
 
 
+//tableau de bord
 Route::get('/dashboard', function () {
     if (!Auth::check() || Auth::user()->role !== 'seller') {
         return redirect()->route('login');
@@ -340,7 +304,7 @@ Route::get('/newInvoice/{sale_id}', function ($sale_id) {
     ]);
 });
 
-   Route::get('/settings', function () {
+Route::get('/settings', function () {
     if (!Auth::check() || Auth::user()->role !== 'seller') {
         return redirect()->route('login');
     }
@@ -371,7 +335,7 @@ Route::post('/products', function (\Illuminate\Http\Request $request) {
 })->name('products.store');
 
 
-  Route::get('/product/{id}', function ($id) {
+Route::get('/product/{id}', function ($id) {
     if (!Auth::check()) {
         return redirect()->route('login');
     }
@@ -471,7 +435,7 @@ Route::get('/salesList', function () {
 })->name('salesList');
 
 
- Route::get('/saleDetails/{saleId}', function ($saleId) {
+Route::get('/saleDetails/{saleId}', function ($saleId) {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
         return redirect()->route('login');
     }
@@ -487,7 +451,7 @@ Route::get('/sellers/{id}/sales', function ($id) {
     if (!Auth::check()) {
         return response()->json(['error' => 'Non authentifié.'], 401);
     }
-    
+
     // Rechercher le vendeur par son ID
     $seller = User::find($id);
 
@@ -498,8 +462,8 @@ Route::get('/sellers/{id}/sales', function ($id) {
 
     // Récupérer les ventes du vendeur en utilisant son nom
     $sales = Sale::where('seller_name', $seller->name)
-                 ->orderBy('created_at', 'desc')
-                 ->get();
+        ->orderBy('created_at', 'desc')
+        ->get();
 
     return response()->json($sales);
 });
@@ -511,7 +475,7 @@ Route::post('/sellers/{id}/ban', function (Request $request, $id) {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
         return response()->json(['error' => 'Accès non autorisé.'], 403);
     }
-    
+
     // 2. Validation de la requête
     $request->validate([
         'reason' => 'required|string|min:10',
@@ -562,7 +526,7 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store'])
     ->middleware('guest')
     ->name('login');
 
-    Route::get('/reset_password', function () {
+Route::get('/reset_password', function () {
     return view('pages/front/reset_password');
 })->middleware('guest')->name('reset_password');
 

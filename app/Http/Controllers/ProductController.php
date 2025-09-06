@@ -28,98 +28,98 @@ class ProductController extends BaseController
         return view('products.create');
     }
 
-public function store(Request $request)
-{
-    $data = $request->validate([
-        'name' => 'required|string',
-        'purchase_price' => 'required|numeric',
-        'price_detail' => 'required|numeric',
-        'price_semi_bulk' => 'required|numeric',
-        'price_bulk' => 'required|numeric',
-        'quantity' => 'required|integer',
-        'photo' => 'nullable|image|max:2048',
-    ]);
-
-    if ($request->hasFile('photo')) {
-        $data['photo'] = $request->file('photo')->store('products', 'public');
-    }
-
-    try {
-        $product = Product::create($data);
-
-        Stock::create([
-            'date' => now()->toDateString(),
-            'initial_stock' => 0,
-            'label' => 'Ajout du produit ' . $product->name,
-            'quantity' => $request->quantity,
-            'final_stock' => $request->quantity,
-            'product_id' => $product->id,
-            'product_name' => $product->name,
-            'sale_id' => null,
-            'seller_name' => null,
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+            'purchase_price' => 'required|numeric',
+            'price_detail' => 'required|numeric',
+            'price_semi_bulk' => 'required|numeric',
+            'price_bulk' => 'required|numeric',
+            'quantity' => 'required|integer',
+            'photo' => 'nullable|image|max:2048',
         ]);
 
-        Notification::create([
-            'description' => 'Produit ' . $data['name'] . ' ajouté avec succès. Quantité : ' . $data['quantity'] . '.',
+        if ($request->hasFile('photo')) {
+            $data['photo'] = $request->file('photo')->store('products', 'public');
+        }
+
+        try {
+            $product = Product::create($data);
+
+            Stock::create([
+                'date' => now()->toDateString(),
+                'initial_stock' => 0,
+                'label' => 'Ajout du produit ' . $product->name,
+                'quantity' => $request->quantity,
+                'final_stock' => $request->quantity,
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'sale_id' => null,
+                'seller_name' => null,
+            ]);
+
+            Notification::create([
+                'description' => 'Produit ' . $data['name'] . ' ajouté avec succès. Quantité : ' . $data['quantity'] . '.',
+            ]);
+
+            return response()->json(['message' => 'Produit ajouté avec succès.'], 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Erreur lors de la création du produit.'], 500);
+        }
+    }
+
+
+    public function updatePrices(Request $request, $id)
+    {
+        // Validation des données reçues
+        $validated = $request->validate([
+            'price_detail' => 'required|numeric|min:0',
+            'price_semi_bulk' => 'required|numeric|min:0',
+            'price_bulk' => 'required|numeric|min:0',
         ]);
 
-        return response()->json(['message' => 'Produit ajouté avec succès.'], 201);
-    } catch (\Exception $e) {
-        return response()->json(['error' => 'Erreur lors de la création du produit.'], 500);
+        // Trouver le produit
+        $product = Product::findOrFail($id);
+
+        // Récupération des anciens prix
+        $oldDetail = $product->price_detail;
+        $oldSemiBulk = $product->price_semi_bulk;
+        $oldBulk = $product->price_bulk;
+
+        // Mise à jour des prix
+        $product->price_detail = $validated['price_detail'];
+        $product->price_semi_bulk = $validated['price_semi_bulk'];
+        $product->price_bulk = $validated['price_bulk'];
+
+        // Construction du message de notification
+        $messages = [];
+
+        if ($oldDetail != $validated['price_detail']) {
+            $messages[] = 'détail: ' . $oldDetail . ' → ' . $validated['price_detail'];
+        }
+        if ($oldSemiBulk != $validated['price_semi_bulk']) {
+            $messages[] = 'semi-gros: ' . $oldSemiBulk . ' → ' . $validated['price_semi_bulk'];
+        }
+        if ($oldBulk != $validated['price_bulk']) {
+            $messages[] = 'gros: ' . $oldBulk . ' → ' . $validated['price_bulk'];
+        }
+
+        $product->save();
+
+        // Créer une notification seulement si au moins un prix a changé
+        if (!empty($messages)) {
+            $label = 'Mise à jour des prix pour le produit "' . $product->name . '": ' . implode('; ', $messages);
+            Notification::create([
+                'description' => $label,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Prix mis à jour avec succès',
+            'product' => $product
+        ], 200);
     }
-}
-
-
-   public function updatePrices(Request $request, $id)
-{
-    // Validation des données reçues
-    $validated = $request->validate([
-        'price_detail' => 'required|numeric|min:0',
-        'price_semi_bulk' => 'required|numeric|min:0',
-        'price_bulk' => 'required|numeric|min:0',
-    ]);
-
-    // Trouver le produit
-    $product = Product::findOrFail($id);
-
-    // Récupération des anciens prix
-    $oldDetail = $product->price_detail;
-    $oldSemiBulk = $product->price_semi_bulk;
-    $oldBulk = $product->price_bulk;
-
-    // Mise à jour des prix
-    $product->price_detail = $validated['price_detail'];
-    $product->price_semi_bulk = $validated['price_semi_bulk'];
-    $product->price_bulk = $validated['price_bulk'];
-
-    // Construction du message de notification
-    $messages = [];
-
-    if ($oldDetail != $validated['price_detail']) {
-        $messages[] = 'détail: ' . $oldDetail . ' → ' . $validated['price_detail'];
-    }
-    if ($oldSemiBulk != $validated['price_semi_bulk']) {
-        $messages[] = 'semi-gros: ' . $oldSemiBulk . ' → ' . $validated['price_semi_bulk'];
-    }
-    if ($oldBulk != $validated['price_bulk']) {
-        $messages[] = 'gros: ' . $oldBulk . ' → ' . $validated['price_bulk'];
-    }
-
-    $product->save();
-
-    // Créer une notification seulement si au moins un prix a changé
-    if (!empty($messages)) {
-        $label = 'Mise à jour des prix pour le produit "' . $product->name . '": ' . implode('; ', $messages);
-        Notification::create([
-            'description' => $label,
-        ]);
-    }
-
-    return response()->json([
-        'message' => 'Prix mis à jour avec succès',
-        'product' => $product
-    ], 200);
-}
 
 
     public function updateStock(Request $request, $id)
@@ -158,46 +158,46 @@ public function store(Request $request)
     }
 
 
-public function getAccountingData($id)
-{
-    $product = Product::findOrFail($id);
+    public function getAccountingData($id)
+    {
+        $product = Product::findOrFail($id);
 
-    // Récupérer toutes les lignes de vente avec date et id liés à ce produit
-    $sales = SaleProduct::where('product_id', $id)->get();
+        // Récupérer toutes les lignes de vente avec date et id liés à ce produit
+        $sales = SaleProduct::where('product_id', $id)->get();
 
-    $totalQuantity = $sales->sum('quantity');
+        $totalQuantity = $sales->sum('quantity');
 
-    $totalRevenue = $sales->sum(function ($sale) {
-        return $sale->quantity * $sale->price;
-    });
+        $totalRevenue = $sales->sum(function ($sale) {
+            return $sale->quantity * $sale->price;
+        });
 
-    $totalCost = $product->purchase_price * $totalQuantity;
+        $totalCost = $product->purchase_price * $totalQuantity;
 
-    $profit = $totalRevenue - $totalCost;
+        $profit = $totalRevenue - $totalCost;
 
-    // Ajouter le détail des ventes pour l'affichage ligne par ligne
-    $salesDetails = $sales->map(function ($sale) use ($product) {
-        return [
-            'id' => $sale->id,
-            'quantity' => $sale->quantity,
-            'price' => $sale->price,
-            'created_at' => $sale->created_at->toDateTimeString(),
-            'total_sale' => $sale->quantity * $sale->price,
-            'total_cost' => $product->purchase_price * $sale->quantity,
-            'profit' => $sale->quantity * $sale->price - $product->purchase_price * $sale->quantity,
-        ];
-    });
+        // Ajouter le détail des ventes pour l'affichage ligne par ligne
+        $salesDetails = $sales->map(function ($sale) use ($product) {
+            return [
+                'id' => $sale->id,
+                'quantity' => $sale->quantity,
+                'price' => $sale->price,
+                'created_at' => $sale->created_at->toDateTimeString(),
+                'total_sale' => $sale->quantity * $sale->price,
+                'total_cost' => $product->purchase_price * $sale->quantity,
+                'profit' => $sale->quantity * $sale->price - $product->purchase_price * $sale->quantity,
+            ];
+        });
 
-    return response()->json([
-        'total_quantity_sold' => $totalQuantity,
-        'total_revenue' => $totalRevenue,
-        'total_cost' => $totalCost,
-        'profit' => $profit,
-        'sales_details' => $salesDetails,
-    ]);
-}
+        return response()->json([
+            'total_quantity_sold' => $totalQuantity,
+            'total_revenue' => $totalRevenue,
+            'total_cost' => $totalCost,
+            'profit' => $profit,
+            'sales_details' => $salesDetails,
+        ]);
+    }
 
-  public function revertAddStock(Request $request)
+    public function revertAddStock(Request $request)
     {
         // 1. Validation de l'ID du produit
         $validated = $request->validate([
@@ -265,7 +265,6 @@ public function getAccountingData($id)
                 'message' => 'Opération d\'ajout de stock annulée avec succès.',
                 'product' => $product,
             ], 200);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -275,30 +274,25 @@ public function getAccountingData($id)
         }
     }
 
-public function destroy($id, Request $request)
-{
-    try {
-        $product = Product::findOrFail($id);
-        $product->delete();
+    public function destroy($id, Request $request)
+    {
+        try {
+            $product = Product::findOrFail($id);
+            $product->delete();
 
-        Notification::create([
-            'description' => 'Produit ' . $product->name . ' supprimé.',
-        ]);
+            Notification::create([
+                'description' => 'Produit ' . $product->name . ' supprimé.',
+            ]);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Produit supprimé avec succès.'
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Erreur de suppression: ' . $e->getMessage()
-        ], 500);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Produit supprimé avec succès.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erreur de suppression: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
-
-}
-
-
-

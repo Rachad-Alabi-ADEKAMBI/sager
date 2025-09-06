@@ -11,6 +11,8 @@
          <li><a href="{{ route('dashboard') }}" class="active"><i class="fas fa-tachometer-alt"></i> Tableau de bord</a>
          </li>
          <li><a href="{{ route('sale') }}"><i class="fas fa-shopping-cart"></i> Vente</a></li>
+         <li><a href="{{ route('proforma') }}"><i class="fas fa-file-invoice"></i> Facture Proforma</a></li>
+
          <li><a href="{{ route('settings') }}"><i class="fas fa-cog"></i> Paramètres du compte</a></li>
          <li><a href="{{ route('home') }}"><i class="fas fa-home"></i> Accueil</a></li>
 

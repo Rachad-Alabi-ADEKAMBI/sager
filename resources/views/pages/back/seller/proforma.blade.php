@@ -3,7 +3,8 @@
 @include('pages.back.seller.sidebar')
 
 
-@section('title', 'Nouvelle facture proforma - sager')
+@section('title', 'Facture proforma- sager')
+
 
 
 @section('content')
@@ -27,7 +28,7 @@
         </div>
     </header>
 
-    <sale-component>
+    <proforma-component>
 
 </main>
 
