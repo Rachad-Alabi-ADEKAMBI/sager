@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Sale;
 use App\Models\SaleProduct;
+use App\Models\ProformaProduct;
+use App\Models\Proforma;
 use App\Models\Notification;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SettingsController;
@@ -151,8 +153,108 @@ Route::get('/proforma', function () {
 Route::middleware(['auth'])->group(function () {
 
 // Create proforma invoice
-Route::post('/proforma', [ProformaController::class, 'store'])
-        ->name('proforma.store');
+Route::post('/proforma', function (Request $request) {
+
+    $validated = $request->validate([
+        'seller_name' => 'required|string',
+        'buyer_name' => 'required|string',
+        'products' => 'required|array|min:1',
+        'products.*.product_id' => 'required|exists:products,id',
+        'products.*.quantity' => 'required|numeric|min:0.01',
+        'products.*.price' => 'required|numeric|min:0',
+    ]);
+
+    DB::beginTransaction();
+
+    try {
+        // Calcul du total
+        $total = collect($validated['products'])->sum(function ($item) {
+            return $item['quantity'] * $item['price'];
+        });
+
+        // Création de la proforma
+        $proforma = Proforma::create([
+            'seller_name' => $validated['seller_name'],
+            'buyer_name' => $validated['buyer_name'],
+            'total' => $total,
+            'status' => 'draft',
+        ]);
+
+        $details = [];
+
+        // Enregistrement des produits liés
+        foreach ($validated['products'] as $item) {
+            $product = Product::findOrFail($item['product_id']);
+
+            ProformaProduct::create([
+                'proforma_id' => $proforma->id,
+                'product_id' => $product->id,
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+            ]);
+
+            $details[] = [
+                'product_name' => $product->name,
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+            ];
+        }
+
+        // Notification
+        Notification::create([
+            'description' => 'Proforma N°' . $proforma->id . ' pour ' .
+                $proforma->buyer_name . ' par ' . $proforma->seller_name .
+                '. Total : ' . $total . ' FCFA.',
+        ]);
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Proforma enregistrée avec succès.',
+            'proforma_id' => $proforma->id,
+            'total' => $total,
+            'products' => $details
+        ], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'error' => 'Échec de l\'enregistrement de la proforma.',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+});
+
+// Liste de toutes les proformas
+Route::get('/proformasApiList', function (Request $request) {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $proformas = Proforma::with('products')
+        ->orderBy('id', 'desc') // Tri par id décroissant
+        ->get();
+
+    return response()->json($proformas);
+})->name('proformasApiList');
+
+// Liste des proformas d'un vendeur connecté
+Route::get('/proformaApiBySellerList', function (Request $request) {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $user = Auth::user();
+
+    $proformas = Proforma::with('products')
+        ->where('seller_name', $user->name)
+        ->orderBy('id', 'desc') // Tri par id décroissant
+        ->get();
+
+    return response()->json($proformas);
+})->name('proformaApiBySellerList');
+
+
 
 // Optional: cancel a proforma
 Route::post('/proformas/{id}/cancel', [ProformaController::class, 'cancel'])

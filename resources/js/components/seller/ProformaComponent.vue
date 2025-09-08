@@ -185,7 +185,7 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>N° Facture Proforma</th>
+                            <th>N° Facture</th>
                             <th>Client</th>
                             <th>Date</th>
                             <th>Montant</th>
@@ -353,8 +353,8 @@
         data() {
             return {
                 products: [],
-                seller_name: 'john',
-                customer_name: 'test',
+                seller_name: window.sellerName || '',
+                customer_name: '',
                 customer_phone: '5222',
                 productLines: [],
                 total: 0,
@@ -392,9 +392,10 @@
                     });
 
                 axios
-                    .get('/sellerSalesList?seller_name=' + this.seller_name)
+                    .get('/proformaApiBySellerList')
                     .then((response) => {
                         this.sales = response.data;
+                        console.log(response.data);
                     })
                     .catch((error) => {
                         console.error('Erreur ventes :', error);

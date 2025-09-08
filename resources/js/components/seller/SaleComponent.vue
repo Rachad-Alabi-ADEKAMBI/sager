@@ -354,7 +354,7 @@
             return {
                 products: [],
                 seller_name: window.sellerName || '',
-                customer_name: 'test',
+                customer_name: '',
                 customer_phone: '5222',
                 productLines: [],
                 total: 0,
