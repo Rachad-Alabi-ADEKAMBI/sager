@@ -24,7 +24,7 @@
              </a>
          </li>
           <li>
-             <a href="{{ route('sellers') }}" class="{{ request()->routeIs('sellers') ? 'active' : '' }}">
+             <a href="{{ route('rentability') }}" class="{{ request()->routeIs('rentability') ? 'active' : '' }}">
                  <i class="fas fa-money-bill"></i> Rentabilité
              </a>
          </li>

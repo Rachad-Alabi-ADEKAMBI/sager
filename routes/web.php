@@ -99,6 +99,14 @@ Route::get('/sellers', function () {
     return view('pages/back/admin/sellers', compact('users'));
 })->name('sellers');
 
+Route::get('/rentability', function () {
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return redirect()->route('login');
+    }
+    $users = User::all();
+    return view('pages/back/admin/rentability');
+})->name('rentability');
+
 Route::get('/sales', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
         return redirect()->route('login');
@@ -513,6 +521,10 @@ Route::get('/accounting/{id}', [ProductController::class, 'getAccountingData']);
 //rentability data
 Route::get('/rentabilityApi', [RentabilityController::class, 'getRentability'])
     ->name('api.rentability');
+
+
+Route::get('/rentabilityApi/daily', [RentabilityController::class, 'getDailyRentability'])
+    ->name('api.rentabilityApi.daily');
 
 
 /* end api routes*/
