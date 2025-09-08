@@ -200,28 +200,35 @@
                 <p>Système de Gestion de Stock</p>
             </div>
 
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
-                <div class="form-group">
-                    <i class="fas fa-envelope form-icon"></i>
-                    <input type="email" name="email" class="form-control" placeholder="Adresse email" required>
-                </div>
+          <form method="POST" action="{{ route('login') }}">
+    @csrf
+    <div class="form-group">
+        <i class="fas fa-envelope form-icon"></i>
+        <input type="email" name="email" class="form-control" placeholder="Adresse email" required>
+    </div>
 
-                <div class="form-group">
-                    <i class="fas fa-lock form-icon"></i>
-                    <input type="password" name="password" id="password" class="form-control"
-                        placeholder="Mot de passe" required>
-                    <i class="fas fa-eye password-toggle" id="togglePassword"></i>
-                </div>
+    <div class="form-group">
+        <i class="fas fa-lock form-icon"></i>
+        <input type="password" name="password" id="password" class="form-control"
+            placeholder="Mot de passe" required>
+        <i class="fas fa-eye password-toggle" id="togglePassword"></i>
+    </div>
 
-                <button type="submit" class="btn-login">
-                    <i class="fas fa-sign-in-alt"></i> Se connecter
-                </button>
+    <!-- Case à cocher Se souvenir de moi -->
+    <div class="form-group remember-me">
+        <input type="checkbox" name="remember" id="remember">
+        <label for="remember" style="color: grey">Se souvenir de moi</label>
+    </div>
 
-                <div class="forgot-password">
-                    <a href="{{ route('reset_password') }}">Mot de passe oublié ?</a>
-                </div>
-            </form>
+    <button type="submit" class="btn-login">
+        <i class="fas fa-sign-in-alt"></i> Se connecter
+    </button>
+
+    <div class="forgot-password">
+        <a href="{{ route('reset_password') }}">Mot de passe oublié ?</a>
+    </div>
+</form>
+
 
         </div>
     </main>

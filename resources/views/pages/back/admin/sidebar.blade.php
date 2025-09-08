@@ -23,6 +23,11 @@
                  <i class="fas fa-cubes"></i> Produits
              </a>
          </li>
+          <li>
+             <a href="{{ route('sellers') }}" class="{{ request()->routeIs('sellers') ? 'active' : '' }}">
+                 <i class="fas fa-money-bill"></i> Rentabilité
+             </a>
+         </li>
          <li>
              <a href="{{ route('sellers') }}" class="{{ request()->routeIs('sellers') ? 'active' : '' }}">
                  <i class="fas fa-users"></i> Vendeurs

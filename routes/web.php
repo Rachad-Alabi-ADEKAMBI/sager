@@ -18,6 +18,7 @@ use App\Http\Controllers\SettingsController;
 use App\Models\Stock;
 use Illuminate\Support\Carbon;
 use App\Http\Controllers\ProformaController;
+use App\Http\Controllers\RentabilityController;
 
 
 Route::get('/', function () {
@@ -508,6 +509,10 @@ Route::post('/sellers/{id}/ban', function (Request $request, $id) {
 //accounting datas
 Route::get('/accounting/{id}', [ProductController::class, 'getAccountingData']);
 
+
+//rentability data
+Route::get('/rentabilityApi', [RentabilityController::class, 'getRentability'])
+    ->name('api.rentability');
 
 
 /* end api routes*/
