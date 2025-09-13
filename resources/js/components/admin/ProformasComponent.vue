@@ -71,7 +71,14 @@
                                         style="margin: 2px"
                                     ></i>
                                     Voir
-                                </button>                            
+                                </button>
+                                <button
+                                    @click="printInvoice(sale.id)"
+                                    class="btn btn-primary"
+                                >
+                                    <i class="fas fa-print"></i>
+                                    Imprimer
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -124,73 +131,88 @@
                         </li>
                     </ul>
                 </div>
-                <div class="modal fade" tabindex="-1" v-if="showSaleModal">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5>Détails de la vente</h5>
-                                <button
-                                    @click="closeSaleModal"
-                                    class="btn btn-close"
+                <div v-if="showSaleModal" class="modal-overlay">
+                    <div class="modal-container">
+                        <div class="modal-header">
+                            <h5>Détails de la vente</h5>
+                            <button @click="closeSaleModal" class="modal-close">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>
+                                <strong>Client :</strong>
+                                {{ selectedSale.buyer_name }}
+                            </p>
+                            <p>
+                                <strong>Vendeur :</strong>
+                                {{ selectedSale.seller_name }}
+                            </p>
+                            <p>
+                                <strong>Date :</strong>
+                                {{ formatDateTime(selectedSale.created_at) }}
+                            </p>
+                            <p>
+                                <strong>Total :</strong>
+                                {{ formatAmount(selectedSale.total) }} FCFA
+                            </p>
+                            <hr />
+                            <h6>Produits achetés :</h6>
+                            <ul>
+                                <li
+                                    v-for="(
+                                        product, i
+                                    ) in selectedSale.products ?? []"
+                                    :key="i"
                                 >
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <p>
-                                    <strong>Client :</strong>
-                                    {{ selectedSale.buyer_name }}
-                                </p>
-                                <p>
-                                    <strong>Vendeur :</strong>
-                                    {{ selectedSale.seller_name }}
-                                </p>
-                                <p>
-                                    <strong>Date :</strong>
                                     {{
-                                        formatDateTime(selectedSale.created_at)
+                                        product.name ??
+                                        product.product?.name ??
+                                        'Produit supprimé'
                                     }}
-                                </p>
-                                <p>
-                                    <strong>Total :</strong>
-                                    {{ formatAmount(selectedSale.total) }} FCFA
-                                </p>
-                                <hr />
-                                <h6>Produits achetés :</h6>
-                                <ul>
-                                    <li
-                                        v-for="(
-                                            product, i
-                                        ) in selectedSale.products"
-                                        :key="i"
-                                    >
-                                        {{ product.name }} -
-                                        {{ product.pivot.quantity }} ×
-                                        {{
-                                            formatAmount(
-                                                Number(product.pivot.price)
+                                    -
+                                    {{
+                                        product.pivot?.quantity ??
+                                        product.quantity ??
+                                        0
+                                    }}
+                                    ×
+                                    {{
+                                        formatAmount(
+                                            Number(
+                                                product.pivot?.price ??
+                                                    product.price ??
+                                                    0
                                             )
-                                        }}
-                                        =
-                                        {{
-                                            formatAmount(
-                                                Number(product.pivot.price) *
-                                                    product.pivot.quantity
-                                            )
-                                        }}
-                                        FCFA
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="modal-footer">
-                                <button
-                                    @click="printInvoice(selectedSale.id)"
-                                    class="btn-download"
-                                >
-                                    <i class="fas fa-download"></i>
-                                    Imprimer Facture
-                                </button>
-                            </div>
+                                        )
+                                    }}
+                                    =
+                                    {{
+                                        formatAmount(
+                                            Number(
+                                                product.pivot?.price ??
+                                                    product.price ??
+                                                    0
+                                            ) *
+                                                Number(
+                                                    product.pivot?.quantity ??
+                                                        product.quantity ??
+                                                        0
+                                                )
+                                        )
+                                    }}
+                                    FCFA
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button
+                                @click="printInvoice(selectedSale.id)"
+                                class="btn-download"
+                            >
+                                <i class="fas fa-print"></i>
+                                Imprimer Facture
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -254,8 +276,9 @@
             },
             showSaleDetails(saleId) {
                 axios
-                    .get(`/saleDetails/${saleId}`)
+                    .get(`/proformaDetails/${saleId}`)
                     .then((response) => {
+                        console.log(response.data); // vérifier que products existe
                         this.selectedSale = response.data;
                         this.showSaleModal = true;
                     })
@@ -288,7 +311,7 @@
                 this.selectedSale = null;
             },
             printInvoice(saleId) {
-                window.location.href = `/newInvoice/${saleId}`;
+                window.location.href = `/newProforma/${saleId}`;
             },
 
             // AJOUTÉ POUR LA PAGINATION: Méthode pour changer de page

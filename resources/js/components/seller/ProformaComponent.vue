@@ -112,7 +112,7 @@
                                     <input
                                         type="number"
                                         class="form-control quantity-input"
-                                         min="0.01"
+                                        min="0.01"
                                         step="0.01"
                                         v-model.number="line.quantity"
                                         style="width: 100px"
@@ -317,14 +317,22 @@
                     </p>
                     <hr />
                     <h6>Produits achetés :</h6>
-                 <ul>
-    <li v-for="(product, i) in selectedSale.products" :key="i">
-        {{ product.product?.name ?? 'Produit supprimé' }} - 
-        {{ product.quantity }} × {{ formatAmount(Number(product.price)) }} = 
-        {{ formatAmount(Number(product.price) * product.quantity) }} FCFA
-    </li>
-</ul>
-
+                    <ul>
+                        <li
+                            v-for="(product, i) in selectedSale.products"
+                            :key="i"
+                        >
+                            {{ product.product?.name ?? 'Produit supprimé' }} -
+                            {{ product.quantity }} ×
+                            {{ formatAmount(Number(product.price)) }} =
+                            {{
+                                formatAmount(
+                                    Number(product.price) * product.quantity
+                                )
+                            }}
+                            FCFA
+                        </li>
+                    </ul>
                 </div>
                 <div class="modal-footer">
                     <button

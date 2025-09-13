@@ -589,6 +589,22 @@ Route::get('/saleDetails/{saleId}', function ($saleId) {
     return response()->json($sale);
 })->name('sale.details');
 
+
+Route::get('/proformaDetails/{proformaId}', function ($proformaId) {
+    // Vérifie que l'utilisateur est connecté et admin
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return redirect()->route('login');
+    }
+
+    // Charge la proforma avec ses produits et les informations du produit lié
+    $proforma = Proforma::with('products.product')->findOrFail($proformaId);
+
+    // Retourne en JSON
+    return response()->json($proforma);
+})->name('proforma.details');
+
+
+
 Route::post('/stocks', [StockController::class, 'store']);
 //all the sales of an user based on his id
 Route::get('/sellers/{id}/sales', function ($id) {
