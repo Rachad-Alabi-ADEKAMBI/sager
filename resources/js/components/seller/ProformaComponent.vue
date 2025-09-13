@@ -112,6 +112,8 @@
                                     <input
                                         type="number"
                                         class="form-control quantity-input"
+                                         min="0.01"
+                                        step="0.01"
                                         v-model.number="line.quantity"
                                         style="width: 100px"
                                         @input="onQuantityChange(index)"
@@ -291,7 +293,7 @@
         <div v-if="showSaleModal" class="modal-overlay">
             <div class="modal-container">
                 <div class="modal-header">
-                    <h5>Détails de la vente</h5>
+                    <h3>Détails de la facture Proforma</h3>
                     <button @click="closeSaleModal" class="modal-close">
                         <i class="fas fa-times"></i>
                     </button>
@@ -315,22 +317,14 @@
                     </p>
                     <hr />
                     <h6>Produits achetés :</h6>
-                    <ul>
-                        <li
-                            v-for="(product, i) in selectedSale.products"
-                            :key="i"
-                        >
-                            {{ product.name }} - {{ product.pivot.quantity }} ×
-                            {{ formatAmount(Number(product.pivot.price)) }} =
-                            {{
-                                formatAmount(
-                                    Number(product.pivot.price) *
-                                        product.pivot.quantity
-                                )
-                            }}
-                            FCFA
-                        </li>
-                    </ul>
+                 <ul>
+    <li v-for="(product, i) in selectedSale.products" :key="i">
+        {{ product.product?.name ?? 'Produit supprimé' }} - 
+        {{ product.quantity }} × {{ formatAmount(Number(product.price)) }} = 
+        {{ formatAmount(Number(product.price) * product.quantity) }} FCFA
+    </li>
+</ul>
+
                 </div>
                 <div class="modal-footer">
                     <button
@@ -483,8 +477,8 @@
                 return date.toLocaleString('fr-FR', options);
             },
 
-            printInvoice(sale_id) {
-                window.location.href = `/newInvoice/${sale_id}`;
+            printInvoice(proforma_id) {
+                window.location.href = `/newProforma/${proforma_id}`;
             },
 
             submitForm() {

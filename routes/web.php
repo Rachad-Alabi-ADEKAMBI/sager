@@ -246,10 +246,10 @@ Route::get('/proformaApiBySellerList', function (Request $request) {
 
     $user = Auth::user();
 
-    $proformas = Proforma::with('products')
-        ->where('seller_name', $user->name)
-        ->orderBy('id', 'desc') // Tri par id décroissant
-        ->get();
+  $proformas = Proforma::with('products.product') // charger aussi la relation 'product'
+    ->where('seller_name', $user->name)
+    ->orderBy('id', 'desc')
+    ->get();
 
     return response()->json($proformas);
 })->name('proformaApiBySellerList');
@@ -412,6 +412,14 @@ Route::get('/newInvoice/{sale_id}', function ($sale_id) {
 
     return view('pages/back/seller/newInvoice', [
         'sale' => $sale,
+    ]);
+});
+
+Route::get('/newProforma/{proforma_id}', function ($proforma_id) {
+    $proforma = Proforma::with('products')->findOrFail($proforma_id);
+
+    return view('pages.back.seller.newProforma', [
+        'sale' => $proforma, // correspond à la variable utilisée dans le Blade
     ]);
 });
 

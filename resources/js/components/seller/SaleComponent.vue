@@ -315,22 +315,7 @@
                     </p>
                     <hr />
                     <h6>Produits achetés :</h6>
-                    <ul>
-                        <li
-                            v-for="(product, i) in selectedSale.products"
-                            :key="i"
-                        >
-                            {{ product.name }} - {{ product.pivot.quantity }} ×
-                            {{ formatAmount(Number(product.pivot.price)) }} =
-                            {{
-                                formatAmount(
-                                    Number(product.pivot.price) *
-                                        product.pivot.quantity
-                                )
-                            }}
-                            FCFA
-                        </li>
-                    </ul>
+                   
                 </div>
                 <div class="modal-footer">
                     <button
