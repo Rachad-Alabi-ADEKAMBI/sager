@@ -89,6 +89,13 @@
         .action-button:hover {
             opacity: 0.9;
         }
+
+          /* Masquer la section actions lors de l'impression */
+        @media print {
+            .actions {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 

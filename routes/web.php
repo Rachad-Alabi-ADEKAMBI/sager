@@ -35,20 +35,26 @@ Route::get('/home', function () {
 
 
 /*admin routes*/
-
 Route::get('/dashboardAdmin', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
         return redirect()->route('login');
     }
 
     $products = Product::all();
-    $sales = Sale::all();
-    $totalCA = Sale::sum('total');
+
+    // Ventes "done" uniquement
+    $sales = Sale::where('status', 'done')->get();
+    $totalCA = Sale::where('status', 'done')->sum('total');
 
     $today = Carbon::today();
 
-    $salesCountToday = Sale::whereDate('created_at', $today)->count();
-    $salesAmountToday = Sale::whereDate('created_at', $today)->sum('total');
+    $salesCountToday = Sale::where('status', 'done')
+        ->whereDate('created_at', $today)
+        ->count();
+
+    $salesAmountToday = Sale::where('status', 'done')
+        ->whereDate('created_at', $today)
+        ->sum('total');
 
     $notifications = Notification::latest()->take(5)->get();
 
@@ -61,6 +67,7 @@ Route::get('/dashboardAdmin', function () {
         'notifications'
     ));
 })->name('dashboardAdmin');
+
 
 
 
@@ -116,6 +123,13 @@ Route::get('/sales', function () {
     $sales = Sale::with('products')->orderBy('created_at', 'desc')->get();
     return view('pages/back/admin/sales', compact('sales'));
 })->name('sales');
+
+Route::get('/proformas', function () {
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return redirect()->route('login');
+    }
+    return view('pages/back/admin/proformas');
+})->name('proformas');
 
 Route::get('/settingsAdmin', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
@@ -378,24 +392,35 @@ Route::get('/dashboard', function () {
     $user = Auth::user();
     $today = Carbon::today();
 
+    // Toutes les ventes "done"
     $sales = Sale::where('seller_name', $user->name)
+        ->where('status', 'done')
         ->orderBy('created_at', 'desc')
         ->get();
 
+    // Nombre de ventes "done" aujourd'hui
     $salesCountToday = Sale::where('seller_name', $user->name)
+        ->where('status', 'done')
         ->whereDate('created_at', $today)
         ->count();
 
+    // Montant total des ventes "done" aujourd'hui
     $salesAmountToday = Sale::where('seller_name', $user->name)
+        ->where('status', 'done')
         ->whereDate('created_at', $today)
         ->sum('total');
 
+    // Dernières notifications de ventes "done"
     $salesNotifications = Sale::where('seller_name', $user->name)
+        ->where('status', 'done')
         ->latest()
         ->take(20)
         ->get();
 
-    $totalCA = Sale::where('seller_name', $user->name)->sum('total');
+    // Chiffre d'affaires total des ventes "done"
+    $totalCA = Sale::where('seller_name', $user->name)
+        ->where('status', 'done')
+        ->sum('total');
 
     return view('pages/back/seller/dashboard', compact(
         'sales',
@@ -405,6 +430,7 @@ Route::get('/dashboard', function () {
         'totalCA'
     ));
 })->name('dashboard');
+
 
 
 Route::get('/newInvoice/{sale_id}', function ($sale_id) {

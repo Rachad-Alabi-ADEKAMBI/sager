@@ -112,6 +112,9 @@
             <button class="action-button" onclick="window.print()">
                 <i class="fas fa-print"></i> Imprimer
             </button>
+             <a href="javascript:history.back()" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
         </div>
     </div>
 </body>

@@ -19,6 +19,11 @@
              </a>
          </li>
          <li>
+            <a href="{{ url('/proformas') }}" class="{{ request()->is('proformas') ? 'active' : '' }}">
+                <i class="fas fa-file-invoice"></i> Factures Proformas
+            </a>
+        </li>
+         <li>
              <a href="{{ route('products') }}" class="{{ request()->routeIs('products') ? 'active' : '' }}">
                  <i class="fas fa-cubes"></i> Produits
              </a>
@@ -37,12 +42,6 @@
          <li>
              <a href="{{ route('settingsAdmin') }}" class="{{ request()->routeIs('settingsAdmin') ? 'active' : '' }}">
                  <i class="fas fa-cog"></i> Paramètres du compte
-             </a>
-         </li>
-
-         <li>
-             <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">
-                 <i class="fas fa-home"></i> Accueil
              </a>
          </li>
 
