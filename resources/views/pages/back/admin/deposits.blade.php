@@ -22,7 +22,7 @@
         </div>
     </header>
 
-    <sales-component>
+    <deposits-component>
 
 </main>
 @endsection

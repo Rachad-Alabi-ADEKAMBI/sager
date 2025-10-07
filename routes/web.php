@@ -22,6 +22,7 @@ use App\Models\Stock;
 use Illuminate\Support\Carbon;
 use App\Http\Controllers\ProformaController;
 use App\Http\Controllers\RentabilityController;
+use App\Http\Controllers\DepositController;
 
 
 Route::get('/', function () {
@@ -723,6 +724,12 @@ Route::get('/reset_password', function () {
 
 //nouvelle vente
 Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');
+
+//Mise à jour d'une consignation
+Route::post('/deposits/{id}/update', [DepositController::class, 'updateDeposit']);
+
+//liste des consignations
+Route::get('/depositsList', [DepositController::class, 'depositsList']);
 
 //mise a jour du password
 Route::post('/settings/password', [SettingsController::class, 'updatePassword'])
