@@ -11,6 +11,7 @@ use App\Http\Controllers\SaleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Sale;
+use App\Models\Deposit;
 use App\Models\SaleProduct;
 use App\Models\ProformaProduct;
 use App\Models\Proforma;
@@ -288,8 +289,8 @@ Route::middleware(['auth'])->group(function () {
 
 
 //faire une vente
+
 Route::post('/sale', function (Request $request) {
-    // Validation des données
     $validated = $request->validate([
         'seller_name' => 'required|string',
         'buyer_name' => 'required|string',
@@ -303,34 +304,28 @@ Route::post('/sale', function (Request $request) {
     DB::beginTransaction();
 
     try {
-        // Calcul du total
-        $total = collect($validated['products'])->sum(function ($item) {
-            return $item['quantity'] * $item['price'];
-        });
+        $total = collect($validated['products'])->sum(fn($item) => $item['quantity'] * $item['price']);
 
-        // Création de la vente
         $sale = Sale::create([
             'seller_name' => $validated['seller_name'],
             'buyer_name' => $validated['buyer_name'],
             'buyer_phone' => $validated['buyer_phone'],
             'total' => $total,
-            'status' => 'done', // <-- ajout du status
+            'status' => 'done',
         ]);
 
         $details = [];
 
         foreach ($validated['products'] as $item) {
             $product = Product::findOrFail($item['product_id']);
-
             $initial_quantity = $product->quantity;
 
-            // Vérifie le stock
             if ($product->quantity < $item['quantity']) {
-                throw new \Exception("Stock insuffisant pour le produit: {$product->name}");
+                throw new \Exception("Stock insuffisant pour le produit : {$product->name}");
             }
 
-            // Création de la ligne de vente
-            $saleProduct = SaleProduct::create([
+            // Ligne de vente
+            SaleProduct::create([
                 'sale_id' => $sale->id,
                 'product_id' => $product->id,
                 'quantity' => $item['quantity'],
@@ -339,16 +334,9 @@ Route::post('/sale', function (Request $request) {
 
             // Mise à jour du stock
             $product->decrement('quantity', $item['quantity']);
-
-            $details[] = [
-                'product' => $product->name,
-                'quantity_sold' => $item['quantity'],
-                'price' => $item['price']
-            ];
-
-            //insertion dans la table des stocks
             $final_quantity = $initial_quantity - $item['quantity'];
 
+            // Historique du stock
             Stock::create([
                 'date' => now()->toDateString(),
                 'initial_stock' => $initial_quantity,
@@ -360,30 +348,53 @@ Route::post('/sale', function (Request $request) {
                 'sale_id' => $sale->id,
                 'seller_name' => $sale->seller_name,
             ]);
+
+            // Si produit consignable → création dans deposits
+            if ($product->is_depositable) {
+                $depositTotal = $product->deposit_price * $item['quantity'];
+
+                Deposit::create([
+                    'sale_id' => $sale->id,
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'deposit_price_at_sale' => $product->deposit_price,
+                    'quantity' => $item['quantity'],
+                    'total' => $depositTotal,
+                    'status' => 'En cours',
+                ]);
+            }
+
+            $details[] = [
+                'product' => $product->name,
+                'quantity_sold' => $item['quantity'],
+                'price' => $item['price']
+            ];
         }
 
-        DB::commit();
-
-        // Ajoute l'opération dans la table des notifications
+        // Notification
         Notification::create([
-            'description' => 'Facture N°' . $sale->id . '/' . now()->format('m') . '/' . now()->format('y') . '/FR-N pour ' .
-                $sale->buyer_name . ' par ' . $sale->seller_name . '. Total : ' . $total . ' FCFA.',
+            'description' => 'Facture N°' . $sale->id . '/' . now()->format('m') . '/' . now()->format('y')
+                . '/FR-N pour ' . $sale->buyer_name . ' par ' . $sale->seller_name
+                . '. Total : ' . $total . ' FCFA.',
         ]);
+
+        DB::commit();
 
         return response()->json([
             'message' => 'Vente enregistrée avec succès.',
             'sale_id' => $sale->id,
             'total' => $total,
-            'products' => $details
+            'products' => $details,
         ], 200);
     } catch (\Exception $e) {
         DB::rollBack();
         return response()->json([
             'error' => 'Échec de l\'enregistrement de la vente.',
-            'message' => $e->getMessage()
+            'message' => $e->getMessage(),
         ], 500);
     }
 });
+
 
 
 // annuler une vente

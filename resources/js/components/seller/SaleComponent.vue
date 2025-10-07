@@ -66,7 +66,8 @@
                                                 {{ product.name }}
                                             </option>
                                         </select>
-                                        <!-- Affichage de l'indicateur consignable et quantité restante -->
+
+                                        <!-- Affichage de l'indicateur consignable, quantité restante et prix consignation -->
                                         <div
                                             v-if="line.product"
                                             style="
@@ -92,11 +93,34 @@
                                                 style="
                                                     color: #007bff;
                                                     font-weight: 500;
+                                                    margin-right: 10px;
                                                 "
                                             >
                                                 Stock:
-                                                {{ line.product.quantity }}
+                                                {{
+                                                    line.product.quantity
+                                                }}
                                                 disponible(s)
+                                            </span>
+
+                                            <!-- Prix de consignation affiché discrètement -->
+                                            <span
+                                                v-if="
+                                                    line.product.is_depositable
+                                                "
+                                                style="
+                                                    color: #888;
+                                                    font-style: italic;
+                                                "
+                                            >
+                                                (Consignation :
+                                                {{
+                                                    formatAmount(
+                                                        line.product
+                                                            .deposit_price
+                                                    )
+                                                }}
+                                                FCFA)
                                             </span>
                                         </div>
                                     </div>
