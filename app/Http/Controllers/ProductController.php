@@ -28,20 +28,29 @@ class ProductController extends BaseController
         return view('products.create');
     }
 
+
+
     public function store(Request $request)
     {
+        // Valeur par défaut à 0 si non envoyée
+        $request->merge([
+            'is_depositable' => $request->input('is_depositable', 0),
+        ]);
+
         $data = $request->validate([
             'name' => 'required|string',
             'purchase_price' => 'required|numeric',
             'price_detail' => 'required|numeric',
             'price_semi_bulk' => 'required|numeric',
             'price_bulk' => 'required|numeric',
-            'quantity' => 'required|integer',
-            'photo' => 'nullable|image|max:2048',
+            'quantity' => 'required|numeric',
+            'is_depositable' => 'required|integer',
+            'deposit_price' => 'nullable|numeric',
         ]);
 
-        if ($request->hasFile('photo')) {
-            $data['photo'] = $request->file('photo')->store('products', 'public');
+        // Si le produit n'est pas consignable, deposit_price doit être null
+        if (!$data['is_depositable']) {
+            $data['deposit_price'] = null;
         }
 
         try {
@@ -51,10 +60,12 @@ class ProductController extends BaseController
                 'date' => now()->toDateString(),
                 'initial_stock' => 0,
                 'label' => 'Ajout du produit ' . $product->name,
-                'quantity' => $request->quantity,
-                'final_stock' => $request->quantity,
+                'quantity' => $data['quantity'],
+                'final_stock' => $data['quantity'],
                 'product_id' => $product->id,
                 'product_name' => $product->name,
+                'is_depositable' => $data['is_depositable'],
+                'deposit_price' => $data['deposit_price'],
                 'sale_id' => null,
                 'seller_name' => null,
             ]);
@@ -65,9 +76,15 @@ class ProductController extends BaseController
 
             return response()->json(['message' => 'Produit ajouté avec succès.'], 201);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Erreur lors de la création du produit.'], 500);
+            return response()->json([
+                'error' => 'Erreur lors de la création du produit.',
+                'details' => $e->getMessage()
+            ], 500);
         }
     }
+
+
+
 
 
     public function updatePrices(Request $request, $id)
@@ -77,6 +94,7 @@ class ProductController extends BaseController
             'price_detail' => 'required|numeric|min:0',
             'price_semi_bulk' => 'required|numeric|min:0',
             'price_bulk' => 'required|numeric|min:0',
+            'deposit_price' => 'nullable|numeric|min:0',
         ]);
 
         // Trouver le produit
@@ -86,11 +104,17 @@ class ProductController extends BaseController
         $oldDetail = $product->price_detail;
         $oldSemiBulk = $product->price_semi_bulk;
         $oldBulk = $product->price_bulk;
+        $oldDeposit = $product->deposit_price;
 
         // Mise à jour des prix
         $product->price_detail = $validated['price_detail'];
         $product->price_semi_bulk = $validated['price_semi_bulk'];
         $product->price_bulk = $validated['price_bulk'];
+
+        // Mise à jour du prix de consignation si le produit est consignable
+        if ($product->is_depositable && isset($validated['deposit_price'])) {
+            $product->deposit_price = $validated['deposit_price'];
+        }
 
         // Construction du message de notification
         $messages = [];
@@ -103,6 +127,9 @@ class ProductController extends BaseController
         }
         if ($oldBulk != $validated['price_bulk']) {
             $messages[] = 'gros: ' . $oldBulk . ' → ' . $validated['price_bulk'];
+        }
+        if ($product->is_depositable && $oldDeposit != $product->deposit_price) {
+            $messages[] = 'consignation: ' . $oldDeposit . ' → ' . $product->deposit_price;
         }
 
         $product->save();
@@ -120,6 +147,7 @@ class ProductController extends BaseController
             'product' => $product
         ], 200);
     }
+
 
 
     public function updateStock(Request $request, $id)

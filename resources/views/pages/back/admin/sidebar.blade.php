@@ -18,17 +18,23 @@
                  <i class="fas fa-shopping-cart"></i> Ventes
              </a>
          </li>
+
          <li>
-            <a href="{{ url('/proformas') }}" class="{{ request()->is('proformas') ? 'active' : '' }}">
-                <i class="fas fa-file-invoice"></i> Factures Proformas
-            </a>
-        </li>
+             <a href="{{ route('deposits') }}" class="{{ request()->routeIs('deposits.*') ? 'active' : '' }}">
+                 <i class="fas fa-box"></i> Consignations
+             </a>
+         </li>
+         <li>
+             <a href="{{ url('/proformas') }}" class="{{ request()->is('proformas') ? 'active' : '' }}">
+                 <i class="fas fa-file-invoice"></i> Factures Proformas
+             </a>
+         </li>
          <li>
              <a href="{{ route('products') }}" class="{{ request()->routeIs('products') ? 'active' : '' }}">
                  <i class="fas fa-cubes"></i> Produits
              </a>
          </li>
-          <li>
+         <li>
              <a href="{{ route('rentability') }}" class="{{ request()->routeIs('rentability') ? 'active' : '' }}">
                  <i class="fas fa-money-bill"></i> Rentabilité
              </a>
