@@ -2,79 +2,75 @@
     <div class="stock-content">
         <div class="stock-header">
             <h2>Inventaire des Produits</h2>
-            <div style="display: flex; gap: 10px; margin-bottom: 20px">
+            <div
+                style="
+                    display: flex;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                    flex-wrap: wrap;
+                    align-items: center;
+                "
+            >
                 <button class="btn btn-primary" @click="openModal()">
                     <i class="fas fa-plus"></i>
                     Ajouter un produit
                 </button>
 
                 <button
-                    class=""
-                    style="
-                        background-color: #0e65b1ff;
-                        color: white;
-                        border: none;
-                        padding: 0.75rem;
-                        border-radius: 10px;
-                        cursor: pointer;
-                    "
-                    onclick="
-                        alert(
-                            'Impression en cours ...'
-                        )
-                    "
+                    @click="printList"
+                    class="btn-primary"
+                    style="background-color: #17a2b8; padding: 0.75rem 1.5rem"
                 >
                     <i class="fas fa-print"></i>
-                    Imprimer
+                    Imprimer la liste
                 </button>
+
+                <input
+                    type="text"
+                    style="
+                        padding: 0.75rem;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                        min-width: 200px;
+                    "
+                    placeholder="Rechercher un produit..."
+                    v-model="searchQuery"
+                />
+
+                <select
+                    style="
+                        padding: 0.75rem;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                        min-width: 200px;
+                    "
+                    v-model="statusFilter"
+                >
+                    <option>Tous les statuts</option>
+                    <option>En stock (plus de 5)</option>
+                    <option>Stock faible (entre 1 et 5)</option>
+                    <option>Rupture de stock (stock a zero)</option>
+                </select>
+
+                <select
+                    style="
+                        padding: 0.75rem;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                        min-width: 180px;
+                    "
+                    v-model="sortOption"
+                >
+                    <option>Nom (A-Z)</option>
+                    <option>Nom (Z-A)</option>
+                    <option>Prix (croissant)</option>
+                    <option>Prix (décroissant)</option>
+                    <option>Quantité</option>
+                </select>
             </div>
         </div>
 
         <div class="showProducts" v-if="showProducts">
-            <!-- Filtres -->
-            <div class="filters">
-                <div class="filters-grid">
-                    <div class="form-group">
-                        <label>Rechercher</label>
-                        <input
-                            type="text"
-                            style="width: 200px"
-                            class="form-control"
-                            placeholder="Nom du produit..."
-                            v-model="searchQuery"
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label>Statut</label>
-
-                        <select
-                            class="form-control"
-                            v-model="statusFilter"
-                            style="width: 200px"
-                        >
-                            <option>Tous les statuts</option>
-                            <option>En stock (plus de 5)</option>
-                            <option>Stock faible (entre 1 et 5)</option>
-                            <option>Rupture de stock (stock a zero)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Trier par</label>
-                        <select
-                            class="form-control"
-                            v-model="sortOption"
-                            style="width: 200px"
-                        >
-                            <option>Nom (A-Z)</option>
-                            <option>Nom (Z-A)</option>
-                            <option>Prix (croissant)</option>
-                            <option>Prix (décroissant)</option>
-                            <option>Quantité</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
             <!-- Tableau -->
             <div class="table-container">
                 <div class="table-header">
@@ -135,14 +131,31 @@
                             </td>
                             <td data-label="Statut">
                                 <span
-                                    :class="[
-                                        'status-badge',
-                                        product.quantity >= 5
-                                            ? 'status-in-stock'
-                                            : product.quantity > 0
-                                            ? 'status-low-stock'
-                                            : 'status-out-stock',
-                                    ]"
+                                    :style="{
+                                        padding: '0.4rem 0.8rem',
+                                        borderRadius: '20px',
+                                        fontSize: '0.85rem',
+                                        fontWeight: '600',
+                                        display: 'inline-block',
+                                        backgroundColor:
+                                            product.quantity >= 5
+                                                ? '#d4edda'
+                                                : product.quantity > 0
+                                                ? '#fff3cd'
+                                                : '#f8d7da',
+                                        color:
+                                            product.quantity >= 5
+                                                ? '#155724'
+                                                : product.quantity > 0
+                                                ? '#856404'
+                                                : '#721c24',
+                                        border:
+                                            product.quantity >= 5
+                                                ? '1px solid #c3e6cb'
+                                                : product.quantity > 0
+                                                ? '1px solid #ffeaa7'
+                                                : '1px solid #f5c6cb',
+                                    }"
                                 >
                                     {{
                                         product.quantity >= 5
@@ -617,7 +630,8 @@
                     <input
                         v-model.number="stockQuantity"
                         type="number"
-                        min="1"
+                        min="0.01"
+                        step="0.01"
                         class="form-control"
                         required
                     />
@@ -915,6 +929,125 @@
 
             formatAmount(value) {
                 return Number(value).toLocaleString('fr-FR');
+            },
+
+            printList() {
+                const printWindow = window.open('', '_blank');
+
+                const totalValue = this.filteredProducts.reduce(
+                    (sum, product) => {
+                        return (
+                            sum +
+                            parseFloat(product.price_detail) *
+                                parseFloat(product.quantity)
+                        );
+                    },
+                    0
+                );
+
+                let tableRows = '';
+                this.filteredProducts.forEach((product, index) => {
+                    const statusText =
+                        product.quantity >= 5
+                            ? 'En stock'
+                            : product.quantity > 0
+                            ? 'Stock faible'
+                            : 'Rupture de stock';
+                    const statusColor =
+                        product.quantity >= 5
+                            ? '#d4edda'
+                            : product.quantity > 0
+                            ? '#fff3cd'
+                            : '#f8d7da';
+
+                    tableRows += `
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                index + 1
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;"><strong>${
+                                product.name
+                            }</strong></td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                product.price_detail
+                            )} FCFA</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${
+                                product.quantity
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                                <span style="padding: 4px 12px; border-radius: 12px; background: ${statusColor}; font-size: 0.85rem; font-weight: 600;">
+                                    ${statusText}
+                                </span>
+                            </td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                product.price_detail * product.quantity
+                            )} FCFA</td>
+                        </tr>
+                    `;
+                });
+
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Inventaire des Produits</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            h1 { text-align: center; color: #333; margin-bottom: 10px; }
+                            .info { text-align: center; margin-bottom: 30px; color: #666; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                            th { background-color: #667eea; color: white; padding: 12px; text-align: left; border: 1px solid #ddd; }
+                            .total-row { background-color: #f0f4ff; font-weight: bold; }
+                            @media print {
+                                button { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Inventaire des Produits</h1>
+                        <div class="info">
+                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                                'fr-FR'
+                            )}</p>
+                            <p><strong>Nombre total de produits:</strong> ${
+                                this.filteredProducts.length
+                            }</p>
+                            <p><strong>Filtre de statut:</strong> ${
+                                this.statusFilter
+                            }</p>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Nom du produit</th>
+                                    <th style="text-align: right;">Prix détail</th>
+                                    <th style="text-align: center;">Quantité</th>
+                                    <th style="text-align: center;">Statut</th>
+                                    <th style="text-align: right;">Valeur totale</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                                <tr class="total-row">
+                                    <td colspan="5" style="padding: 12px; border: 1px solid #ddd; text-align: right;">VALEUR TOTALE DE L'INVENTAIRE:</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        totalValue
+                                    )} FCFA</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                            Imprimer
+                        </button>
+                    </body>
+                    </html>
+                `;
+
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
             },
 
             openModal() {

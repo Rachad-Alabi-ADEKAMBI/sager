@@ -4,34 +4,50 @@
             <div class="sales-history">
                 <div class="history-header">
                     <h3>Historique des Factures Proformas</h3>
-                    <div>
+                    <div
+                        style="
+                            display: flex;
+                            gap: 1rem;
+                            align-items: center;
+                            flex-wrap: wrap;
+                        "
+                    >
+                        <button
+                            @click="printList"
+                            class="btn-primary"
+                            style="background: #17a2b8; padding: 0.5rem 1rem"
+                        >
+                            <i class="fas fa-print"></i>
+                            Imprimer la liste
+                        </button>
                         <select
                             v-model="filterPeriod"
                             style="
                                 padding: 0.5rem;
                                 border: 1px solid #ddd;
                                 border-radius: 5px;
-                                margin-right: 1rem;
                             "
                         >
                             <option>Aujourd'hui</option>
                             <option>Hier</option>
-
                             <option>Cette semaine</option>
                             <option>Ce mois</option>
                             <option>Toutes les ventes</option>
                             <option>À une date précise</option>
                         </select>
-
-                        <div
-                            v-if="filterPeriod === 'À une date précise'"
-                            style="margin-top: 0.5rem"
-                        >
-                            <input type="date" v-model="selectedDate" />
+                        <div v-if="filterPeriod === 'À une date précise'">
+                            <input
+                                type="date"
+                                v-model="selectedDate"
+                                style="
+                                    padding: 0.5rem;
+                                    border: 1px solid #ddd;
+                                    border-radius: 5px;
+                                "
+                            />
                         </div>
                     </div>
                 </div>
-
                 <table class="table" v-if="paginatedSales.length > 0">
                     <thead>
                         <tr>
@@ -63,21 +79,30 @@
                             </td>
                             <td data-label="Actions">
                                 <button
-                                    class="invoice-btn"
+                                    class="action-btn btn-primary"
+                                    style="margin: 2px"
                                     @click="showSaleDetails(sale.id)"
                                 >
-                                    <i
-                                        class="fas fa-eye"
-                                        style="margin: 2px"
-                                    ></i>
+                                    <i class="fas fa-eye"></i>
                                     Voir
                                 </button>
+
                                 <button
+                                    style="margin: 2px"
+                                    class="action-btn print-btn"
                                     @click="printInvoice(sale.id)"
-                                    class="btn btn-primary"
                                 >
                                     <i class="fas fa-print"></i>
                                     Imprimer
+                                </button>
+
+                                <button
+                                    v-if="sale.status === 'done'"
+                                    class="action-btn cancel-btn"
+                                    @click="cancelInvoice(sale.id)"
+                                >
+                                    <i class="fas fa-times"></i>
+                                    Annuler
                                 </button>
                             </td>
                         </tr>
@@ -88,7 +113,6 @@
                         Aucune vente disponible pour la période sélectionnée
                     </strong>
                 </div>
-
                 <div class="pagination-container" v-if="totalPages > 1">
                     <ul class="pagination">
                         <li
@@ -305,7 +329,6 @@
                         console.error(error);
                     });
             },
-
             closeSaleModal() {
                 this.showSaleModal = false;
                 this.selectedSale = null;
@@ -313,7 +336,103 @@
             printInvoice(saleId) {
                 window.location.href = `/newProforma/${saleId}`;
             },
+            printList() {
+                const printWindow = window.open('', '_blank');
 
+                const totalAmount = this.filteredSales.reduce(
+                    (sum, sale) => sum + parseFloat(sale.total),
+                    0
+                );
+
+                let tableRows = '';
+                this.filteredSales.forEach((sale, index) => {
+                    tableRows += `
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                index + 1
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">N° ${
+                                sale.id
+                            } /FR-N</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                sale.buyer_name
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                sale.seller_name
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDateTime(
+                                sale.created_at
+                            )}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;"><strong>${this.formatAmount(
+                                sale.total
+                            )} FCFA</strong></td>
+                        </tr>
+                    `;
+                });
+
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Liste des Factures Proformas</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            h1 { text-align: center; color: #333; margin-bottom: 10px; }
+                            .info { text-align: center; margin-bottom: 30px; color: #666; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                            th { background-color: #667eea; color: white; padding: 12px; text-align: left; border: 1px solid #ddd; }
+                            .total-row { background-color: #f0f4ff; font-weight: bold; }
+                            @media print {
+                                button { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Liste des Factures Proformas</h1>
+                        <div class="info">
+                            <p><strong>Période:</strong> ${
+                                this.filterPeriod
+                            }</p>
+                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                                'fr-FR'
+                            )}</p>
+                            <p><strong>Nombre total:</strong> ${
+                                this.filteredSales.length
+                            } facture(s)</p>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>N° Facture</th>
+                                    <th>Client</th>
+                                    <th>Vendeur</th>
+                                    <th>Date</th>
+                                    <th style="text-align: right;">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                                <tr class="total-row">
+                                    <td colspan="5" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAL GÉNÉRAL:</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        totalAmount
+                                    )} FCFA</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                            Imprimer
+                        </button>
+                    </body>
+                    </html>
+                `;
+
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            },
             // AJOUTÉ POUR LA PAGINATION: Méthode pour changer de page
             goToPage(page) {
                 if (page >= 1 && page <= this.totalPages) {
@@ -385,12 +504,10 @@
                     }
                 });
             },
-
             // AJOUTÉ: Propriété calculée pour le nombre total de pages
             totalPages() {
                 return Math.ceil(this.filteredSales.length / this.perPage);
             },
-
             // AJOUTÉ: Propriété calculée pour les ventes de la page actuelle
             paginatedSales() {
                 const start = (this.currentPage - 1) * this.perPage;

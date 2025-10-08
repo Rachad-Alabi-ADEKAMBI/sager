@@ -153,7 +153,12 @@ class ProductController extends BaseController
     public function updateStock(Request $request, $id)
     {
         $request->validate([
-            'quantity' => 'required|integer|min:1',
+            'quantity' => [
+                'required',
+                'numeric',
+                'regex:/^\d+(\.\d{1,2})?$/',
+                'min:0.01',
+            ],
         ]);
 
         $product = Product::findOrFail($id);
@@ -190,8 +195,12 @@ class ProductController extends BaseController
     {
         $product = Product::findOrFail($id);
 
-        // Récupérer toutes les lignes de vente avec date et id liés à ce produit
-        $sales = SaleProduct::where('product_id', $id)->get();
+        // Récupérer les ventes 'done' pour ce produit
+        $doneSaleIds = \App\Models\Sale::where('status', 'done')->pluck('id');
+
+        $sales = \App\Models\SaleProduct::where('product_id', $id)
+            ->whereIn('sale_id', $doneSaleIds)
+            ->get();
 
         $totalQuantity = $sales->sum('quantity');
 
@@ -203,7 +212,6 @@ class ProductController extends BaseController
 
         $profit = $totalRevenue - $totalCost;
 
-        // Ajouter le détail des ventes pour l'affichage ligne par ligne
         $salesDetails = $sales->map(function ($sale) use ($product) {
             return [
                 'id' => $sale->id,
@@ -224,6 +232,8 @@ class ProductController extends BaseController
             'sales_details' => $salesDetails,
         ]);
     }
+
+
 
     public function revertAddStock(Request $request)
     {

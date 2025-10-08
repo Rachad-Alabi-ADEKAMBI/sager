@@ -51,7 +51,7 @@
              </a>
          </li>
 
-         <li>
+         <li style="margin-top: -10px;">
              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                  <i class="fas fa-sign-out-alt"></i> Déconnexion
              </a>

@@ -290,112 +290,7 @@ Route::middleware(['auth'])->group(function () {
 
 
 //faire une vente
-
-Route::post('/sale', function (Request $request) {
-    $validated = $request->validate([
-        'seller_name' => 'required|string',
-        'buyer_name' => 'required|string',
-        'buyer_phone' => 'nullable|string',
-        'products' => 'required|array|min:1',
-        'products.*.product_id' => 'required|exists:products,id',
-        'products.*.quantity'   => 'required|numeric|min:0.01',
-        'products.*.price' => 'required|numeric|min:0',
-    ]);
-
-    DB::beginTransaction();
-
-    try {
-        $total = collect($validated['products'])->sum(fn($item) => $item['quantity'] * $item['price']);
-
-        $sale = Sale::create([
-            'seller_name' => $validated['seller_name'],
-            'buyer_name' => $validated['buyer_name'],
-            'buyer_phone' => $validated['buyer_phone'],
-            'total' => $total,
-            'status' => 'done',
-        ]);
-
-        $details = [];
-
-        foreach ($validated['products'] as $item) {
-            $product = Product::findOrFail($item['product_id']);
-            $initial_quantity = $product->quantity;
-
-            if ($product->quantity < $item['quantity']) {
-                throw new \Exception("Stock insuffisant pour le produit : {$product->name}");
-            }
-
-            // Ligne de vente
-            SaleProduct::create([
-                'sale_id' => $sale->id,
-                'product_id' => $product->id,
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-            ]);
-
-            // Mise à jour du stock
-            $product->decrement('quantity', $item['quantity']);
-            $final_quantity = $initial_quantity - $item['quantity'];
-
-            // Historique du stock
-            Stock::create([
-                'date' => now()->toDateString(),
-                'initial_stock' => $initial_quantity,
-                'label' => 'Vente produit ' . $product->name,
-                'quantity' => $item['quantity'],
-                'final_stock' => $final_quantity,
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'sale_id' => $sale->id,
-                'seller_name' => $sale->seller_name,
-            ]);
-
-            // Si produit consignable → création dans deposits
-            if ($product->is_depositable) {
-                $depositTotal = $product->deposit_price * $item['quantity'];
-
-                Deposit::create([
-                    'sale_id' => $sale->id,
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'deposit_price_at_sale' => $product->deposit_price,
-                    'quantity' => $item['quantity'],
-                    'total' => $depositTotal,
-                    'status' => 'En cours',
-                ]);
-            }
-
-            $details[] = [
-                'product' => $product->name,
-                'quantity_sold' => $item['quantity'],
-                'price' => $item['price']
-            ];
-        }
-
-        // Notification
-        Notification::create([
-            'description' => 'Facture N°' . $sale->id . '/' . now()->format('m') . '/' . now()->format('y')
-                . '/FR-N pour ' . $sale->buyer_name . ' par ' . $sale->seller_name
-                . '. Total : ' . $total . ' FCFA.',
-        ]);
-
-        DB::commit();
-
-        return response()->json([
-            'message' => 'Vente enregistrée avec succès.',
-            'sale_id' => $sale->id,
-            'total' => $total,
-            'products' => $details,
-        ], 200);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return response()->json([
-            'error' => 'Échec de l\'enregistrement de la vente.',
-            'message' => $e->getMessage(),
-        ], 500);
-    }
-});
-
+Route::post('/sale', [SaleController::class, 'store']);
 
 
 // annuler une vente
@@ -723,7 +618,9 @@ Route::get('/reset_password', function () {
 
 
 //nouvelle vente
+/*
 Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');
+*/
 
 //Mise à jour d'une consignation
 Route::post('/deposits/{id}/update', [DepositController::class, 'updateDeposit']);

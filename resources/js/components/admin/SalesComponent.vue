@@ -4,28 +4,66 @@
             <div class="sales-history">
                 <div class="history-header">
                     <h3>Historique des ventes</h3>
-                    <div>
+                    <div
+                        style="
+                            display: flex;
+                            gap: 1rem;
+                            align-items: center;
+                            flex-wrap: wrap;
+                        "
+                    >
+                        <!-- Ajout des filtres et bouton d'impression en haut -->
                         <select
                             v-model="filterPeriod"
                             style="
                                 padding: 0.5rem;
                                 border: 1px solid #ddd;
                                 border-radius: 5px;
-                                margin-right: 1rem;
                             "
                         >
                             <option>Aujourd'hui</option>
                             <option>Hier</option>
-
                             <option>Cette semaine</option>
                             <option>Ce mois</option>
                             <option>Toutes les ventes</option>
                             <option>À une date précise</option>
                         </select>
 
+                        <select
+                            v-model="filterStatus"
+                            style="
+                                padding: 0.5rem;
+                                border: 1px solid #ddd;
+                                border-radius: 5px;
+                            "
+                        >
+                            <option value="">Tous les statuts</option>
+                            <option value="done">Terminée</option>
+                            <option value="cancelled">Annulée</option>
+                        </select>
+
+                        <button
+                            @click="printCurrentList"
+                            class="btn-primary"
+                            style="
+                                background: #17a2b8;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem 1rem;
+                                border-radius: 5px;
+                                cursor: pointer;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 0.5rem;
+                            "
+                        >
+                            <i class="fas fa-print"></i>
+                            Imprimer la liste
+                        </button>
+
                         <div
                             v-if="filterPeriod === 'À une date précise'"
-                            style="margin-top: 0.5rem"
+                            style="width: 100%; margin-top: 0.5rem"
                         >
                             <input type="date" v-model="selectedDate" />
                         </div>
@@ -40,6 +78,7 @@
                             <th>Vendeur</th>
                             <th>Date</th>
                             <th>Montant</th>
+                            <th>Statut</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -60,6 +99,27 @@
                                 <strong>
                                     {{ formatAmount(sale.total) }} FCFA
                                 </strong>
+                            </td>
+                            <td data-label="Statut">
+                                <!-- Ajout des badges colorés pour les statuts -->
+                                <span
+                                    :class="getStatusClass(sale.status)"
+                                    style="
+                                        padding: 0.25rem 0.75rem;
+                                        border-radius: 20px;
+                                        font-size: 0.85rem;
+                                        font-weight: 600;
+                                        display: inline-block;
+                                    "
+                                >
+                                    {{
+                                        sale.status === 'done'
+                                            ? 'Terminée'
+                                            : sale.status === 'cancelled'
+                                            ? 'Annulée'
+                                            : sale.status
+                                    }}
+                                </span>
                             </td>
                             <td data-label="Actions">
                                 <button
@@ -169,6 +229,30 @@
                                 <strong>Total :</strong>
                                 {{ formatAmount(selectedSale.total) }} FCFA
                             </p>
+                            <!-- Ajout du statut avec badge coloré dans le modal -->
+                            <p>
+                                <strong>Statut :</strong>
+                                <span
+                                    :class="getStatusClass(selectedSale.status)"
+                                    style="
+                                        padding: 0.25rem 0.75rem;
+                                        border-radius: 20px;
+                                        font-size: 0.85rem;
+                                        font-weight: 600;
+                                        display: inline-block;
+                                        margin-left: 0.5rem;
+                                    "
+                                >
+                                    {{
+                                        selectedSale.status === 'done'
+                                            ? 'Terminée'
+                                            : selectedSale.status ===
+                                              'cancelled'
+                                            ? 'Annulée'
+                                            : selectedSale.status
+                                    }}
+                                </span>
+                            </p>
                             <hr />
                             <h6>Produits achetés :</h6>
                             <ul>
@@ -225,6 +309,7 @@
                 saleModalInstance: null,
                 showSaleModal: false,
                 filterPeriod: 'Toutes les ventes',
+                filterStatus: '', // Ajout du filtre de statut
 
                 // AJOUTÉ POUR LA PAGINATION
                 currentPage: 1,
@@ -311,6 +396,163 @@
                     this.currentPage = page;
                 }
             },
+
+            printCurrentList() {
+                const printWindow = window.open('', '_blank');
+                const printContent = this.generatePrintContent();
+
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+                printWindow.focus();
+
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            },
+
+            generatePrintContent() {
+                let html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Liste des Ventes</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                padding: 20px;
+                            }
+                            h1 {
+                                text-align: center;
+                                color: #333;
+                                margin-bottom: 20px;
+                            }
+                            .filter-info {
+                                text-align: center;
+                                margin-bottom: 20px;
+                                color: #666;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-top: 20px;
+                            }
+                            th, td {
+                                border: 1px solid #ddd;
+                                padding: 12px;
+                                text-align: left;
+                            }
+                            th {
+                                background-color: #667eea;
+                                color: white;
+                                font-weight: bold;
+                            }
+                            tr:nth-child(even) {
+                                background-color: #f9f9f9;
+                            }
+                            .status-badge {
+                                padding: 4px 12px;
+                                border-radius: 12px;
+                                font-size: 0.85em;
+                                font-weight: 600;
+                                display: inline-block;
+                            }
+                            .status-completed {
+                                background-color: #d4edda;
+                                color: #155724;
+                            }
+                            .status-cancelled {
+                                background-color: #f8d7da;
+                                color: #721c24;
+                            }
+                            .total-row {
+                                font-weight: bold;
+                                background-color: #f0f0f0;
+                            }
+                            @media print {
+                                body { padding: 0; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Liste des Ventes</h1>
+                        <div class="filter-info">
+                            <p><strong>Période:</strong> ${
+                                this.filterPeriod
+                            }</p>
+                            ${
+                                this.filterStatus
+                                    ? `<p><strong>Statut:</strong> ${
+                                          this.filterStatus === 'done'
+                                              ? 'Terminée'
+                                              : 'Annulée'
+                                      }</p>`
+                                    : ''
+                            }
+                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                                'fr-FR'
+                            )}</p>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>N° Facture</th>
+                                    <th>Client</th>
+                                    <th>Vendeur</th>
+                                    <th>Date</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                let totalAmount = 0;
+                this.filteredSales.forEach((sale) => {
+                    totalAmount += parseFloat(sale.total);
+                    const statusClass = this.getStatusClass(sale.status);
+                    const statusText =
+                        sale.status === 'done'
+                            ? 'Terminée'
+                            : sale.status === 'cancelled'
+                            ? 'Annulée'
+                            : sale.status;
+                    html += `
+                        <tr>
+                            <td>N° ${sale.id} /FR-N</td>
+                            <td>${sale.buyer_name}</td>
+                            <td>${sale.seller_name}</td>
+                            <td>${this.formatDateTime(sale.created_at)}</td>
+                            <td>${this.formatAmount(sale.total)} FCFA</td>
+                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            <tr class="total-row">
+                                <td colspan="4" style="text-align: right;">TOTAL GÉNÉRAL:</td>
+                                <td colspan="2">${this.formatAmount(
+                                    totalAmount
+                                )} FCFA</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </body>
+                    </html>
+                `;
+
+                return html;
+            },
+
+            getStatusClass(status) {
+                if (status === 'done') {
+                    return 'status-completed';
+                } else if (status === 'cancelled') {
+                    return 'status-cancelled';
+                }
+                return '';
+            },
         },
         computed: {
             filteredSales() {
@@ -319,6 +561,13 @@
 
                 return this.sales.filter((sale) => {
                     const saleDate = new Date(sale.created_at);
+
+                    if (
+                        this.filterStatus &&
+                        sale.status !== this.filterStatus
+                    ) {
+                        return false;
+                    }
 
                     switch (this.filterPeriod) {
                         case 'Hier': {
@@ -763,9 +1012,10 @@
         border-radius: 15px;
         width: 90%;
         max-width: 800px;
-        animation: slideIn 0.3s ease;
         max-height: 90vh;
         overflow-y: auto;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     }
 
     .modal-header {
@@ -1201,5 +1451,102 @@
 
     .page-item:not(.active) .page-link:hover {
         background-color: #f8f9fa;
+    }
+</style>
+
+<style>
+    /* Ajout des styles pour les badges de statut colorés */
+    .status-completed {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-cancelled {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    /* Ajout des styles pour le modal overlay */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal-container {
+        background: white;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #999;
+        transition: color 0.3s ease;
+    }
+
+    .modal-close:hover {
+        color: #333;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-body p {
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .modal-body strong {
+        color: #333;
+        font-weight: 600;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #eee;
+    }
+
+    .btn-download {
+        background: #667eea;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-download:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
     }
 </style>

@@ -374,7 +374,7 @@
                             error.response ? error.response.data : error.message
                         );
                         alert(
-                            'Erreur lors du bannissement. Veuillez réessayer.'
+                            'Erreur lors du bannissement. Veuillez renseigner un motif de minimum 10 caractères'
                         );
                     });
             },

@@ -97,9 +97,7 @@
                                                 "
                                             >
                                                 Stock:
-                                                {{
-                                                    line.product.quantity
-                                                }}
+                                                {{ line.product.quantity }}
                                                 disponible(s)
                                             </span>
 
@@ -256,6 +254,7 @@
                             <th>Client</th>
                             <th>Date</th>
                             <th>Montant</th>
+                            <th>Statut</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -273,6 +272,19 @@
                                     {{ formatAmount(sale.total) }} FCFA
                                 </strong>
                             </td>
+
+                            <td data-label="Statut">
+                                <strong>
+                                    {{
+                                        sale.status === 'done'
+                                            ? 'Terminée'
+                                            : sale.status === 'cancelled'
+                                            ? 'Annulée'
+                                            : sale.status
+                                    }}
+                                </strong>
+                            </td>
+
                             <td data-label="Actions">
                                 <button
                                     class="invoice-btn"

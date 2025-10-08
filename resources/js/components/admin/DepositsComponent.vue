@@ -37,9 +37,9 @@
                             "
                         >
                             <option value="">Tous les statuts</option>
-                            <option value="En attente">En attente</option>
                             <option value="En cours">En cours</option>
                             <option value="Terminée">Terminée</option>
+                            <option value="Annulée">Annulée</option>
                         </select>
 
                         <button

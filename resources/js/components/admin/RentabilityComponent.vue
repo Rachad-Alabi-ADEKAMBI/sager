@@ -4,14 +4,28 @@
             <div class="sales-history">
                 <div class="history-header">
                     <h3>Rentabilité</h3>
-                    <div>
+                    <div
+                        style="
+                            display: flex;
+                            gap: 1rem;
+                            align-items: center;
+                            flex-wrap: wrap;
+                        "
+                    >
+                        <button
+                            @click="printList"
+                            class="btn-primary"
+                            style="background: #17a2b8; padding: 0.5rem 1rem"
+                        >
+                            <i class="fas fa-print"></i>
+                            Imprimer la liste
+                        </button>
                         <select
                             v-model="filterPeriod"
                             style="
                                 padding: 0.5rem;
                                 border: 1px solid #ddd;
                                 border-radius: 5px;
-                                margin-right: 1rem;
                             "
                         >
                             <option>Aujourd'hui</option>
@@ -21,17 +35,32 @@
                             <option>Toutes les ventes</option>
                             <option>À une date précise</option>
                         </select>
-
-                        <div
-                            v-if="filterPeriod === 'À une date précise'"
-                            style="margin-top: 0.5rem"
-                        >
-                            <input type="date" v-model="selectedDate" />
-                            <button @click="fetchDailyRentability">Voir</button>
+                        <div v-if="filterPeriod === 'À une date précise'">
+                            <input
+                                type="date"
+                                v-model="selectedDate"
+                                style="
+                                    padding: 0.5rem;
+                                    border: 1px solid #ddd;
+                                    border-radius: 5px;
+                                "
+                            />
+                            <button
+                                @click="fetchDailyRentability"
+                                style="
+                                    padding: 0.5rem 1rem;
+                                    background: #667eea;
+                                    color: white;
+                                    border: none;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                "
+                            >
+                                Voir
+                            </button>
                         </div>
                     </div>
                 </div>
-
                 <table class="table" v-if="paginatedRentability.length > 0">
                     <thead>
                         <tr>
@@ -66,14 +95,11 @@
                         </tr>
                     </tbody>
                 </table>
-
                 <div v-else class="no-sales-message">
                     <strong>
                         Aucune vente disponible pour la période sélectionnée
                     </strong>
                 </div>
-
-                <!-- Pagination -->
                 <div class="pagination-container" v-if="totalPages > 1">
                     <ul class="pagination">
                         <li
@@ -116,12 +142,9 @@
                         </li>
                     </ul>
                 </div>
-
-                <!-- Modal détails rentabilité -->
                 <div class="modal-overlay" v-if="showSaleModal">
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
-                            <!-- Header -->
                             <div
                                 class="modal-header bg-primary text-white d-flex justify-content-between align-items-center"
                             >
@@ -152,8 +175,6 @@
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
-
-                            <!-- Body -->
                             <div class="modal-body p-2">
                                 <table
                                     class="table table-bordered table-striped text-center align-middle"
@@ -224,8 +245,6 @@
                                                 </td>
                                             </tr>
                                         </template>
-
-                                        <!-- Totaux globaux -->
                                         <tr class="table-info fw-bold">
                                             <td
                                                 colspan="5"
@@ -314,11 +333,9 @@
 
                 if (!day) return;
 
-                // Conversion de yyyy-mm-dd → dd/mm/yyyy
                 const parts = day.split('-');
                 const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-                // Affichage de la date dans la console
                 console.log(
                     'Datee choisie (format dd/mm/yyyy) :',
                     formattedDate
@@ -343,7 +360,7 @@
                                 name: p.product_name,
                                 quantity: p.quantity,
                                 price: parseFloat(p.price),
-                                purchase_price: parseFloat(p.purchase_price), // 👈 garder le prix d'achat
+                                purchase_price: parseFloat(p.purchase_price),
                                 profit: parseFloat(p.profit),
                             })),
                         }));
@@ -365,15 +382,13 @@
                     return;
                 }
 
-                // Pas besoin de reformater en dd/mm/yyyy pour l'API
-                const dateForApi = this.selectedDate; // yyyy-mm-dd
+                const dateForApi = this.selectedDate;
 
                 axios
                     .get('/rentability/daily', {
                         params: { date: dateForApi },
                     })
                     .then((res) => {
-                        // Transformation des données pour garder les prix en nombre
                         this.details = res.data.map((sale) => ({
                             id: sale.sale_id,
                             client_name: sale.client_name,
@@ -388,7 +403,7 @@
                             })),
                         }));
 
-                        this.selectedDay = this.selectedDate; // pour le titre du modal
+                        this.selectedDay = this.selectedDate;
                         this.showSaleModal = true;
                     })
                     .catch((err) =>
@@ -398,7 +413,6 @@
                         )
                     );
             },
-
             closeSaleModal() {
                 this.showSaleModal = false;
                 this.details = [];
@@ -412,6 +426,91 @@
             },
             formatAmount(value) {
                 return Number(value).toLocaleString('fr-FR');
+            },
+            printList() {
+                const printWindow = window.open('', '_blank');
+
+                const totalProfit = this.filteredRentability.reduce(
+                    (sum, day) => sum + parseFloat(day.total_profit),
+                    0
+                );
+
+                let tableRows = '';
+                this.filteredRentability.forEach((day, index) => {
+                    tableRows += `
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                index + 1
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDate(
+                                day.day
+                            )}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;"><strong>${this.formatAmount(
+                                day.total_profit
+                            )} FCFA</strong></td>
+                        </tr>
+                    `;
+                });
+
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Rapport de Rentabilité</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            h1 { text-align: center; color: #333; margin-bottom: 10px; }
+                            .info { text-align: center; margin-bottom: 30px; color: #666; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                            th { background-color: #667eea; color: white; padding: 12px; text-align: left; border: 1px solid #ddd; }
+                            .total-row { background-color: #f0f4ff; font-weight: bold; }
+                            @media print {
+                                button { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Rapport de Rentabilité</h1>
+                        <div class="info">
+                            <p><strong>Période:</strong> ${
+                                this.filterPeriod
+                            }</p>
+                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                                'fr-FR'
+                            )}</p>
+                            <p><strong>Nombre de jours:</strong> ${
+                                this.filteredRentability.length
+                            }</p>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th style="text-align: right;">Bénéfice</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                                <tr class="total-row">
+                                    <td colspan="2" style="padding: 12px; border: 1px solid #ddd; text-align: right;">BÉNÉFICE TOTAL:</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        totalProfit
+                                    )} FCFA</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                            Imprimer
+                        </button>
+                    </body>
+                    </html>
+                `;
+
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
             },
             goToPage(page) {
                 if (page >= 1 && page <= this.totalPages)
@@ -489,7 +588,6 @@
         color: #333;
     }
 
-    /* Sidebar (same as previous pages) */
     .sidebar {
         position: fixed;
         left: 0;
@@ -543,7 +641,6 @@
         width: 20px;
     }
 
-    /* Main Content */
     .main-content {
         margin-left: 250px;
         min-height: 100vh;
@@ -581,7 +678,6 @@
         color: white;
     }
 
-    /* Sales Content */
     .sales-content {
         padding: 2rem;
     }
@@ -615,7 +711,6 @@
         box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
     }
 
-    /* Sales Form */
     .sales-form {
         background: white;
         padding: 2rem;
@@ -655,9 +750,9 @@
     .form-control:focus {
         outline: none;
         border-color: #667eea;
+        box-shadow: 0 0 5px #764ba2aa;
     }
 
-    /* Product Lines Section */
     .product-lines {
         margin-top: 2rem;
     }
@@ -724,7 +819,6 @@
         box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
     }
 
-    /* Cart Section */
     .cart-section {
         background: #f8f9fa;
         padding: 1.5rem;
@@ -752,7 +846,6 @@
         font-size: 0.9rem;
     }
 
-    /* Sales History */
     .sales-history {
         background: white;
         border-radius: 15px;
@@ -827,7 +920,6 @@
         transform: translateY(-1px);
     }
 
-    /* Modal */
     .modal {
         display: none;
         position: fixed;
@@ -870,7 +962,6 @@
         color: #333;
     }
 
-    /* Invoice Styles */
     .invoice {
         padding: 2rem;
     }
@@ -960,7 +1051,6 @@
         }
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
         .sidebar {
             transform: translateX(-100%);
@@ -1010,7 +1100,6 @@
 </style>
 
 <style>
-    /* Table responsive : sur petits écrans */
     @media (max-width: 768px) {
         table.table,
         thead,
@@ -1024,7 +1113,6 @@
 
         thead tr {
             display: none;
-            /* Masquer l'en-tête sur mobile */
         }
 
         tbody tr {
@@ -1074,7 +1162,6 @@
         td,
         tr {
             display: block !important;
-            /* forcer block */
             width: 100% !important;
         }
 
@@ -1118,7 +1205,6 @@
             color: #333;
         }
 
-        /* Boutons en block et marge */
         tbody td button {
             display: inline-flex;
             margin-right: 10px;
@@ -1128,7 +1214,6 @@
 </style>
 
 <style>
-    /* Style général du modal */
     .modal-content {
         border-radius: 8px;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
@@ -1138,14 +1223,12 @@
         color: #333;
     }
 
-    /* Titre du modal */
     .modal-header {
         border-bottom: 1px solid #ddd;
         padding-bottom: 0.75rem;
         position: relative;
     }
 
-    /* Bouton croix fermer dans coin supérieur droit */
     .btn-close {
         position: absolute;
         top: 1rem;
@@ -1156,17 +1239,16 @@
         transition: opacity 0.2s ease;
         cursor: pointer;
     }
+
     .btn-close:hover {
         opacity: 1;
     }
 
-    /* Contenu modal-body */
     .modal-body p {
         margin-bottom: 0.6rem;
         font-size: 1rem;
     }
 
-    /* Liste produits */
     .modal-body ul {
         list-style-type: disc;
         margin-left: 1.2rem;
@@ -1174,7 +1256,6 @@
         color: #444;
     }
 
-    /* Bouton "Télécharger Facture" */
     .modal-footer {
         display: flex;
         justify-content: flex-end;
@@ -1200,37 +1281,6 @@
 </style>
 
 <style>
-    .filter-select {
-        padding: 0.5rem 1rem;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        font-size: 1rem;
-        margin-bottom: 1rem;
-        min-width: 180px;
-    }
-
-    .date-picker-container {
-        margin-bottom: 1.5rem;
-    }
-
-    .date-picker {
-        padding: 0.5rem 0.8rem;
-        font-size: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        width: 180px;
-        box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.1);
-        transition: border-color 0.3s ease;
-    }
-
-    .date-picker:focus {
-        outline: none;
-        border-color: #764ba2;
-        box-shadow: 0 0 5px #764ba2aa;
-    }
-</style>
-
-<style>
     .modal-overlay {
         position: fixed;
         inset: 0;
@@ -1241,7 +1291,6 @@
         z-index: 9999;
     }
 
-    /* Styles pour la pagination */
     .pagination-container {
         display: flex;
         justify-content: center;
@@ -1297,6 +1346,7 @@
         background-color: #f8f9fa;
     }
 </style>
+
 <style>
     .modal-overlay {
         position: fixed;
