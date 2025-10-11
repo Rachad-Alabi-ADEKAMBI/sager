@@ -11,7 +11,7 @@
                     align-items: center;
                 "
             >
-                <button class="btn btn-primary" @click="openModal()">
+                <button class="btn btn-primary" @click="openAddProductModal()">
                     <i class="fas fa-plus"></i>
                     Ajouter un produit
                 </button>
@@ -212,7 +212,7 @@
                                     <button
                                         class="btn-sm btn-edit"
                                         title="Modifier"
-                                        @click="openEditModal(product)"
+                                        @click="openEditPricesModal(product)"
                                     >
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -220,7 +220,7 @@
                                     <button
                                         class="btn-sm btn-delete"
                                         title="Supprimer"
-                                        @click="openDeleteModal(product)"
+                                        @click="openDeleteProductModal(product)"
                                     >
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -429,7 +429,11 @@
     </div>
 
     <!-- Modal Ajouter Produit -->
-    <div v-if="showModal" class="modal" @click.self="closeModal()">
+    <div
+        v-if="showAddProductModal"
+        class="modal-add-product"
+        @click.self="closeAddProductModal()"
+    >
         <div class="modal-content" style="padding: 2rem">
             <div
                 class="modal-header"
@@ -442,7 +446,7 @@
                 <h3>Ajouter un nouveau produit</h3>
                 <span
                     class="close"
-                    @click="closeModal"
+                    @click="closeAddProductModal"
                     style="cursor: pointer; font-size: 1.5rem"
                 >
                     &times;
@@ -597,7 +601,7 @@
                     </button>
                     <button
                         type="button"
-                        @click="closeModal()"
+                        @click="closeAddProductModal()"
                         style="
                             flex: 1 1 45%;
                             min-width: 120px;
@@ -617,7 +621,7 @@
     </div>
 
     <!--modal add stock-->
-    <div v-if="showAddStockModal" class="modal-overlay">
+    <div v-if="showAddStockModal" class="modal-add-stock">
         <div class="modal-content">
             <h3>
                 Ajouter du stock pour
@@ -657,7 +661,7 @@
     </div>
 
     <!--modal revert add stock-->
-    <div v-if="showRevertAddStockModal" class="modal-overlay">
+    <div v-if="showRevertAddStockModal" class="modal-revert-stock">
         <div class="modal-content">
             <h3>
                 Annuler cette opération d'ajout de stock pour
@@ -696,13 +700,18 @@
         </div>
     </div>
 
-    <div v-if="showEditModal" class="modal" @click.self="closeEditModal">
+    <!-- Modal Modifier les Prix -->
+    <div
+        v-if="showEditPricesModal"
+        class="modal-edit-prices"
+        @click.self="closeEditPricesModal"
+    >
         <div class="modal-content" style="padding: 2rem; max-width: 400px">
             <div class="modal-header">
                 <h3>Modifier les prix</h3>
                 <span
                     class="close"
-                    @click="closeEditModal"
+                    @click="closeEditPricesModal"
                     style="cursor: pointer"
                 >
                     &times;
@@ -775,7 +784,7 @@
                     Enregistrer
                 </button>
                 <button
-                    @click="closeEditModal"
+                    @click="closeEditPricesModal"
                     style="
                         background: #6c757d;
                         color: #fff;
@@ -790,13 +799,18 @@
         </div>
     </div>
 
-    <div v-if="showDeleteModal" class="modal" @click.self="closeDeleteModal">
+    <!-- Modal Supprimer Produit -->
+    <div
+        v-if="showDeleteProductModal"
+        class="modal-delete-product"
+        @click.self="closeDeleteProductModal"
+    >
         <div class="modal-content" style="padding: 2rem; max-width: 400px">
             <div class="modal-header">
                 <h3>Confirmer la suppression</h3>
                 <span
                     class="close"
-                    @click="closeDeleteModal"
+                    @click="closeDeleteProductModal"
                     style="cursor: pointer"
                 >
                     &times;
@@ -830,7 +844,7 @@
                     Supprimer
                 </button>
                 <button
-                    @click="closeDeleteModal"
+                    @click="closeDeleteProductModal"
                     style="
                         background: #6c757d;
                         color: #fff;
@@ -854,7 +868,7 @@
             return {
                 message: 'Bonjour depuis Vue !',
                 products: [], // ajout pour stocker les produits,
-                showModal: null,
+                showAddProductModal: false,
                 showProducts: true,
                 showStock: false,
                 stocks: [],
@@ -872,16 +886,18 @@
                 deposit_price: '',
                 statusFilter: 'Tous les statuts',
                 sortOption: 'Nom (A-Z)',
-                showEditModal: false,
+                showEditPricesModal: false,
                 currentProduct: null,
                 editedPriceDetail: null,
                 editedPriceSemiBulk: null,
                 editedPriceBulk: null,
                 editedDepositPrice: null,
-                showDeleteModal: false,
+                showDeleteProductModal: false,
                 showAddStockModal: false,
+                showTransactions: false,
                 selectedProduct: {},
                 stockQuantity: 1,
+                selectedProductId: '',
                 showRevertAddStockModal: false,
                 accountingData: {
                     total_quantity_sold: 0,
@@ -900,7 +916,7 @@
             fetchProducts() {
                 this.showProducts = true;
                 this.showStock = false;
-                this.showTAccounting = false;
+                this.showAccounting = false;
                 axios
                     .get('/productsList')
                     .then((response) => {
@@ -1016,7 +1032,7 @@
                                 this.statusFilter
                             }</p>
                         </div>
-                        
+
                         <table>
                             <thead>
                                 <tr>
@@ -1038,7 +1054,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                        
+
                         <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
                             Imprimer
                         </button>
@@ -1050,18 +1066,18 @@
                 printWindow.document.close();
             },
 
-            openModal() {
-                this.showModal = true;
+            openAddProductModal() {
+                this.showAddProductModal = true;
             },
-            closeModal() {
-                this.showModal = false;
+            closeAddProductModal() {
+                this.showAddProductModal = false;
             },
             submitForm() {
                 // Préparer les données dans le format attendu
                 const productData = {
                     name: this.name,
                     purchase_price: this.purchase_price,
-                    buyer_phone: this.purchase_price,
+                    buyer_phone: this.buyer_phone,
                     quantity: this.quantity,
                     price_detail: this.price_detail,
                     price_semi_bulk: this.price_semi_bulk,
@@ -1078,7 +1094,7 @@
                     })
                     .then((response) => {
                         console.log('Prix mis à jour', response.data);
-                        this.closeEditModal();
+                        this.closeEditPricesModal();
                     })
                     .catch((error) => {
                         console.error(
@@ -1087,16 +1103,16 @@
                         );
                     });
             },
-            openEditModal(product) {
+            openEditPricesModal(product) {
                 this.currentProduct = product;
                 this.editedPriceDetail = product.price_detail;
                 this.editedPriceSemiBulk = product.price_semi_bulk;
                 this.editedPriceBulk = product.price_bulk;
-                this.showEditModal = true;
-                this.editedDepositPrice = product.deposit_price; //
+                this.showEditPricesModal = true;
+                this.editedDepositPrice = product.deposit_price;
             },
-            closeEditModal() {
-                this.showEditModal = false;
+            closeEditPricesModal() {
+                this.showEditPricesModal = false;
                 this.currentProduct = null;
                 this.editedPriceDetail = null;
                 this.editedPriceSemiBulk = null;
@@ -1136,7 +1152,7 @@
                                     this.editedDepositPrice;
                             }
 
-                            this.closeEditModal();
+                            this.closeEditPricesModal();
                         })
                         .catch((error) => {
                             console.error(
@@ -1187,12 +1203,12 @@
                     });
             },
 
-            openDeleteModal(product) {
+            openDeleteProductModal(product) {
                 this.currentProduct = product;
-                this.showDeleteModal = true;
+                this.showDeleteProductModal = true;
             },
-            closeDeleteModal() {
-                this.showDeleteModal = false;
+            closeDeleteProductModal() {
+                this.showDeleteProductModal = false;
                 this.currentProduct = null;
             },
             deleteProduct() {
@@ -1204,7 +1220,7 @@
                             `Le produit ${this.currentProduct.name} a été supprimé avec succès.`
                         );
                         this.fetchProducts(); //relaod plutot la page window.location.reload()
-                        this.closeDeleteModal();
+                        this.closeDeleteProductModal();
                     })
                     .catch((error) => {
                         if (
@@ -1249,7 +1265,7 @@
                     .then(() => {
                         alert('Produit ajouté avec succès.');
                         this.fetchProducts(); // Rafraîchir la liste
-                        this.closeModal(); // Fermer le modal après ajout
+                        this.closeAddProductModal(); // Fermer le modal après ajout
 
                         // Réinitialiser le formulaire
                         this.name = '';
@@ -1422,7 +1438,10 @@
 </script>
 
 <style>
-    .modal {
+    /* Added more specific class names for each modal type */
+    .modal-add-product,
+    .modal-edit-prices,
+    .modal-delete-product {
         position: fixed;
         top: 0;
         left: 0;
@@ -1444,7 +1463,8 @@
 </style>
 
 <style>
-    .modal-overlay {
+    .modal-add-stock,
+    .modal-revert-stock {
         position: fixed;
         top: 0;
         left: 0;
