@@ -98,34 +98,49 @@
                                 <strong>{{ product.name }}</strong>
                             </td>
                             <td data-label="Prix">
-                                Détail:
-                                <strong>
-                                    {{ formatAmount(product.price_detail) }}
-                                    FCFA
-                                </strong>
-                                <br />
-                                Semi-gros:
-                                <strong>
-                                    {{ formatAmount(product.price_semi_bulk) }}
-                                    FCFA
-                                </strong>
-                                <br />
-                                Gros:
-                                <strong>
-                                    {{ formatAmount(product.price_bulk) }} FCFA
-                                </strong>
-
-                                <template v-if="product.is_depositable == 1">
+                                <template v-if="product.is_depositable == 0">
+                                    Détail :
+                                    <strong>
+                                        {{ formatAmount(product.price_detail) }}
+                                        FCFA
+                                    </strong>
                                     <br />
-                                    Consignation:
+                                    Semi-gros :
+                                    <strong>
+                                        {{
+                                            formatAmount(
+                                                product.price_semi_bulk
+                                            )
+                                        }}
+                                        FCFA
+                                    </strong>
+                                    <br />
+                                    Gros :
+                                    <strong>
+                                        {{ formatAmount(product.price_bulk) }}
+                                        FCFA
+                                    </strong>
+                                </template>
+
+                                <template v-else>
+                                    Consignation :
                                     <strong>
                                         {{
                                             formatAmount(product.deposit_price)
                                         }}
                                         FCFA
                                     </strong>
+                                    <br />
+                                    Rechargement :
+                                    <strong>
+                                        {{
+                                            formatAmount(product.filling_price)
+                                        }}
+                                        FCFA
+                                    </strong>
                                 </template>
                             </td>
+
                             <td data-label="Quantité">
                                 {{ product.quantity }}
                             </td>
@@ -458,6 +473,7 @@
                 method="POST"
                 @submit.prevent="addProductForm"
             >
+                <!-- Nom du produit -->
                 <div class="form-group" style="margin-bottom: 1rem">
                     <label>Nom du produit</label>
                     <input
@@ -468,6 +484,7 @@
                     />
                 </div>
 
+                <!-- Prix d'achat et Quantité -->
                 <div
                     class="row"
                     style="
@@ -502,6 +519,26 @@
                     </div>
                 </div>
 
+                <!-- Choix consignable -->
+                <div
+                    class="form-group"
+                    style="
+                        margin-bottom: 1rem;
+                        display: flex;
+                        gap: 1rem;
+                        align-items: flex-end;
+                    "
+                >
+                    <div style="flex: 1">
+                        <label>Produit consignable ?</label>
+                        <select v-model="is_depositable" class="form-control">
+                            <option :value="0">Non</option>
+                            <option :value="1">Oui</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Champs selon consignable ou non -->
                 <div
                     class="row"
                     style="
@@ -511,64 +548,9 @@
                         margin-bottom: 1rem;
                     "
                 >
-                    <div class="form-group" style="flex: 1 1 30%">
-                        <label>Prix détail</label>
-                        <input
-                            v-model="price_detail"
-                            type="number"
-                            class="form-control"
-                            step="0.01"
-                            min="0"
-                            required
-                        />
-                    </div>
-
-                    <div class="form-group" style="flex: 1 1 30%">
-                        <label>Prix semi gros</label>
-                        <input
-                            v-model="price_semi_bulk"
-                            type="number"
-                            class="form-control"
-                            step="0.01"
-                            min="0"
-                            required
-                        />
-                    </div>
-
-                    <div class="form-group" style="flex: 1 1 30%">
-                        <label>Prix gros</label>
-                        <input
-                            v-model="price_bulk"
-                            type="number"
-                            class="form-control"
-                            step="0.01"
-                            min="0"
-                            required
-                        />
-                    </div>
-
-                    <!-- Consignation -->
-                    <div
-                        class="form-group"
-                        style="
-                            margin-bottom: 1rem;
-                            display: flex;
-                            gap: 1rem;
-                            align-items: flex-end;
-                        "
-                    >
-                        <div style="flex: 1">
-                            <label>Produit consignable ?</label>
-                            <select
-                                v-model="is_depositable"
-                                class="form-control"
-                            >
-                                <option :value="0">Non</option>
-                                <option :value="1">Oui</option>
-                            </select>
-                        </div>
-
-                        <div style="flex: 1" v-if="is_depositable">
+                    <!-- Si produit consignable -->
+                    <template v-if="is_depositable">
+                        <div class="form-group" style="flex: 1 1 45%">
                             <label>Prix de consignation</label>
                             <input
                                 v-model="deposit_price"
@@ -577,12 +559,65 @@
                                 step="0.01"
                                 min="0"
                                 required
-                                placeholder="Prix consigne"
+                                placeholder="Prix consignation"
                             />
                         </div>
-                    </div>
+
+                        <div class="form-group" style="flex: 1 1 45%">
+                            <label>Prix de rechargement</label>
+                            <input
+                                v-model="filling_price"
+                                type="number"
+                                class="form-control"
+                                step="0.01"
+                                min="0"
+                                required
+                                placeholder="Prix rechargement"
+                            />
+                        </div>
+                    </template>
+
+                    <!-- Si produit non consignable -->
+                    <template v-else>
+                        <div class="form-group" style="flex: 1 1 30%">
+                            <label>Prix détail</label>
+                            <input
+                                v-model="price_detail"
+                                type="number"
+                                class="form-control"
+                                step="0.01"
+                                min="0"
+                                required
+                            />
+                        </div>
+
+                        <div class="form-group" style="flex: 1 1 30%">
+                            <label>Prix semi gros</label>
+                            <input
+                                v-model="price_semi_bulk"
+                                type="number"
+                                class="form-control"
+                                step="0.01"
+                                min="0"
+                                required
+                            />
+                        </div>
+
+                        <div class="form-group" style="flex: 1 1 30%">
+                            <label>Prix gros</label>
+                            <input
+                                v-model="price_bulk"
+                                type="number"
+                                class="form-control"
+                                step="0.01"
+                                min="0"
+                                required
+                            />
+                        </div>
+                    </template>
                 </div>
 
+                <!-- Boutons -->
                 <div
                     style="
                         display: flex;
@@ -867,7 +902,7 @@
         data() {
             return {
                 message: 'Bonjour depuis Vue !',
-                products: [], // ajout pour stocker les produits,
+                products: [], // stocke les produits
                 showAddProductModal: false,
                 showProducts: true,
                 showStock: false,
@@ -875,30 +910,48 @@
                 salesDetails: [],
                 transactions: [],
                 showAccounting: false,
+
+                // Champs du formulaire produit
                 name: '',
                 purchase_price: '',
                 quantity: '',
+
+                // Prix classiques
                 price_detail: '',
                 price_semi_bulk: '',
                 price_bulk: '',
-                searchQuery: '',
-                is_depositable: 0, // Nouveau
+
+                // Champs consignation
+                is_depositable: 0, // Produit non consignable par défaut
                 deposit_price: '',
+                filling_price: '', // Nouveau : prix de rechargement
+
+                // Autres états
+                searchQuery: '',
                 statusFilter: 'Tous les statuts',
                 sortOption: 'Nom (A-Z)',
                 showEditPricesModal: false,
                 currentProduct: null,
+
+                // Édition de prix
                 editedPriceDetail: null,
                 editedPriceSemiBulk: null,
                 editedPriceBulk: null,
                 editedDepositPrice: null,
+                editedFillingPrice: null, // pour modification éventuelle du prix de rechargement
+
+                // Modales diverses
                 showDeleteProductModal: false,
                 showAddStockModal: false,
                 showTransactions: false,
-                selectedProduct: {},
-                stockQuantity: 1,
-                selectedProductId: '',
                 showRevertAddStockModal: false,
+
+                // Stock
+                selectedProduct: {},
+                selectedProductId: '',
+                stockQuantity: 1,
+
+                // Comptabilité
                 accountingData: {
                     total_quantity_sold: 0,
                     total_revenue: 0,
@@ -1248,6 +1301,7 @@
                 formData.append('is_depositable', this.is_depositable ? 1 : 0);
                 if (this.is_depositable) {
                     formData.append('deposit_price', this.deposit_price);
+                    formData.append('filling_price', this.filling_price);
                 }
 
                 // 🔍 Affichage du contenu envoyé
@@ -1276,6 +1330,7 @@
                         this.price_bulk = '';
                         this.is_depositable = 0;
                         this.deposit_price = '';
+                        this.filling_price = '';
                     })
                     .catch((error) => {
                         alert("Erreur lors de l'ajout du produit.");

@@ -29,7 +29,6 @@ class ProductController extends BaseController
     }
 
 
-
     public function store(Request $request)
     {
         // Valeur par défaut à 0 si non envoyée
@@ -40,17 +39,24 @@ class ProductController extends BaseController
         $data = $request->validate([
             'name' => 'required|string',
             'purchase_price' => 'required|numeric',
-            'price_detail' => 'required|numeric',
-            'price_semi_bulk' => 'required|numeric',
-            'price_bulk' => 'required|numeric',
+            'price_detail' => 'nullable|numeric',
+            'price_semi_bulk' => 'nullable|numeric',
+            'price_bulk' => 'nullable|numeric',
             'quantity' => 'required|numeric',
             'is_depositable' => 'required|integer',
             'deposit_price' => 'nullable|numeric',
+            'filling_price' => 'nullable|numeric',
         ]);
 
-        // Si le produit n'est pas consignable, deposit_price doit être null
-        if (!$data['is_depositable']) {
+        // Si le produit est consignable → on ignore les prix de vente classiques
+        if ($data['is_depositable']) {
+            $data['price_detail'] = null;
+            $data['price_semi_bulk'] = null;
+            $data['price_bulk'] = null;
+        } else {
+            // Si le produit n'est pas consignable → on ignore les prix de consignation
             $data['deposit_price'] = null;
+            $data['filling_price'] = null;
         }
 
         try {
@@ -66,6 +72,7 @@ class ProductController extends BaseController
                 'product_name' => $product->name,
                 'is_depositable' => $data['is_depositable'],
                 'deposit_price' => $data['deposit_price'],
+                'filling_price' => $data['filling_price'],
                 'sale_id' => null,
                 'seller_name' => null,
             ]);
@@ -82,8 +89,6 @@ class ProductController extends BaseController
             ], 500);
         }
     }
-
-
 
 
 
