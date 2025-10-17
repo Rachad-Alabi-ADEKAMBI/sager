@@ -1,28 +1,33 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\ProductController;
-use App\Models\Product;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\SaleController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Models\Sale;
-use App\Models\Deposit;
-use App\Models\SaleProduct;
-use App\Models\ProformaProduct;
-use App\Models\Proforma;
-use App\Models\Notification;
-use App\Http\Controllers\StockController;
-use App\Http\Controllers\SettingsController;
-use App\Models\Stock;
+use Illuminate\Support\Facades\{Route, Auth, DB};
 use Illuminate\Support\Carbon;
-use App\Http\Controllers\ProformaController;
-use App\Http\Controllers\RentabilityController;
-use App\Http\Controllers\DepositController;
+use Illuminate\Http\Request;
+
+use App\Http\Controllers\{
+    Auth\RegisteredUserController,
+    Auth\AuthenticatedSessionController,
+    ProductController,
+    SaleController,
+    StockController,
+    SettingsController,
+    ProformaController,
+    RentabilityController,
+    DepositController
+};
+
+use App\Models\{
+    Product,
+    User,
+    Sale,
+    Deposit,
+    SaleProduct,
+    ProformaProduct,
+    Proforma,
+    Notification,
+    Stock
+};
+
 
 
 Route::get('/', function () {

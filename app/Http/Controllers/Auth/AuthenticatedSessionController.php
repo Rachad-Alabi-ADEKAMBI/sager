@@ -13,19 +13,27 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-   public function store(LoginRequest $request)
-{
-    $request->authenticate();
-    $request->session()->regenerate();
+    public function store(LoginRequest $request)
+    {
+        $request->authenticate();
+        $request->session()->regenerate();
 
-    $user = Auth::user();
+        $user = Auth::user();
 
-    if ($user->role === 'admin') {
-        return redirect()->intended('/dashboardAdmin');
+        // Vérifie si le compte est banni
+        if ($user->status === 'banned') {
+            Auth::logout(); // Déconnecte l'utilisateur
+            return redirect()->back()->with('error', "Votre compte a été banni, merci de contacter l'administrateur");
+        }
+
+        // Redirection selon le rôle
+        if ($user->role === 'admin') {
+            return redirect()->intended('/dashboardAdmin');
+        }
+
+        return redirect()->intended('/dashboard');
     }
 
-    return redirect()->intended('/dashboard');
-}
 
 
     /**
