@@ -101,25 +101,49 @@
                                                 disponible(s)
                                             </span>
 
-                                            <!-- Prix de consignation affiché discrètement -->
-                                            <span
+                                            <!-- Affichage des prix de consignation et rechargement avec filling_price -->
+                                            <div
                                                 v-if="
                                                     line.product.is_depositable
                                                 "
                                                 style="
-                                                    color: #888;
-                                                    font-style: italic;
+                                                    margin-top: 0.25rem;
+                                                    display: flex;
+                                                    gap: 1rem;
+                                                    flex-wrap: wrap;
                                                 "
                                             >
-                                                (Consignation :
-                                                {{
-                                                    formatAmount(
-                                                        line.product
-                                                            .deposit_price
-                                                    )
-                                                }}
-                                                FCFA)
-                                            </span>
+                                                <span
+                                                    style="
+                                                        color: #888;
+                                                        font-style: italic;
+                                                    "
+                                                >
+                                                    Consignation :
+                                                    {{
+                                                        formatAmount(
+                                                            line.product
+                                                                .deposit_price
+                                                        )
+                                                    }}
+                                                    FCFA
+                                                </span>
+                                                <span
+                                                    style="
+                                                        color: #888;
+                                                        font-style: italic;
+                                                    "
+                                                >
+                                                    Rechargement :
+                                                    {{
+                                                        formatAmount(
+                                                            line.product
+                                                                .filling_price
+                                                        )
+                                                    }}
+                                                    FCFA
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -135,38 +159,136 @@
                                         <option disabled value="">
                                             Sélectionner le type
                                         </option>
-                                        <option
-                                            :value="line.product.price_detail"
+
+                                        <!-- Options pour produits consignables avec filling_price -->
+                                        <template
+                                            v-if="line.product.is_depositable"
                                         >
-                                            Détail
-                                            {{
-                                                formatAmount(
-                                                    line.product.price_detail
-                                                )
-                                            }}
-                                        </option>
-                                        <option
-                                            :value="
-                                                line.product.price_semi_bulk
-                                            "
-                                        >
-                                            Semi gros
-                                            {{
-                                                formatAmount(
-                                                    line.product.price_semi_bulk
-                                                )
-                                            }}
-                                        </option>
-                                        <option
-                                            :value="line.product.price_bulk"
-                                        >
-                                            Gros
-                                            {{
-                                                formatAmount(
-                                                    line.product.price_bulk
-                                                )
-                                            }}
-                                        </option>
+                                            <option
+                                                :value="
+                                                    JSON.stringify({
+                                                        price: line.product
+                                                            .deposit_price,
+                                                        type: 'deposit',
+                                                    })
+                                                "
+                                            >
+                                                Consignation
+                                                {{
+                                                    formatAmount(
+                                                        line.product
+                                                            .deposit_price
+                                                    )
+                                                }}
+                                                FCFA
+                                            </option>
+                                            <option
+                                                :value="
+                                                    JSON.stringify({
+                                                        price: line.product
+                                                            .filling_price,
+                                                        type: 'refill',
+                                                    })
+                                                "
+                                            >
+                                                Rechargement
+                                                {{
+                                                    formatAmount(
+                                                        line.product
+                                                            .filling_price
+                                                    )
+                                                }}
+                                                FCFA
+                                            </option>
+                                            <option
+                                                :value="
+                                                    JSON.stringify({
+                                                        price:
+                                                            Number(
+                                                                line.product
+                                                                    .deposit_price
+                                                            ) +
+                                                            Number(
+                                                                line.product
+                                                                    .filling_price
+                                                            ),
+                                                        type: 'both',
+                                                    })
+                                                "
+                                            >
+                                                Consignation + Rechargement
+                                                {{
+                                                    formatAmount(
+                                                        Number(
+                                                            line.product
+                                                                .deposit_price
+                                                        ) +
+                                                            Number(
+                                                                line.product
+                                                                    .filling_price
+                                                            )
+                                                    )
+                                                }}
+                                                FCFA
+                                            </option>
+                                        </template>
+
+                                        <!-- Options pour produits non-consignables -->
+                                        <template v-else>
+                                            <option
+                                                :value="
+                                                    JSON.stringify({
+                                                        price: line.product
+                                                            .price_detail,
+                                                        type: 'detail',
+                                                    })
+                                                "
+                                            >
+                                                Détail
+                                                {{
+                                                    formatAmount(
+                                                        line.product
+                                                            .price_detail
+                                                    )
+                                                }}
+                                                FCFA
+                                            </option>
+                                            <option
+                                                :value="
+                                                    JSON.stringify({
+                                                        price: line.product
+                                                            .price_semi_bulk,
+                                                        type: 'semi_bulk',
+                                                    })
+                                                "
+                                            >
+                                                Semi gros
+                                                {{
+                                                    formatAmount(
+                                                        line.product
+                                                            .price_semi_bulk
+                                                    )
+                                                }}
+                                                FCFA
+                                            </option>
+                                            <option
+                                                :value="
+                                                    JSON.stringify({
+                                                        price: line.product
+                                                            .price_bulk,
+                                                        type: 'bulk',
+                                                    })
+                                                "
+                                            >
+                                                Gros
+                                                {{
+                                                    formatAmount(
+                                                        line.product.price_bulk
+                                                    )
+                                                }}
+                                                FCFA
+                                            </option>
+                                        </template>
                                     </select>
                                 </div>
 
@@ -425,6 +547,31 @@
                                     Consignable
                                 </span>
                             </div>
+
+                            <!-- Affichage du type de transaction pour produits consignables -->
+                            <div
+                                v-if="
+                                    line.product.is_depositable &&
+                                    line.priceType
+                                "
+                                style="
+                                    font-size: 0.85rem;
+                                    color: #666;
+                                    margin-top: 0.25rem;
+                                    font-style: italic;
+                                "
+                            >
+                                <span v-if="line.priceType === 'deposit'">
+                                    (Consignation uniquement)
+                                </span>
+                                <span v-else-if="line.priceType === 'refill'">
+                                    (Rechargement uniquement)
+                                </span>
+                                <span v-else-if="line.priceType === 'both'">
+                                    (Consignation + Rechargement)
+                                </span>
+                            </div>
+
                             <div class="product-details">
                                 <span>
                                     {{ line.quantity }} ×
@@ -656,6 +803,7 @@
                     unitPrice: 0,
                     quantity: 1,
                     searchQuery: '',
+                    priceType: '', // Ajout du tracking du type de prix
                 });
             },
 
@@ -700,6 +848,7 @@
                         this.productLines[index].selectedPrice = '';
                         this.productLines[index].unitPrice = 0;
                         this.productLines[index].quantity = 1;
+                        this.productLines[index].priceType = ''; // Reset du type de prix
                         this.updateTotal();
                     })
                     .catch((error) => {
@@ -712,7 +861,15 @@
 
             updateUnitPrice(index) {
                 const line = this.productLines[index];
-                line.unitPrice = parseFloat(line.selectedPrice) || 0;
+                try {
+                    const priceData = JSON.parse(line.selectedPrice);
+                    line.unitPrice = parseFloat(priceData.price) || 0;
+                    line.priceType = priceData.type || '';
+                } catch (e) {
+                    // Fallback pour compatibilité avec l'ancien format
+                    line.unitPrice = parseFloat(line.selectedPrice) || 0;
+                    line.priceType = '';
+                }
                 this.updateTotal();
             },
 
@@ -804,6 +961,7 @@
                         product_id: line.productId,
                         quantity: line.quantity,
                         price: line.unitPrice,
+                        price_type: line.priceType, // Type de prix pour les produits consignables
                     })),
                 };
 
@@ -1140,5 +1298,48 @@
             padding: 0.4rem 0.6rem;
             font-size: 0.85rem;
         }
+    }
+
+    /* Ajout de styles pour aligner tous les inputs et selects sur la même ligne */
+    .product-line {
+        display: flex;
+        align-items: flex-end;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #333;
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.95rem;
+    }
+
+    .btn-remove {
+        padding: 0.5rem 0.75rem;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+        height: 38px;
+    }
+
+    .btn-remove:hover {
+        background: #c82333;
     }
 </style>

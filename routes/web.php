@@ -610,8 +610,14 @@ Route::post('/logout', function () {
 
 
 Route::get('/login', function () {
+    if (Auth::check()) {
+        Auth::logout();
+        session()->invalidate();
+        session()->regenerateToken();
+    }
+
     return view('pages/front/login');
-})->middleware('guest')->name('login');
+})->name('login');
 
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])
     ->middleware('guest')
