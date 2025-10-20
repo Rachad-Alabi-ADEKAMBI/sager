@@ -9,6 +9,7 @@ use App\Models\Notification;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SaleController;
 use App\Models\Stock;
+use App\Models\StockDeposit;
 use App\Models\Sale;
 use App\Models\SaleProduct;
 use Illuminate\Support\Facades\DB;
@@ -78,14 +79,19 @@ class ProductController extends BaseController
                 'seller_name' => null,
             ]);
 
-            // 🔹 Si le produit est consignable → création d’une ligne dans deposits
+            // 🔹 Si le produit est consignable → création du dépôt et de l’historique
             if ($data['is_depositable']) {
-                \App\Models\Deposit::create([
+                $deposit = \App\Models\Deposit::create([
                     'product_id' => $product->id,
                     'product_name' => $product->name,
-                    'initial_quantity' => 0,
                     'quantity' => 0,
-                    'final_quantity' => 0,
+                ]);
+
+                \App\Models\StockDeposit::create([
+                    'product_id' => $product->id,
+                    'initial_stock' => 0,
+                    'quantity' => 0,
+                    'final_stock' => 0,
                     'comment' => 'Création du produit ' . $product->name,
                 ]);
             }
@@ -103,6 +109,7 @@ class ProductController extends BaseController
             ], 500);
         }
     }
+
 
 
 

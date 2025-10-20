@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\SaleProduct;
 use App\Models\Stock;
+use App\Models\StockDeposit;
 use Illuminate\Support\Carbon;
 use App\Models\Notification;
 use App\Models\Deposit;
@@ -23,6 +24,7 @@ class SaleController extends Controller
         $sales = Sale::with('products')->get();
         return view('sales.index', compact('sales'));
     }
+
 
     public function store(Request $request)
     {
@@ -40,9 +42,7 @@ class SaleController extends Controller
         DB::beginTransaction();
 
         try {
-            $total = collect($validated['products'])->sum(function ($item) {
-                return $item['quantity'] * $item['price'];
-            });
+            $total = collect($validated['products'])->sum(fn($item) => $item['quantity'] * $item['price']);
 
             $sale = Sale::create([
                 'seller_name' => $validated['seller_name'],
@@ -62,8 +62,8 @@ class SaleController extends Controller
                     throw new \Exception("Stock insuffisant pour le produit : {$product->name}");
                 }
 
-                // Déterminer le prix correct selon price_type pour les produits consignables
-                $unitPrice = $item['price']; // valeur par défaut
+                // Déterminer le prix correct selon price_type
+                $unitPrice = $item['price'];
                 if ($product->is_depositable && isset($item['price_type'])) {
                     switch ($item['price_type']) {
                         case 'deposit':
@@ -86,7 +86,7 @@ class SaleController extends Controller
                     'price' => $unitPrice,
                 ]);
 
-                // Mise à jour du stock (toujours)
+                // Mise à jour du stock produit
                 $product->decrement('quantity', $item['quantity']);
                 $final_quantity = $initial_quantity - $item['quantity'];
 
@@ -109,29 +109,26 @@ class SaleController extends Controller
 
                     switch ($item['price_type']) {
                         case 'deposit':
-                            // Juste baisse du stock, rien dans deposits
+                            // On ne modifie que le stock produit, pas la table deposits
                             break;
 
                         case 'refill':
-                            // Ajouter la quantité dans la table deposits
-                            $deposit = Deposit::where('product_id', $product->id)->first();
+                            // Mettre à jour la table deposits uniquement avec la quantité
+                            $deposit = Deposit::firstOrCreate(
+                                ['product_id' => $product->id],
+                                ['product_name' => $product->name, 'quantity' => 0]
+                            );
 
-                            if ($deposit) {
-                                $deposit->update([
-                                    'quantity' => $deposit->quantity + $item['quantity'],
-                                    'final_quantity' => $deposit->final_quantity + $item['quantity'],
-                                    'comment' => $comment,
-                                ]);
-                            } else {
-                                Deposit::create([
-                                    'product_id' => $product->id,
-                                    'product_name' => $product->name,
-                                    'initial_quantity' => 0,
-                                    'quantity' => $item['quantity'],
-                                    'final_quantity' => $item['quantity'],
-                                    'comment' => $comment,
-                                ]);
-                            }
+                            $deposit->increment('quantity', $item['quantity']);
+
+                            // Historique du dépôt dans stocks_deposits
+                            StockDeposit::create([
+                                'product_id' => $product->id,
+                                'initial_stock' => $deposit->quantity - $item['quantity'],
+                                'quantity' => $item['quantity'],
+                                'final_stock' => $deposit->quantity,
+                                'comment' => $comment,
+                            ]);
                             break;
 
                         case 'both':
@@ -170,8 +167,6 @@ class SaleController extends Controller
             ], 500);
         }
     }
-
-
 
     public function show($id)
     {

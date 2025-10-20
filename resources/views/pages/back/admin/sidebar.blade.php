@@ -19,13 +19,13 @@
              </a>
          </li>
 
-         <!--  <li>
+         <li>
              <a href="{{ route('deposits') }}" class="{{ request()->routeIs('deposits.*') ? 'active' : '' }}">
                  <i class="fas fa-box"></i> Consignations
              </a>
          </li>
 
--->
+
          <li>
              <a href="{{ url('/proformas') }}" class="{{ request()->is('proformas') ? 'active' : '' }}">
                  <i class="fas fa-file-invoice"></i> Factures Proformas

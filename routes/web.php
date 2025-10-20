@@ -13,7 +13,8 @@ use App\Http\Controllers\{
     SettingsController,
     ProformaController,
     RentabilityController,
-    DepositController
+    DepositController,
+    StockDepositController
 };
 
 use App\Models\{
@@ -141,6 +142,14 @@ Route::get('/sales', function () {
     $sales = Sale::with('products')->orderBy('created_at', 'desc')->get();
     return view('pages/back/admin/sales', compact('sales'));
 })->name('sales');
+
+//route clients
+Route::get('/clients', function () {
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return redirect()->route('login');
+    }
+    return view('pages/back/admin/clients');
+})->name('clients');
 
 Route::get('/proformas', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
@@ -633,8 +642,11 @@ Route::get('/reset_password', function () {
 Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');
 */
 
-//Mise à jour d'une consignation
-Route::post('/deposits/{id}/update', [DepositController::class, 'updateDeposit']);
+//liste des consignations d'un prdoduit
+Route::get('/deposits/{product_id}/history', [StockDepositController::class, 'history']);
+
+//ajouter du stock pour les consignations
+Route::post('/deposits/add', [DepositController::class, 'addDeposit']);
 
 //liste des consignations
 Route::get('/depositsList', [DepositController::class, 'depositsList']);

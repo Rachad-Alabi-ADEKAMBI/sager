@@ -1,325 +1,258 @@
 <template>
     <div>
         <div class="sales-content">
-            <div class="sales-history">
+            <!-- Main deposits list view -->
+            <div class="sales-history" v-if="!showHistoryView">
                 <div class="history-header">
-                    <h3>Historique des consignations</h3>
-                    <div
-                        style="
-                            display: flex;
-                            gap: 1rem;
-                            align-items: center;
-                            flex-wrap: wrap;
-                        "
-                    >
-                        <select
-                            v-model="filterPeriod"
-                            style="
-                                padding: 0.5rem;
-                                border: 1px solid #ddd;
-                                border-radius: 5px;
-                            "
-                        >
-                            <option>Aujourd'hui</option>
-                            <option>Hier</option>
-                            <option>Cette semaine</option>
-                            <option>Ce mois</option>
-                            <option>Toutes les consignations</option>
-                            <option>À une date précise</option>
-                        </select>
-
-                        <select
-                            v-model="filterStatus"
-                            style="
-                                padding: 0.5rem;
-                                border: 1px solid #ddd;
-                                border-radius: 5px;
-                            "
-                        >
-                            <option value="">Tous les statuts</option>
-                            <option value="En cours">En cours</option>
-                            <option value="Terminée">Terminée</option>
-                            <option value="Annulée">Annulée</option>
-                        </select>
-
+                    <h3>Historique des Consignations</h3>
+                    <div class="header-actions">
                         <button
-                            @click="printCurrentList"
-                            class="btn-primary"
+                            @click="showAddStockModal = true"
+                            class="btn-add-stock"
+                        >
+                            <i class="fas fa-plus"></i>
+                            Ajouter du Stock
+                        </button>
+                        <button @click="printAllDeposits" class="btn-print-all">
+                            <i class="fas fa-print"></i>
+                            Imprimer la Liste
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Deposits Table -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Quantité</th>
+                                <th>Dernière MAJ</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="deposit in paginatedDeposits"
+                                :key="deposit.id"
+                            >
+                                <td data-label="Produit">
+                                    {{ deposit.product_name }}
+                                </td>
+                                <td data-label="Quantité">
+                                    {{ formatQuantity(deposit.quantity) }}
+                                </td>
+                                <td data-label="Dernière MAJ">
+                                    {{ formatDateTime(deposit.updated_at) }}
+                                </td>
+                                <td data-label="Actions">
+                                    <button
+                                        @click="
+                                            viewProductHistory(
+                                                deposit.product_id,
+                                                deposit.product_name
+                                            )
+                                        "
+                                        class="action-btn history-btn"
+                                        title="Voir l'historique"
+                                    >
+                                        <i
+                                            class="fas fa-clock"
+                                            style="color: white"
+                                        ></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Empty State -->
+                    <div v-if="deposits.length === 0" class="empty-state">
+                        <i class="fas fa-box-open"></i>
+                        <p>Aucun dépôt trouvé</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="totalPages > 1" class="pagination">
+                    <button
+                        @click="goToPage(currentPage - 1)"
+                        :disabled="currentPage === 1"
+                        class="page-btn"
+                    >
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="page-info">
+                        Page {{ currentPage }} sur {{ totalPages }}
+                    </span>
+                    <button
+                        @click="goToPage(currentPage + 1)"
+                        :disabled="currentPage === totalPages"
+                        class="page-btn"
+                    >
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- History view for specific product -->
+            <div class="showStock" v-if="showHistoryView">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3
                             style="
-                                background: #17a2b8;
-                                color: white;
-                                border: none;
-                                padding: 0.5rem 1rem;
-                                border-radius: 5px;
-                                cursor: pointer;
-                                display: inline-flex;
+                                display: flex;
                                 align-items: center;
                                 gap: 0.5rem;
                             "
                         >
-                            <i class="fas fa-print"></i>
-                            Imprimer la liste
-                        </button>
-
+                            <span
+                                @click="closeHistoryView()"
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    cursor: pointer;
+                                    color: #007bff;
+                                    font-weight: bold;
+                                "
+                            >
+                                <i class="fas fa-arrow-left"></i>
+                                <span style="margin-left: 5px">Retour</span>
+                            </span>
+                            | Liste des opérations sur
+                            <strong>{{ selectedProductName }}</strong>
+                        </h3>
                         <div
-                            v-if="filterPeriod === 'À une date précise'"
-                            style="width: 100%; margin-top: 0.5rem"
+                            style="
+                                display: flex;
+                                gap: 10px;
+                                align-items: center;
+                            "
                         >
-                            <input type="date" v-model="selectedDate" />
-                        </div>
-                    </div>
-                </div>
-
-                <table class="table" v-if="paginatedDeposits.length > 0">
-                    <thead>
-                        <tr>
-                            <th>N° Facture</th>
-                            <th>Date</th>
-                            <th>Produit</th>
-                            <th>Prix unitaire</th>
-                            <th>Quantité</th>
-                            <th>Total</th>
-                            <th>Statut</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="deposit in paginatedDeposits"
-                            :key="deposit.id"
-                        >
-                            <td data-label="N° Vente">
-                                <strong>N° {{ deposit.sale_id }} /FR-N</strong>
-                            </td>
-                            <td data-label="Date">
-                                {{ formatDateTime(deposit.created_at) }}
-                            </td>
-                            <td data-label="Produit">
-                                {{ deposit.product_name }}
-                            </td>
-                            <td data-label="Prix unitaire">
-                                <strong>
-                                    {{
-                                        formatAmount(
-                                            deposit.deposit_price_at_sale
-                                        )
-                                    }}
-                                    FCFA
-                                </strong>
-                            </td>
-                            <td data-label="Quantité">
-                                {{ deposit.quantity }}
-                            </td>
-                            <td data-label="Total">
-                                <strong>
-                                    {{ formatAmount(deposit.total) }} FCFA
-                                </strong>
-                            </td>
-                            <td data-label="Statut">
-                                <span
-                                    :class="getStatusClass(deposit.status)"
-                                    style="
-                                        padding: 0.25rem 0.75rem;
-                                        border-radius: 20px;
-                                        font-size: 0.85rem;
-                                        font-weight: 600;
-                                        display: inline-block;
-                                    "
-                                >
-                                    {{ deposit.status }}
-                                </span>
-                            </td>
-                            <td data-label="Actions">
-                                <button
-                                    class="invoice-btn"
-                                    @click="showDepositDetails(deposit)"
-                                    style="
-                                        background: #667eea;
-                                        color: white;
-                                        border: none;
-                                        padding: 0.5rem 1rem;
-                                        border-radius: 5px;
-                                        cursor: pointer;
-                                        margin: 5px;
-                                    "
-                                >
-                                    <i
-                                        class="fas fa-eye"
-                                        style="margin-right: 5px"
-                                    ></i>
-                                    Voir facture
-                                </button>
-
-                                <button
-                                    v-if="
-                                        deposit.status === 'En attente' ||
-                                        deposit.status === 'En cours'
-                                    "
-                                    class="action-btn terminate-btn"
-                                    @click="terminateDeposit(deposit.id)"
-                                    style="
-                                        background: #28a745;
-                                        color: white;
-                                        border: none;
-                                        padding: 0.5rem 1rem;
-                                        border-radius: 5px;
-                                        cursor: pointer;
-                                        margin: 5px;
-                                    "
-                                >
-                                    <i class="fas fa-check"></i>
-                                    Terminer
-                                </button>
-
-                                <button
-                                    v-if="deposit.status === 'Terminée'"
-                                    class="action-btn restore-btn"
-                                    @click="restoreDeposit(deposit.id)"
-                                    style="
-                                        background: #ffc107;
-                                        color: #333;
-                                        border: none;
-                                        padding: 0.5rem 1rem;
-                                        border-radius: 5px;
-                                        cursor: pointer;
-                                        margin: 5px;
-                                    "
-                                >
-                                    <i class="fas fa-undo"></i>
-                                    Rétablir
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div v-else class="no-sales-message">
-                    <strong>
-                        Aucune consignation disponible pour la période
-                        sélectionnée
-                    </strong>
-                </div>
-
-                <div class="pagination-container" v-if="totalPages > 1">
-                    <ul class="pagination">
-                        <li
-                            class="page-item"
-                            :class="{ disabled: currentPage === 1 }"
-                        >
-                            <a
-                                class="page-link"
-                                href="#"
-                                @click.prevent="goToPage(currentPage - 1)"
-                            >
-                                Précédent
-                            </a>
-                        </li>
-                        <li
-                            class="page-item"
-                            v-for="page in totalPages"
-                            :key="page"
-                            :class="{ active: currentPage === page }"
-                        >
-                            <a
-                                class="page-link"
-                                href="#"
-                                @click.prevent="goToPage(page)"
-                            >
-                                {{ page }}
-                            </a>
-                        </li>
-                        <li
-                            class="page-item"
-                            :class="{ disabled: currentPage === totalPages }"
-                        >
-                            <a
-                                class="page-link"
-                                href="#"
-                                @click.prevent="goToPage(currentPage + 1)"
-                            >
-                                Suivant
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <div v-if="showDepositModal" class="modal-overlay">
-                    <div class="modal-container">
-                        <div class="modal-header">
-                            <h5>Détails de la consignation</h5>
+                            <strong>Total: {{ productHistory.length }}</strong>
                             <button
-                                @click="closeDepositModal"
-                                class="modal-close"
-                            >
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <p>
-                                <strong>N° Consignation :</strong>
-                                {{ selectedDeposit.id }}
-                            </p>
-                            <p>
-                                <strong>N° Vente :</strong>
-                                {{ selectedDeposit.sale_id }}
-                            </p>
-                            <p>
-                                <strong>Produit :</strong>
-                                {{ selectedDeposit.product_name }}
-                            </p>
-                            <p>
-                                <strong>Prix unitaire :</strong>
-                                {{
-                                    formatAmount(
-                                        selectedDeposit.deposit_price_at_sale
-                                    )
-                                }}
-                                FCFA
-                            </p>
-                            <p>
-                                <strong>Quantité :</strong>
-                                {{ selectedDeposit.quantity }}
-                            </p>
-                            <p>
-                                <strong>Total :</strong>
-                                {{ formatAmount(selectedDeposit.total) }} FCFA
-                            </p>
-                            <p>
-                                <strong>Statut :</strong>
-                                <span
-                                    :class="
-                                        getStatusClass(selectedDeposit.status)
-                                    "
-                                    style="
-                                        padding: 0.25rem 0.75rem;
-                                        border-radius: 20px;
-                                        font-size: 0.85rem;
-                                        font-weight: 600;
-                                        display: inline-block;
-                                        margin-left: 0.5rem;
-                                    "
-                                >
-                                    {{ selectedDeposit.status }}
-                                </span>
-                            </p>
-                            <p>
-                                <strong>Date de création :</strong>
-                                {{ formatDateTime(selectedDeposit.created_at) }}
-                            </p>
-                            <p>
-                                <strong>Dernière mise à jour :</strong>
-                                {{ formatDateTime(selectedDeposit.updated_at) }}
-                            </p>
-                        </div>
-                        <div class="modal-footer">
-                            <button
-                                @click="printDeposit(selectedDeposit.sale_id)"
-                                class="btn-download"
+                                @click="printProductHistory"
+                                class="btn-print-history"
                             >
                                 <i class="fas fa-print"></i>
-                                Imprimer Facture
                             </button>
                         </div>
                     </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Stock initial</th>
+                                <th>Quantité</th>
+                                <th>Stock final</th>
+                                <th>Commentaire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="(operation, index) in productHistory"
+                                :key="index"
+                            >
+                                <td data-label="Date">
+                                    {{ formatDateTime(operation.created_at) }}
+                                </td>
+                                <td data-label="Stock initial">
+                                    <strong>
+                                        {{
+                                            formatQuantity(
+                                                operation.initial_stock
+                                            )
+                                        }}
+                                    </strong>
+                                </td>
+                                <td data-label="Quantité">
+                                    <strong style="color: #28a745">
+                                        {{ formatQuantity(operation.quantity) }}
+                                    </strong>
+                                </td>
+                                <td data-label="Stock final">
+                                    <strong>
+                                        {{
+                                            formatQuantity(
+                                                operation.final_stock
+                                            )
+                                        }}
+                                    </strong>
+                                </td>
+                                <td data-label="Commentaire">
+                                    {{ operation.comment }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div v-if="productHistory.length === 0" class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>Aucune opération trouvée pour ce produit</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Stock Modal -->
+        <div
+            v-if="showAddStockModal"
+            class="modal-overlay"
+            @click.self="closeAddStockModal"
+        >
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h5>Ajouter du Stock</h5>
+                    <button @click="closeAddStockModal" class="modal-close">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Produit</label>
+                        <select
+                            v-model="newStock.product_id"
+                            class="form-control"
+                        >
+                            <option value="">Sélectionner un produit</option>
+                            <option
+                                v-for="product in uniqueProducts"
+                                :key="product.product_id"
+                                :value="product.product_id"
+                            >
+                                {{ product.product_name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantité</label>
+                        <input
+                            v-model.number="newStock.quantity"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            class="form-control"
+                            placeholder="Entrer la quantité"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Commentaire</label>
+                        <textarea
+                            v-model="newStock.comment"
+                            class="form-control"
+                            rows="3"
+                            placeholder="Ajouter un commentaire (optionnel)"
+                        ></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @click="closeAddStockModal" class="btn-cancel">
+                        Annuler
+                    </button>
+                    <button @click="addStock" class="btn-submit">
+                        Ajouter
+                    </button>
                 </div>
             </div>
         </div>
@@ -333,11 +266,16 @@
         data() {
             return {
                 deposits: [],
-                selectedDeposit: null,
-                selectedDate: null,
-                showDepositModal: false,
-                filterPeriod: 'Toutes les consignations',
-                filterStatus: '', // Added status filter
+                showAddStockModal: false,
+                showHistoryView: false,
+                productHistory: [],
+                selectedProductName: '',
+                selectedProductId: null,
+                newStock: {
+                    product_id: '',
+                    quantity: 0,
+                    comment: '',
+                },
 
                 // Pagination
                 currentPage: 1,
@@ -354,15 +292,376 @@
                 axios
                     .get('/depositsList')
                     .then((response) => {
-                        console.log('[v0] Deposits data:', response.data);
-                        this.deposits = response.data;
+                        if (
+                            response.data.success &&
+                            Array.isArray(response.data.data)
+                        ) {
+                            this.deposits = response.data.data;
+                        } else {
+                            this.deposits = [];
+                        }
                     })
                     .catch((error) => {
-                        console.error(
-                            'Erreur lors de la récupération des consignations :',
-                            error
-                        );
+                        console.error('Error fetching deposits:', error);
+                        this.deposits = [];
+                        alert('Erreur lors de la récupération des dépôts');
                     });
+            },
+
+            viewProductHistory(productId, productName) {
+                this.selectedProductId = productId;
+                this.selectedProductName = productName;
+                this.showHistoryView = true;
+
+                // Fetch history from the API
+                axios
+                    .get(`/deposits/${productId}/history`)
+                    .then((response) => {
+                        if (
+                            response.data.history &&
+                            Array.isArray(response.data.history)
+                        ) {
+                            this.productHistory = response.data.history;
+                        } else {
+                            this.productHistory = [];
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error fetching product history:', error);
+                        this.productHistory = [];
+                        alert("Erreur lors de la récupération de l'historique");
+                    });
+            },
+
+            closeHistoryView() {
+                this.showHistoryView = false;
+                this.productHistory = [];
+                this.selectedProductName = '';
+                this.selectedProductId = null;
+            },
+
+            printProductHistory() {
+                const printWindow = window.open('', '_blank');
+                const printContent = this.generateProductHistoryPrint();
+
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+                printWindow.focus();
+
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            },
+
+            generateProductHistoryPrint() {
+                let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Historique - ${this.selectedProductName}</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            padding: 30px;
+                            color: #333;
+                            line-height: 1.6;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 40px;
+                            padding-bottom: 20px;
+                            border-bottom: 3px solid #667eea;
+                        }
+                        .header h1 {
+                            color: #667eea;
+                            font-size: 2rem;
+                            margin-bottom: 10px;
+                        }
+                        .header .product-name {
+                            font-size: 1.5rem;
+                            color: #555;
+                            font-weight: 600;
+                        }
+                        .print-info {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            padding: 15px;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            border-radius: 8px;
+                        }
+                        .print-info p {
+                            margin: 5px 0;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 20px;
+                        }
+                        th {
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            padding: 12px;
+                            text-align: left;
+                            font-weight: 600;
+                        }
+                        td {
+                            padding: 12px;
+                            border-bottom: 1px solid #e9ecef;
+                        }
+                        tr:nth-child(even) {
+                            background-color: #f8f9fa;
+                        }
+                        .footer {
+                            margin-top: 40px;
+                            text-align: center;
+                            padding-top: 20px;
+                            border-top: 2px solid #e9ecef;
+                            color: #666;
+                        }
+                        @media print {
+                            body { padding: 20px; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Historique des Opérations</h1>
+                        <div class="product-name">${
+                            this.selectedProductName
+                        }</div>
+                    </div>
+                    <div class="print-info">
+                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                            'fr-FR'
+                        )}</p>
+                        <p><strong>Nombre d'opérations:</strong> ${
+                            this.productHistory.length
+                        }</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Stock initial</th>
+                                <th>Quantité</th>
+                                <th>Stock final</th>
+                                <th>Commentaire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+                this.productHistory.forEach((operation) => {
+                    html += `
+                    <tr>
+                        <td>${this.formatDateTime(operation.created_at)}</td>
+                        <td><strong>${this.formatQuantity(
+                            operation.initial_stock
+                        )}</strong></td>
+                        <td><strong style="color: #28a745;">${this.formatQuantity(
+                            operation.quantity
+                        )}</strong></td>
+                        <td><strong>${this.formatQuantity(
+                            operation.final_stock
+                        )}</strong></td>
+                        <td>${operation.comment}</td>
+                    </tr>
+                `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                    <div class="footer">
+                        <p>Document généré automatiquement - Système de Gestion des Dépôts</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+                return html;
+            },
+
+            addStock() {
+                if (!this.newStock.product_id) {
+                    alert('Veuillez sélectionner un produit');
+                    return;
+                }
+                if (this.newStock.quantity <= 0) {
+                    alert('La quantité doit être supérieure à 0');
+                    return;
+                }
+
+                axios
+                    .post('/deposits/add', {
+                        product_id: this.newStock.product_id,
+                        quantity: this.newStock.quantity,
+                        comment: this.newStock.comment || 'Ajout de stock',
+                    })
+                    .then((response) => {
+                        alert('Stock ajouté avec succès');
+                        this.closeAddStockModal();
+                        this.fetchDepositsData();
+                    })
+                    .catch((error) => {
+                        console.error('Error adding stock:', error);
+                        alert("Erreur lors de l'ajout du stock");
+                    });
+            },
+
+            closeAddStockModal() {
+                this.showAddStockModal = false;
+                this.newStock = {
+                    product_id: '',
+                    quantity: 0,
+                    comment: '',
+                };
+            },
+
+            printAllDeposits() {
+                const printWindow = window.open('', '_blank');
+                const printContent = this.generateAllDepositsPrint();
+
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+                printWindow.focus();
+
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            },
+
+            generateAllDepositsPrint() {
+                let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Liste des Produits en Stock</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            padding: 30px;
+                            color: #333;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            padding-bottom: 20px;
+                            border-bottom: 3px solid #667eea;
+                        }
+                        .header h1 {
+                            color: #667eea;
+                            font-size: 2.5rem;
+                            margin-bottom: 10px;
+                        }
+                        .print-info {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            padding: 20px;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            border-radius: 10px;
+                        }
+                        .print-info p {
+                            margin: 5px 0;
+                            font-size: 1.1rem;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        }
+                        th {
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            padding: 15px;
+                            text-align: left;
+                            font-weight: 600;
+                            font-size: 1rem;
+                        }
+                        td {
+                            padding: 12px 15px;
+                            border-bottom: 1px solid #e9ecef;
+                        }
+                        tr:nth-child(even) {
+                            background-color: #f8f9fa;
+                        }
+                        tr:hover {
+                            background-color: #e9ecef;
+                        }
+                        .footer {
+                            margin-top: 40px;
+                            text-align: center;
+                            padding-top: 20px;
+                            border-top: 2px solid #e9ecef;
+                            color: #666;
+                        }
+                        @media print {
+                            body { padding: 20px; }
+                            table { box-shadow: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Liste des Produits en Stock</h1>
+                    </div>
+                    <div class="print-info">
+                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                            'fr-FR'
+                        )}</p>
+                        <p><strong>Total des produits:</strong> ${
+                            this.deposits.length
+                        }</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Quantité Actuelle</th>
+                                <th>Dernière Mise à Jour</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+                this.deposits.forEach((deposit) => {
+                    html += `
+                    <tr>
+                        <td><strong>${deposit.product_name}</strong></td>
+                        <td><strong style="color: #28a745;">${this.formatQuantity(
+                            deposit.quantity
+                        )}</strong></td>
+                        <td>${this.formatDateTime(deposit.updated_at)}</td>
+                    </tr>
+                `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                    <div class="footer">
+                        <p>Document généré automatiquement - Système de Gestion des Dépôts</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+                return html;
             },
 
             formatDateTime(datetime) {
@@ -377,235 +676,11 @@
                 return date.toLocaleString('fr-FR', options);
             },
 
-            formatAmount(value) {
-                return Number(value).toLocaleString('fr-FR');
-            },
-
-            showDepositDetails(deposit) {
-                this.selectedDeposit = deposit;
-                this.showDepositModal = true;
-            },
-
-            closeDepositModal() {
-                this.showDepositModal = false;
-                this.selectedDeposit = null;
-            },
-
-            terminateDeposit(id) {
-                if (
-                    !confirm(
-                        'Voulez-vous vraiment terminer cette consignation ?'
-                    )
-                ) {
-                    return;
-                }
-
-                axios
-                    .post(`/deposits/${id}/update`, {
-                        status: 'Terminée', // <-- correspond exactement à l'ENUM
-                    })
-                    .then(() => {
-                        alert('Consignation terminée avec succès.');
-                        this.fetchDepositsData();
-                    })
-                    .catch((error) => {
-                        alert(
-                            'Erreur lors de la mise à jour de la consignation.'
-                        );
-                        console.error('[v0] Error terminating deposit:', error);
-                    });
-            },
-
-            restoreDeposit(id) {
-                if (
-                    !confirm(
-                        'Voulez-vous vraiment rétablir cette consignation ?'
-                    )
-                ) {
-                    return;
-                }
-
-                axios
-                    .post(`/deposits/${id}/update`, {
-                        status: 'En cours', // <-- correspond exactement à l'ENUM
-                    })
-                    .then(() => {
-                        alert('Consignation rétablie avec succès.');
-                        this.fetchDepositsData();
-                    })
-                    .catch((error) => {
-                        alert(
-                            'Erreur lors de la mise à jour de la consignation.'
-                        );
-                        console.error('[v0] Error restoring deposit:', error);
-                    });
-            },
-
-            printDeposit(depositId) {
-                // Ouvre une nouvelle fenêtre avec l'URL correcte
-                window.open(`/newInvoice/${depositId}`);
-            },
-            printCurrentList() {
-                const printWindow = window.open('', '_blank');
-                const printContent = this.generatePrintContent();
-
-                printWindow.document.write(printContent);
-                printWindow.document.close();
-                printWindow.focus();
-
-                setTimeout(() => {
-                    printWindow.print();
-                    printWindow.close();
-                }, 250);
-            },
-
-            generatePrintContent() {
-                let html = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Liste des Consignations</title>
-                        <style>
-                            body {
-                                font-family: Arial, sans-serif;
-                                padding: 20px;
-                            }
-                            h1 {
-                                text-align: center;
-                                color: #333;
-                                margin-bottom: 20px;
-                            }
-                            .filter-info {
-                                text-align: center;
-                                margin-bottom: 20px;
-                                color: #666;
-                            }
-                            table {
-                                width: 100%;
-                                border-collapse: collapse;
-                                margin-top: 20px;
-                            }
-                            th, td {
-                                border: 1px solid #ddd;
-                                padding: 12px;
-                                text-align: left;
-                            }
-                            th {
-                                background-color: #667eea;
-                                color: white;
-                                font-weight: bold;
-                            }
-                            tr:nth-child(even) {
-                                background-color: #f9f9f9;
-                            }
-                            .status-badge {
-                                padding: 4px 12px;
-                                border-radius: 12px;
-                                font-size: 0.85em;
-                                font-weight: 600;
-                                display: inline-block;
-                            }
-                            .status-completed {
-                                background-color: #d4edda;
-                                color: #155724;
-                            }
-                            .status-in-progress {
-                                background-color: #fff3cd;
-                                color: #856404;
-                            }
-                            .status-pending {
-                                background-color: #f8d7da;
-                                color: #721c24;
-                            }
-                            .total-row {
-                                font-weight: bold;
-                                background-color: #f0f0f0;
-                            }
-                            @media print {
-                                body { padding: 0; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Liste des Consignations</h1>
-                        <div class="filter-info">
-                            <p><strong>Période:</strong> ${
-                                this.filterPeriod
-                            }</p>
-                            ${
-                                this.filterStatus
-                                    ? `<p><strong>Statut:</strong> ${this.filterStatus}</p>`
-                                    : ''
-                            }
-                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
-                                'fr-FR'
-                            )}</p>
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>N° Consignation</th>
-                                    <th>N° Vente</th>
-                                    <th>Date</th>
-                                    <th>Produit</th>
-                                    <th>Prix unitaire</th>
-                                    <th>Quantité</th>
-                                    <th>Total</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-
-                let totalAmount = 0;
-                this.filteredDeposits.forEach((deposit) => {
-                    totalAmount += parseFloat(deposit.total);
-                    const statusClass = this.getStatusClass(
-                        deposit.status
-                    ).replace('status-', 'status-');
-                    html += `
-                        <tr>
-                            <td>N° ${deposit.id}</td>
-                            <td>N° ${deposit.sale_id}</td>
-                            <td>${this.formatDateTime(deposit.created_at)}</td>
-                            <td>${deposit.product_name}</td>
-                            <td>${this.formatAmount(
-                                deposit.deposit_price_at_sale
-                            )} FCFA</td>
-                            <td>${deposit.quantity}</td>
-                            <td>${this.formatAmount(deposit.total)} FCFA</td>
-                            <td><span class="status-badge ${statusClass}">${
-                        deposit.status
-                    }</span></td>
-                        </tr>
-                    `;
+            formatQuantity(value) {
+                return Number(value).toLocaleString('fr-FR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
                 });
-
-                html += `
-                            <tr class="total-row">
-                                <td colspan="6" style="text-align: right;">TOTAL GÉNÉRAL:</td>
-                                <td colspan="2">${this.formatAmount(
-                                    totalAmount
-                                )} FCFA</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    </body>
-                    </html>
-                `;
-
-                return html;
-            },
-
-            getStatusClass(status) {
-                if (status === 'Terminé') {
-                    return 'status-completed';
-                } else if (status === 'En cours') {
-                    return 'status-in-progress';
-                } else if (status === 'En attente') {
-                    return 'status-pending';
-                }
-                return '';
             },
 
             goToPage(page) {
@@ -616,132 +691,254 @@
         },
 
         computed: {
-            filteredDeposits() {
-                const now = new Date();
-                this.currentPage = 1;
-
-                return this.deposits.filter((deposit) => {
-                    const depositDate = new Date(deposit.created_at);
-
-                    if (
-                        this.filterStatus &&
-                        deposit.status !== this.filterStatus
-                    ) {
-                        return false;
-                    }
-
-                    switch (this.filterPeriod) {
-                        case 'Hier': {
-                            const yesterday = new Date(now);
-                            yesterday.setDate(now.getDate() - 1);
-                            return (
-                                depositDate.toDateString() ===
-                                yesterday.toDateString()
-                            );
-                        }
-                        case "Aujourd'hui":
-                            return (
-                                depositDate.toDateString() ===
-                                now.toDateString()
-                            );
-
-                        case 'Cette semaine': {
-                            const firstDayOfWeek = new Date(now);
-                            firstDayOfWeek.setDate(
-                                now.getDate() - now.getDay() + 1
-                            );
-                            firstDayOfWeek.setHours(0, 0, 0, 0);
-
-                            const lastDayOfWeek = new Date(firstDayOfWeek);
-                            lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
-                            lastDayOfWeek.setHours(23, 59, 59, 999);
-
-                            return (
-                                depositDate >= firstDayOfWeek &&
-                                depositDate <= lastDayOfWeek
-                            );
-                        }
-
-                        case 'Ce mois': {
-                            return (
-                                depositDate.getMonth() === now.getMonth() &&
-                                depositDate.getFullYear() === now.getFullYear()
-                            );
-                        }
-
-                        case 'À une date précise': {
-                            if (!this.selectedDate) return true;
-
-                            const selected = new Date(this.selectedDate);
-                            selected.setHours(0, 0, 0, 0);
-
-                            const depositDay = new Date(deposit.created_at);
-                            depositDay.setHours(0, 0, 0, 0);
-
-                            return depositDay.getTime() === selected.getTime();
-                        }
-
-                        case 'Toutes les consignations':
-                        default:
-                            return true;
+            uniqueProducts() {
+                const productMap = new Map();
+                this.deposits.forEach((deposit) => {
+                    if (!productMap.has(deposit.product_id)) {
+                        productMap.set(deposit.product_id, {
+                            product_id: deposit.product_id,
+                            product_name: deposit.product_name,
+                        });
                     }
                 });
+                return Array.from(productMap.values());
             },
 
             totalPages() {
-                return Math.ceil(this.filteredDeposits.length / this.perPage);
+                return Math.ceil(this.deposits.length / this.perPage);
             },
 
             paginatedDeposits() {
                 const start = (this.currentPage - 1) * this.perPage;
                 const end = start + this.perPage;
-                return this.filteredDeposits.slice(start, end);
+                return this.deposits.slice(start, end);
             },
         },
     };
 </script>
 
-<style>
-    .status-completed {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
+<style scoped>
+    .sales-content {
+        padding: 20px;
     }
 
-    .status-in-progress {
-        background-color: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeaa7;
+    .sales-history {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
     }
 
-    .status-pending {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .history-header h3 {
+        margin: 0;
+        color: #333;
+        font-size: 1.5rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-add-stock,
+    .btn-print-all {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-add-stock {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-add-stock:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-print-all {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .btn-print-all:hover {
+        background: #138496;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .table th,
+    .table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        color: #333;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
     }
 
     .action-btn {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
         transition: all 0.3s ease;
+        margin-right: 5px;
     }
 
-    .action-btn:hover {
+    /* Improved history button styling with green background and white icon */
+    .history-btn {
+        background: #28a745;
+        color: white;
+    }
+
+    .history-btn:hover {
+        background: #218838;
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
     }
 
-    .terminate-btn:hover {
-        background: #218838 !important;
+    .print-btn {
+        background: #17a2b8;
+        color: white;
     }
 
     .print-btn:hover {
-        background: #138496 !important;
+        background: #138496;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
     }
 
-    .restore-btn:hover {
-        background: #e0a800 !important;
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
     }
 
-    /* Added modal styles */
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .empty-state p {
+        font-size: 1.2rem;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .page-btn {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .page-btn:hover:not(:disabled) {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .page-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .page-info {
+        font-weight: 600;
+        color: #333;
+    }
+
+    /* Added styles for history view matching ProductsComponent */
+    .showStock {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .table-header h3 {
+        margin: 0;
+        color: #333;
+        font-size: 1.3rem;
+    }
+
+    .btn-print-history {
+        padding: 8px 16px;
+        background: #17a2b8;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-print-history:hover {
+        background: #138496;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+    }
+
+    /* Modal Styles */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -760,7 +957,7 @@
         background: white;
         border-radius: 15px;
         width: 90%;
-        max-width: 600px;
+        max-width: 500px;
         max-height: 90vh;
         overflow-y: auto;
         animation: slideIn 0.3s ease;
@@ -798,43 +995,68 @@
         padding: 1.5rem;
     }
 
-    .modal-body p {
-        margin-bottom: 1rem;
-        font-size: 1rem;
-        line-height: 1.6;
+    .form-group {
+        margin-bottom: 1.5rem;
     }
 
-    .modal-body strong {
-        color: #333;
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
         font-weight: 600;
+        color: #333;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
     .modal-footer {
         display: flex;
         justify-content: flex-end;
+        gap: 10px;
         padding: 1rem 1.5rem;
         border-top: 1px solid #eee;
     }
 
-    .btn-download {
-        background: #667eea;
-        color: white;
-        padding: 0.75rem 1.5rem;
+    .btn-cancel,
+    .btn-submit {
+        padding: 10px 20px;
         border: none;
         border-radius: 8px;
         font-weight: 600;
-        font-size: 1rem;
         cursor: pointer;
         transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
     }
 
-    .btn-download:hover {
+    .btn-cancel {
+        background: #f8f9fa;
+        color: #333;
+    }
+
+    .btn-cancel:hover {
+        background: #e9ecef;
+    }
+
+    .btn-submit {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-submit:hover {
         background: #5568d3;
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
     @keyframes fadeIn {
@@ -857,8 +1079,24 @@
         }
     }
 
-    /* Added responsive styles for mobile */
+    /* Responsive Styles */
     @media (max-width: 768px) {
+        .history-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .btn-add-stock,
+        .btn-print-all {
+            width: 100%;
+            justify-content: center;
+        }
+
         table.table,
         thead,
         tbody,
@@ -879,7 +1117,6 @@
             padding: 15px 10px;
             border-radius: 8px;
             background-color: #fff;
-            box-sizing: border-box;
         }
 
         tbody td {
@@ -888,9 +1125,7 @@
             text-align: left !important;
             border: none !important;
             border-bottom: 1px solid #eee !important;
-            box-sizing: border-box;
             min-height: 40px;
-            vertical-align: top;
         }
 
         tbody td:last-child {
@@ -909,15 +1144,8 @@
             color: #333;
         }
 
-        tbody td button {
-            display: inline-flex;
-            margin-right: 10px;
-            margin-bottom: 5px;
-        }
-
         .modal-container {
             width: 95%;
-            max-height: 95vh;
         }
     }
 </style>
