@@ -1,5 +1,5 @@
  <!-- Sidebar -->
- <aside class="sidebar" id="sidebar">
+ <aside class="sidebar" id="sidebar" style="height: 100vh; overflow-y: auto;">
      <div class="sidebar-header">
          <h2>
              <a href="{{ route('home') }}" style='color: white; text-decoration: none;'>
@@ -41,6 +41,14 @@
                  <i class="fas fa-money-bill"></i> Rentabilité
              </a>
          </li>
+
+         <li>
+             <a href="{{ route('clients') }}" class="{{ request()->routeIs('clients') ? 'active' : '' }}">
+                 <i class="fas fa-user-tie"></i> Clients
+             </a>
+         </li>
+
+
          <li>
              <a href="{{ route('sellers') }}" class="{{ request()->routeIs('sellers') ? 'active' : '' }}">
                  <i class="fas fa-users"></i> Vendeurs
