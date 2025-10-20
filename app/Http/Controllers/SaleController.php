@@ -24,7 +24,6 @@ class SaleController extends Controller
         return view('sales.index', compact('sales'));
     }
 
-    //  public function store(Request $request) {}
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -35,12 +34,15 @@ class SaleController extends Controller
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity'   => 'required|numeric|min:0.01',
             'products.*.price' => 'required|numeric|min:0',
+            'products.*.price_type' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
 
         try {
-            $total = collect($validated['products'])->sum(fn($item) => $item['quantity'] * $item['price']);
+            $total = collect($validated['products'])->sum(function ($item) {
+                return $item['quantity'] * $item['price'];
+            });
 
             $sale = Sale::create([
                 'seller_name' => $validated['seller_name'],
@@ -60,15 +62,31 @@ class SaleController extends Controller
                     throw new \Exception("Stock insuffisant pour le produit : {$product->name}");
                 }
 
+                // Déterminer le prix correct selon price_type pour les produits consignables
+                $unitPrice = $item['price']; // valeur par défaut
+                if ($product->is_depositable && isset($item['price_type'])) {
+                    switch ($item['price_type']) {
+                        case 'deposit':
+                            $unitPrice = $product->deposit_price;
+                            break;
+                        case 'refill':
+                            $unitPrice = $product->filling_price;
+                            break;
+                        case 'both':
+                            $unitPrice = $product->deposit_price + $product->filling_price;
+                            break;
+                    }
+                }
+
                 // Ligne de vente
                 SaleProduct::create([
                     'sale_id' => $sale->id,
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
-                    'price' => $item['price'],
+                    'price' => $unitPrice,
                 ]);
 
-                // Mise à jour du stock
+                // Mise à jour du stock (toujours)
                 $product->decrement('quantity', $item['quantity']);
                 $final_quantity = $initial_quantity - $item['quantity'];
 
@@ -85,25 +103,47 @@ class SaleController extends Controller
                     'seller_name' => $sale->seller_name,
                 ]);
 
-                // Si produit consignable → création dans deposits
+                // 🔹 Gestion des dépôts pour produits consignables
                 if ($product->is_depositable) {
-                    $depositTotal = $product->deposit_price * $item['quantity'];
+                    $comment = 'Facture ' . $sale->id . ' à ' . $sale->buyer_name;
 
-                    Deposit::create([
-                        'sale_id' => $sale->id,
-                        'product_id' => $product->id,
-                        'product_name' => $product->name,
-                        'deposit_price_at_sale' => $product->deposit_price,
-                        'quantity' => $item['quantity'],
-                        'total' => $depositTotal,
-                        'status' => 'En cours',
-                    ]);
+                    switch ($item['price_type']) {
+                        case 'deposit':
+                            // Juste baisse du stock, rien dans deposits
+                            break;
+
+                        case 'refill':
+                            // Ajouter la quantité dans la table deposits
+                            $deposit = Deposit::where('product_id', $product->id)->first();
+
+                            if ($deposit) {
+                                $deposit->update([
+                                    'quantity' => $deposit->quantity + $item['quantity'],
+                                    'final_quantity' => $deposit->final_quantity + $item['quantity'],
+                                    'comment' => $comment,
+                                ]);
+                            } else {
+                                Deposit::create([
+                                    'product_id' => $product->id,
+                                    'product_name' => $product->name,
+                                    'initial_quantity' => 0,
+                                    'quantity' => $item['quantity'],
+                                    'final_quantity' => $item['quantity'],
+                                    'comment' => $comment,
+                                ]);
+                            }
+                            break;
+
+                        case 'both':
+                            // Rien à faire pour deposits, seulement stock déjà géré
+                            break;
+                    }
                 }
 
                 $details[] = [
                     'product' => $product->name,
                     'quantity_sold' => $item['quantity'],
-                    'price' => $item['price']
+                    'price' => $unitPrice,
                 ];
             }
 
@@ -130,6 +170,8 @@ class SaleController extends Controller
             ], 500);
         }
     }
+
+
 
     public function show($id)
     {

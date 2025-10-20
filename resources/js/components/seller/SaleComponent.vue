@@ -191,7 +191,7 @@
                                                     })
                                                 "
                                             >
-                                                Rechargement
+                                                Rechargement —
                                                 {{
                                                     formatAmount(
                                                         line.product
@@ -961,7 +961,9 @@
                         product_id: line.productId,
                         quantity: line.quantity,
                         price: line.unitPrice,
-                        price_type: line.priceType, // Type de prix pour les produits consignables
+                        price_type: line.selectedPrice
+                            ? JSON.parse(line.selectedPrice).type
+                            : null,
                     })),
                 };
 

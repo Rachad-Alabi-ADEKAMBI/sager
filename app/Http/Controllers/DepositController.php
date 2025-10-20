@@ -4,56 +4,71 @@ namespace App\Http\Controllers;
 
 use App\Models\Deposit;
 use Illuminate\Http\Request;
-use App\Models\Notification;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Sale;
-
 
 class DepositController extends Controller
 {
-    //recuperer toutes les consignations
-    public function depositsList()
+    // Liste des dépôts
+    public function index()
     {
-        $deposits = Deposit::orderBy('id', 'desc')->get();
-        return response()->json($deposits);
+        return response()->json(Deposit::all());
     }
 
-    /**
-     * Met à jour le statut d'une consignation (Terminée ou Annulée)
-     */
-    public function updateDeposit(Request $request, $id)
+    // Créer un dépôt
+    public function store(Request $request)
     {
-        // Validation du statut
-        $validated = $request->validate([
-            'status' => 'required|string|in:En cours,Terminée,Annulée',
+        $data = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'product_name' => 'required|string',
+            'initial_quantity' => 'nullable|numeric',
+            'quantity' => 'required|numeric',
+            'final_quantity' => 'nullable|numeric',
+            'comment' => 'nullable|string',
         ]);
 
-        // Recherche de la consignation
-        $deposit = Deposit::findOrFail($id);
-
-        // Sauvegarde de l'ancien statut
-        $oldStatus = $deposit->status;
-
-        // Mise à jour du statut
-        $deposit->update([
-            'status' => $validated['status'],
-        ]);
-
-        // Récupération de la vente associée pour info dans la notification
-        $sale = Sale::find($deposit->sale_id);
-
-        // Création de la notification
-        Notification::create([
-            'description' => 'Le statut de la consignation N°' . $deposit->id
-                . ' pour la facture N°' . $deposit->sale_id
-                . '/FR-N de ' . ($sale ? $sale->buyer_name : 'client inconnu')
-                . ' a été modifié de "' . $oldStatus . '" à "' . $deposit->status . '" par '
-                . (Auth::check() ? (Auth::user()->role === 'admin' ? 'admin' : Auth::user()->name) : 'un utilisateur inconnu') . '.',
-        ]);
+        $deposit = Deposit::create($data);
 
         return response()->json([
-            'message' => "Statut de la consignation mis à jour avec succès.",
+            'success' => true,
+            'message' => 'Dépôt créé avec succès.',
             'deposit' => $deposit,
-        ], 200);
+        ]);
+    }
+
+    // Afficher un dépôt spécifique
+    public function show($id)
+    {
+        $deposit = Deposit::findOrFail($id);
+        return response()->json($deposit);
+    }
+
+    // Mettre à jour un dépôt
+    public function update(Request $request, $id)
+    {
+        $deposit = Deposit::findOrFail($id);
+
+        $data = $request->validate([
+            'product_name' => 'sometimes|string',
+            'initial_quantity' => 'sometimes|numeric',
+            'quantity' => 'sometimes|numeric',
+            'final_quantity' => 'sometimes|numeric',
+            'comment' => 'nullable|string',
+        ]);
+
+        $deposit->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dépôt mis à jour avec succès.',
+            'deposit' => $deposit,
+        ]);
+    }
+
+    // Supprimer un dépôt
+    public function destroy($id)
+    {
+        $deposit = Deposit::findOrFail($id);
+        $deposit->delete();
+
+        return response()->json(['message' => 'Dépôt supprimé avec succès.']);
     }
 }

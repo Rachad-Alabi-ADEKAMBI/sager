@@ -10,12 +10,17 @@ class Deposit extends Model
     use HasFactory;
 
     protected $fillable = [
-        'sale_id',
         'product_id',
         'product_name',
-        'deposit_price_at_sale',
+        'initial_quantity',
         'quantity',
-        'total',
-        'status',
+        'final_quantity',
+        'comment',
     ];
+
+    // Relation : un dépôt appartient à un produit
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
 }

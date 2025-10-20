@@ -48,20 +48,21 @@ class ProductController extends BaseController
             'filling_price' => 'nullable|numeric',
         ]);
 
-        // Si le produit est consignable → on ignore les prix de vente classiques
-        if ($data['is_depositable']) {
-            $data['price_detail'] = null;
-            $data['price_semi_bulk'] = null;
-            $data['price_bulk'] = null;
-        } else {
-            // Si le produit n'est pas consignable → on ignore les prix de consignation
-            $data['deposit_price'] = null;
-            $data['filling_price'] = null;
-        }
-
         try {
+            // Gestion des champs selon le type
+            if ($data['is_depositable']) {
+                $data['price_detail'] = null;
+                $data['price_semi_bulk'] = null;
+                $data['price_bulk'] = null;
+            } else {
+                $data['deposit_price'] = null;
+                $data['filling_price'] = null;
+            }
+
+            // Création du produit
             $product = Product::create($data);
 
+            // Création du mouvement de stock
             Stock::create([
                 'date' => now()->toDateString(),
                 'initial_stock' => 0,
@@ -77,6 +78,19 @@ class ProductController extends BaseController
                 'seller_name' => null,
             ]);
 
+            // 🔹 Si le produit est consignable → création d’une ligne dans deposits
+            if ($data['is_depositable']) {
+                \App\Models\Deposit::create([
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'initial_quantity' => 0,
+                    'quantity' => 0,
+                    'final_quantity' => 0,
+                    'comment' => 'Création du produit ' . $product->name,
+                ]);
+            }
+
+            // Création d’une notification
             Notification::create([
                 'description' => 'Produit ' . $data['name'] . ' ajouté avec succès. Quantité : ' . $data['quantity'] . '.',
             ]);
@@ -89,6 +103,7 @@ class ProductController extends BaseController
             ], 500);
         }
     }
+
 
 
 
