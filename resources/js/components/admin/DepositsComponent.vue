@@ -273,7 +273,7 @@
                 selectedProductId: null,
                 newStock: {
                     product_id: '',
-                    quantity: 0,
+                    quantity: '',
                     comment: '',
                 },
 

@@ -19,7 +19,7 @@
                                 id="customerName"
                                 v-model="customer_name"
                                 placeholder="Nom complet du client"
-                                style="width: 250px"
+                                style="width: 200px"
                                 required
                             />
                         </div>
@@ -51,7 +51,7 @@
                                             v-model="line.productId"
                                             @change="onProductChange(index)"
                                             class="form-control product-select"
-                                            style="width: 200px"
+                                            style="width: 170px"
                                         >
                                             <option disabled value="">
                                                 Sélectionner un produit
@@ -134,7 +134,7 @@
                                                         font-style: italic;
                                                     "
                                                 >
-                                                    Rechargement :
+                                                    Recharge :
                                                     {{
                                                         formatAmount(
                                                             line.product
@@ -155,6 +155,7 @@
                                         class="form-control price-type"
                                         v-model="line.selectedPrice"
                                         @change="updateUnitPrice(index)"
+                                        style="width: 170px"
                                     >
                                         <option disabled value="">
                                             Sélectionner le type
@@ -174,6 +175,7 @@
                                                 "
                                             >
                                                 Consignation
+                                                <br />
                                                 {{
                                                     formatAmount(
                                                         line.product
@@ -191,7 +193,8 @@
                                                     })
                                                 "
                                             >
-                                                Rechargement —
+                                                Recharge
+                                                <br />
                                                 {{
                                                     formatAmount(
                                                         line.product
@@ -216,7 +219,8 @@
                                                     })
                                                 "
                                             >
-                                                Consignation + Rechargement
+                                                Consignation + Recharge
+                                                <br />
                                                 {{
                                                     formatAmount(
                                                         Number(
@@ -245,6 +249,7 @@
                                                 "
                                             >
                                                 Détail
+                                                <br />
                                                 {{
                                                     formatAmount(
                                                         line.product
@@ -263,6 +268,7 @@
                                                 "
                                             >
                                                 Semi gros
+                                                <br />
                                                 {{
                                                     formatAmount(
                                                         line.product
@@ -281,6 +287,7 @@
                                                 "
                                             >
                                                 Gros
+                                                <br />
                                                 {{
                                                     formatAmount(
                                                         line.product.price_bulk
@@ -565,10 +572,10 @@
                                     (Consignation uniquement)
                                 </span>
                                 <span v-else-if="line.priceType === 'refill'">
-                                    (Rechargement uniquement)
+                                    (Recharge uniquement)
                                 </span>
                                 <span v-else-if="line.priceType === 'both'">
-                                    (Consignation + Rechargement)
+                                    (Consignation + Recharge)
                                 </span>
                             </div>
 

@@ -18,7 +18,7 @@
 
                 <button
                     @click="printList"
-                    class="btn-primary"
+                    class="btn-secondary"
                     style="background-color: #17a2b8; padding: 0.75rem 1.5rem"
                 >
                     <i class="fas fa-print"></i>
@@ -754,57 +754,73 @@
             </div>
 
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Prix détail</label>
-                    <input
-                        type="number"
-                        class="form-control"
-                        v-model.number="editedPriceDetail"
-                        :placeholder="formatAmount(currentProduct.price_detail)"
-                        min="0"
-                        step="0.01"
-                    />
-                </div>
+                <!-- 🔸 Si le produit n'est PAS consignable -->
+                <template v-if="currentProduct.is_depositable != 1">
+                    <div class="form-group">
+                        <label>Prix détail</label>
+                        <input
+                            type="number"
+                            class="form-control"
+                            v-model.number="editedPriceDetail"
+                            :placeholder="
+                                formatAmount(currentProduct.price_detail)
+                            "
+                            min="0"
+                            step="0.01"
+                        />
+                    </div>
 
-                <div class="form-group">
-                    <label>Prix semi gros</label>
-                    <input
-                        type="number"
-                        class="form-control"
-                        v-model.number="editedPriceSemiBulk"
-                        :placeholder="currentProduct.price_semi_bulk"
-                        min="0"
-                        step="0.01"
-                    />
-                </div>
+                    <div class="form-group">
+                        <label>Prix semi gros</label>
+                        <input
+                            type="number"
+                            class="form-control"
+                            v-model.number="editedPriceSemiBulk"
+                            :placeholder="currentProduct.price_semi_bulk"
+                            min="0"
+                            step="0.01"
+                        />
+                    </div>
 
-                <div class="form-group">
-                    <label>Prix gros</label>
-                    <input
-                        type="number"
-                        class="form-control"
-                        v-model.number="editedPriceBulk"
-                        :placeholder="currentProduct.price_bulk"
-                        min="0"
-                        step="0.01"
-                    />
-                </div>
+                    <div class="form-group">
+                        <label>Prix gros</label>
+                        <input
+                            type="number"
+                            class="form-control"
+                            v-model.number="editedPriceBulk"
+                            :placeholder="currentProduct.price_bulk"
+                            min="0"
+                            step="0.01"
+                        />
+                    </div>
+                </template>
 
-                <!-- ✅ Ajout conditionnel du prix de consignation -->
-                <div
-                    class="form-group"
-                    v-if="currentProduct.is_depositable == 1"
-                >
-                    <label>Prix de consignation</label>
-                    <input
-                        type="number"
-                        class="form-control"
-                        v-model.number="editedDepositPrice"
-                        :placeholder="currentProduct.deposit_price"
-                        min="0"
-                        step="0.01"
-                    />
-                </div>
+                <!-- 🔸 Si le produit EST consignable -->
+                <template v-else>
+                    <div class="form-group">
+                        <label>Prix de consignation</label>
+                        <input
+                            type="number"
+                            class="form-control"
+                            v-model.number="editedDepositPrice"
+                            :placeholder="currentProduct.deposit_price"
+                            min="0"
+                            step="0.01"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prix de recharge</label>
+                        <input
+                            type="number"
+                            class="form-control"
+                            v-model.number="editedFillingPrice"
+                            :placeholder="currentProduct.filling_price"
+                            min="0"
+                            step="0.01"
+                        />
+                    </div>
+                </template>
             </div>
 
             <div
@@ -1126,25 +1142,27 @@
                 this.showAddProductModal = false;
             },
             submitForm() {
-                // Préparer les données dans le format attendu
-                const productData = {
-                    name: this.name,
-                    purchase_price: this.purchase_price,
-                    buyer_phone: this.buyer_phone,
-                    quantity: this.quantity,
-                    price_detail: this.price_detail,
-                    price_semi_bulk: this.price_semi_bulk,
-                    price_bulk: this.price_bulk,
-                };
+                let productData = {};
+
+                // Si le produit est consignable → on met à jour uniquement les deux champs
+                if (this.currentProduct.is_depositable == 1) {
+                    productData = {
+                        deposit_price: this.editedDepositPrice,
+                        filling_price: this.editedFillingPrice,
+                    };
+                } else {
+                    // Sinon on met à jour les prix classiques
+                    productData = {
+                        price_detail: this.editedPriceDetail,
+                        price_semi_bulk: this.editedPriceSemiBulk,
+                        price_bulk: this.editedPriceBulk,
+                    };
+                }
 
                 console.log('Données à envoyer:', productData);
 
                 axios
-                    .put(`/products/${this.currentProduct.id}`, {
-                        price_detail: this.editedPriceDetail,
-                        price_semi_bulk: this.editedPriceSemiBulk,
-                        price_bulk: this.editedPriceBulk,
-                    })
+                    .put(`/products/${this.currentProduct.id}`, productData)
                     .then((response) => {
                         console.log('Prix mis à jour', response.data);
                         this.closeEditPricesModal();
@@ -1152,17 +1170,19 @@
                     .catch((error) => {
                         console.error(
                             'Erreur mise à jour:',
-                            error.response.data
+                            error.response?.data || error
                         );
                     });
             },
+
             openEditPricesModal(product) {
                 this.currentProduct = product;
                 this.editedPriceDetail = product.price_detail;
                 this.editedPriceSemiBulk = product.price_semi_bulk;
                 this.editedPriceBulk = product.price_bulk;
-                this.showEditPricesModal = true;
                 this.editedDepositPrice = product.deposit_price;
+                this.editedFillingPrice = product.filling_price;
+                this.showEditPricesModal = true;
             },
             closeEditPricesModal() {
                 this.showEditPricesModal = false;
@@ -1171,41 +1191,61 @@
                 this.editedPriceSemiBulk = null;
                 this.editedPriceBulk = null;
                 this.editedDepositPrice = null;
+                this.editedFillingPrice = null;
             },
             savePrice() {
                 if (this.currentProduct) {
                     const productId = this.currentProduct.id;
 
                     // ✅ Prépare le payload dynamiquement
-                    const payload = {
-                        price_detail: this.editedPriceDetail,
-                        price_semi_bulk: this.editedPriceSemiBulk,
-                        price_bulk: this.editedPriceBulk,
-                    };
+                    let payload = {};
 
                     if (this.currentProduct.is_depositable == 1) {
-                        payload.deposit_price = this.editedDepositPrice;
+                        // Si le produit est consignable → uniquement deposit_price et filling_price
+                        payload = {
+                            deposit_price: this.editedDepositPrice,
+                            filling_price: this.editedFillingPrice,
+                        };
+                    } else {
+                        // Sinon → prix classiques + filling_price
+                        payload = {
+                            price_detail: this.editedPriceDetail,
+                            price_semi_bulk: this.editedPriceSemiBulk,
+                            price_bulk: this.editedPriceBulk,
+                            filling_price: this.editedFillingPrice,
+                        };
                     }
 
                     axios
                         .post(`/products/${productId}/update-prices`, payload)
-                        .then((response) => {
+                        .then(() => {
                             alert('Prix mis à jour avec succès.');
 
                             // ✅ Met à jour localement l’objet courant
-                            this.currentProduct.price_detail =
-                                this.editedPriceDetail;
-                            this.currentProduct.price_semi_bulk =
-                                this.editedPriceSemiBulk;
-                            this.currentProduct.price_bulk =
-                                this.editedPriceBulk;
-
                             if (this.currentProduct.is_depositable == 1) {
                                 this.currentProduct.deposit_price =
                                     this.editedDepositPrice;
+                                this.currentProduct.filling_price =
+                                    this.editedFillingPrice;
+                            } else {
+                                this.currentProduct.price_detail =
+                                    this.editedPriceDetail;
+                                this.currentProduct.price_semi_bulk =
+                                    this.editedPriceSemiBulk;
+                                this.currentProduct.price_bulk =
+                                    this.editedPriceBulk;
+                                this.currentProduct.filling_price =
+                                    this.editedFillingPrice;
                             }
 
-                            this.closeEditPricesModal();
+                            // ✅ Réinitialise et ferme la modale
+                            this.showEditPricesModal = false;
+                            this.currentProduct = null;
+                            this.editedPriceDetail = null;
+                            this.editedPriceSemiBulk = null;
+                            this.editedPriceBulk = null;
+                            this.editedDepositPrice = null;
+                            this.editedFillingPrice = null;
                         })
                         .catch((error) => {
                             console.error(

@@ -118,10 +118,11 @@ class ProductController extends BaseController
     {
         // Validation des données reçues
         $validated = $request->validate([
-            'price_detail' => 'required|numeric|min:0',
-            'price_semi_bulk' => 'required|numeric|min:0',
-            'price_bulk' => 'required|numeric|min:0',
+            'price_detail' => 'nullable|numeric|min:0',
+            'price_semi_bulk' => 'nullable|numeric|min:0',
+            'price_bulk' => 'nullable|numeric|min:0',
             'deposit_price' => 'nullable|numeric|min:0',
+            'filling_price' => 'nullable|numeric|min:0',
         ]);
 
         // Trouver le produit
@@ -132,31 +133,46 @@ class ProductController extends BaseController
         $oldSemiBulk = $product->price_semi_bulk;
         $oldBulk = $product->price_bulk;
         $oldDeposit = $product->deposit_price;
+        $oldFilling = $product->filling_price;
 
-        // Mise à jour des prix
-        $product->price_detail = $validated['price_detail'];
-        $product->price_semi_bulk = $validated['price_semi_bulk'];
-        $product->price_bulk = $validated['price_bulk'];
+        // Mise à jour des prix classiques si fournis
+        if (isset($validated['price_detail'])) {
+            $product->price_detail = $validated['price_detail'];
+        }
+        if (isset($validated['price_semi_bulk'])) {
+            $product->price_semi_bulk = $validated['price_semi_bulk'];
+        }
+        if (isset($validated['price_bulk'])) {
+            $product->price_bulk = $validated['price_bulk'];
+        }
 
         // Mise à jour du prix de consignation si le produit est consignable
         if ($product->is_depositable && isset($validated['deposit_price'])) {
             $product->deposit_price = $validated['deposit_price'];
         }
 
+        // Mise à jour du prix de recharge si fourni
+        if (isset($validated['filling_price'])) {
+            $product->filling_price = $validated['filling_price'];
+        }
+
         // Construction du message de notification
         $messages = [];
 
-        if ($oldDetail != $validated['price_detail']) {
-            $messages[] = 'détail: ' . $oldDetail . ' → ' . $validated['price_detail'];
+        if ($oldDetail != $product->price_detail) {
+            $messages[] = 'détail: ' . $oldDetail . ' → ' . $product->price_detail;
         }
-        if ($oldSemiBulk != $validated['price_semi_bulk']) {
-            $messages[] = 'semi-gros: ' . $oldSemiBulk . ' → ' . $validated['price_semi_bulk'];
+        if ($oldSemiBulk != $product->price_semi_bulk) {
+            $messages[] = 'semi-gros: ' . $oldSemiBulk . ' → ' . $product->price_semi_bulk;
         }
-        if ($oldBulk != $validated['price_bulk']) {
-            $messages[] = 'gros: ' . $oldBulk . ' → ' . $validated['price_bulk'];
+        if ($oldBulk != $product->price_bulk) {
+            $messages[] = 'gros: ' . $oldBulk . ' → ' . $product->price_bulk;
         }
         if ($product->is_depositable && $oldDeposit != $product->deposit_price) {
             $messages[] = 'consignation: ' . $oldDeposit . ' → ' . $product->deposit_price;
+        }
+        if ($oldFilling != $product->filling_price) {
+            $messages[] = 'recharge: ' . $oldFilling . ' → ' . $product->filling_price;
         }
 
         $product->save();
@@ -174,6 +190,7 @@ class ProductController extends BaseController
             'product' => $product
         ], 200);
     }
+
 
 
 
