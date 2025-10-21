@@ -211,7 +211,8 @@
                 @csrf
                 <div class="form-group">
                     <i class="fas fa-envelope form-icon"></i>
-                    <input type="email" name="email" class="form-control" placeholder="Adresse email" required>
+                    <input type="text" name="login" class="form-control" placeholder="Nom d’utilisateur ou email" required>
+
                 </div>
 
                 <div class="form-group">

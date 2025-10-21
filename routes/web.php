@@ -14,7 +14,10 @@ use App\Http\Controllers\{
     ProformaController,
     RentabilityController,
     DepositController,
-    StockDepositController
+    StockDepositController,
+    Clientcontroller,
+    ClaimController,
+    ClaimsPaymentController,
 };
 
 use App\Models\{
@@ -26,7 +29,9 @@ use App\Models\{
     ProformaProduct,
     Proforma,
     Notification,
-    Stock
+    Stock,
+    Client,
+    Claim
 };
 
 
@@ -144,12 +149,19 @@ Route::get('/sales', function () {
 })->name('sales');
 
 //route clients
-Route::get('/clients', function () {
-    if (!Auth::check() || Auth::user()->role !== 'admin') {
-        return redirect()->route('login');
-    }
-    return view('pages/back/admin/clients');
-})->name('clients');
+Route::get('/clients', [ClientController::class, 'index'])->name('clients');
+Route::get('/clientslist', [ClientController::class, 'clientsList'])->name('clients.list');
+Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
+Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
+
+//route claims
+Route::post('/claims/add', [ClaimController::class, 'add'])->name('claims.add');
+Route::get('/claimslist', [ClaimController::class, 'list'])->name('claims.list');
+
+//route claims payments
+Route::post('/claims/pay', [ClaimsPaymentController::class, 'addPayment'])->name('claims.pay');
+Route::get('/claims/payments', [ClaimsPaymentController::class, 'list'])->name('claims.payments.list');
+
 
 Route::get('/proformas', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {

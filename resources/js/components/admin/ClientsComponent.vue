@@ -1,587 +1,625 @@
 <template>
-    <div>
-        <div class="sales-content">
-            <!-- Main clients list view -->
-            <div class="sales-history" v-if="!showClientDetails">
-                <div class="history-header">
-                    <h3>Gestion des Clients</h3>
-                    <div class="header-actions">
-                        <button @click="printClientsList" class="btn-print-all">
-                            <i class="fas fa-print"></i>
-                            Imprimer la Liste
-                        </button>
-                    </div>
+    <div class="clients-content">
+        <div class="clients-header">
+            <h2>Gestion des Clients et Créances</h2>
+            <div class="header-actions">
+                <button class="btn btn-primary" @click="openAddClientModal()">
+                    <i class="fas fa-user-plus"></i>
+                    Ajouter un client
+                </button>
+
+                <!-- <CHANGE> Added global print button with #17a2b8 color -->
+                <button class="btn btn-print" @click="printAllClients()">
+                    <i class="fas fa-print"></i>
+                    Imprimer tout
+                </button>
+
+                <input
+                    type="text"
+                    class="search-input"
+                    placeholder="Rechercher un client..."
+                    v-model="searchQuery"
+                />
+
+                <select class="filter-select" v-model="statusFilter">
+                    <option>Tous les statuts</option>
+                    <option>Avec créances</option>
+                    <option>Sans créances</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Liste des clients -->
+        <div class="showClients" v-if="showClients">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Liste des Clients</h3>
+                    <strong>Total: {{ filteredClients.length }}</strong>
                 </div>
 
-                <!-- Search and Filters -->
-                <div class="filters-container">
-                    <input
-                        type="text"
-                        v-model="searchQuery"
-                        class="search-input"
-                        placeholder="Rechercher un client..."
-                    />
-                    <select v-model="sortOption" class="filter-select">
-                        <option value="name_asc">Nom (A-Z)</option>
-                        <option value="name_desc">Nom (Z-A)</option>
-                        <option value="purchases_desc">Plus d'achats</option>
-                        <option value="debt_desc">Plus de créances</option>
-                        <option value="recent">Achat récent</option>
-                    </select>
-                </div>
-
-                <!-- Clients Table -->
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Client</th>
-                                <th>Téléphone</th>
-                                <th>Total Achats</th>
-                                <th>Créance</th>
-                                <th>Dernier Achat</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="client in paginatedClients"
-                                :key="client.id"
-                            >
-                                <td data-label="Client">
-                                    <strong>{{ client.name }}</strong>
-                                </td>
-                                <td data-label="Téléphone">
-                                    {{ client.phone || 'N/A' }}
-                                </td>
-                                <td data-label="Total Achats">
-                                    <strong style="color: #28a745">
-                                        {{
-                                            formatAmount(client.total_purchases)
-                                        }}
-                                        FCFA
-                                    </strong>
-                                </td>
-                                <td data-label="Créance">
-                                    <span
-                                        :style="{
-                                            color:
-                                                client.total_debt > 0
-                                                    ? '#dc3545'
-                                                    : '#28a745',
-                                            fontWeight: 'bold',
-                                        }"
-                                    >
-                                        {{ formatAmount(client.total_debt) }}
-                                        FCFA
-                                    </span>
-                                </td>
-                                <td data-label="Dernier Achat">
+                <table class="table" v-if="paginatedClients.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Téléphone</th>
+                            <th>Créances</th>
+                            <th>Total dû</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- <CHANGE> Using paginatedClients instead of filteredClients -->
+                        <tr v-for="client in paginatedClients" :key="client.id">
+                            <td data-label="Nom">
+                                <strong>{{ client.name }}</strong>
+                            </td>
+                            <td data-label="Téléphone">{{ client.phone }}</td>
+                            <td data-label="Créances">
+                                {{ getClientClaimsCount(client.id) }}
+                            </td>
+                            <td data-label="Total dû">
+                                <strong>
                                     {{
-                                        client.last_purchase_date
-                                            ? formatDateTime(
-                                                  client.last_purchase_date
-                                              )
-                                            : 'Aucun'
+                                        formatAmount(
+                                            getClientTotalDebt(client.id)
+                                        )
                                     }}
-                                </td>
-                                <td data-label="Actions">
-                                    <div class="action-buttons">
-                                        <button
-                                            @click="
-                                                viewClientDetails(client.id)
-                                            "
-                                            class="action-btn view-btn"
-                                            title="Voir détails"
-                                        >
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button
-                                            v-if="client.phone"
-                                            @click="callClient(client.phone)"
-                                            class="action-btn call-btn"
-                                            title="Appeler"
-                                        >
-                                            <i class="fas fa-phone"></i>
-                                        </button>
-                                        <button
-                                            v-if="client.phone"
-                                            @click="
-                                                whatsappClient(client.phone)
-                                            "
-                                            class="action-btn whatsapp-btn"
-                                            title="WhatsApp"
-                                        >
-                                            <i class="fab fa-whatsapp"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                    FCFA
+                                </strong>
+                            </td>
+                            <td data-label="Statut">
+                                <span
+                                    :class="[
+                                        'status-badge',
+                                        getClientClaimsCount(client.id) > 0
+                                            ? 'status-debt'
+                                            : 'status-clear',
+                                    ]"
+                                >
+                                    {{
+                                        getClientClaimsCount(client.id) > 0
+                                            ? 'Créances en cours'
+                                            : 'Aucune créance'
+                                    }}
+                                </span>
+                            </td>
+                            <td data-label="Actions">
+                                <div class="action-buttons">
+                                    <!-- <CHANGE> Added print button per client -->
+                                    <button
+                                        class="btn-sm btn-print"
+                                        title="Imprimer"
+                                        @click="printClient(client)"
+                                    >
+                                        <i class="fas fa-print"></i>
+                                    </button>
 
-                    <!-- Empty State -->
-                    <div v-if="clients.length === 0" class="empty-state">
-                        <i class="fas fa-users"></i>
-                        <p>Aucun client trouvé</p>
-                    </div>
-                </div>
+                                    <button
+                                        class="btn-sm btn-info"
+                                        title="Voir les créances"
+                                        @click="viewClientClaims(client)"
+                                    >
+                                        <i
+                                            class="fas fa-file-invoice-dollar"
+                                        ></i>
+                                    </button>
 
-                <!-- Pagination -->
-                <div v-if="totalPages > 1" class="pagination">
+                                    <button
+                                        class="btn-sm btn-success"
+                                        title="Ajouter une créance"
+                                        @click="openAddClaimModal(client)"
+                                    >
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+
+                                    <button
+                                        class="btn-sm btn-delete"
+                                        title="Supprimer le client"
+                                        @click="openDeleteClientModal(client)"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <strong v-if="filteredClients.length == 0" class="no-data">
+                    Aucun client disponible
+                </strong>
+
+                <!-- <CHANGE> Added pagination controls -->
+                <div class="pagination" v-if="totalPages > 1">
                     <button
-                        @click="goToPage(currentPage - 1)"
+                        class="pagination-btn"
+                        @click="previousPage"
                         :disabled="currentPage === 1"
-                        class="page-btn"
                     >
                         <i class="fas fa-chevron-left"></i>
+                        Précédent
                     </button>
-                    <span class="page-info">
+                    <span class="pagination-info">
                         Page {{ currentPage }} sur {{ totalPages }}
                     </span>
                     <button
-                        @click="goToPage(currentPage + 1)"
+                        class="pagination-btn"
+                        @click="nextPage"
                         :disabled="currentPage === totalPages"
-                        class="page-btn"
                     >
+                        Suivant
                         <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Client Details View -->
-            <div class="showStock" v-if="showClientDetails">
-                <div class="table-container">
-                    <div class="table-header">
-                        <h3
-                            style="
-                                display: flex;
-                                align-items: center;
-                                gap: 0.5rem;
-                            "
-                        >
-                            <span
-                                @click="closeClientDetails()"
-                                style="
-                                    display: flex;
-                                    align-items: center;
-                                    cursor: pointer;
-                                    color: #007bff;
-                                    font-weight: bold;
-                                "
-                            >
-                                <i class="fas fa-arrow-left"></i>
-                                <span style="margin-left: 5px">Retour</span>
-                            </span>
-                            | Détails de
-                            <strong>{{ selectedClient.name }}</strong>
-                        </h3>
-                        <div
-                            style="
-                                display: flex;
-                                gap: 10px;
-                                align-items: center;
-                            "
-                        >
-                            <button
-                                @click="printClientReport"
-                                class="btn-print-history"
-                            >
-                                <i class="fas fa-print"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Client Summary Card -->
-                    <div class="client-summary-card">
-                        <div class="summary-item">
-                            <span class="summary-label">Téléphone:</span>
-                            <span class="summary-value">
-                                {{ selectedClient.phone || 'N/A' }}
-                                <button
-                                    v-if="selectedClient.phone"
-                                    @click="callClient(selectedClient.phone)"
-                                    class="inline-action-btn"
-                                    title="Appeler"
-                                >
-                                    <i class="fas fa-phone"></i>
-                                </button>
-                                <button
-                                    v-if="selectedClient.phone"
-                                    @click="
-                                        whatsappClient(selectedClient.phone)
-                                    "
-                                    class="inline-action-btn whatsapp"
-                                    title="WhatsApp"
-                                >
-                                    <i class="fab fa-whatsapp"></i>
-                                </button>
-                            </span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="summary-label">Total Achats:</span>
-                            <span class="summary-value" style="color: #28a745">
-                                {{
-                                    formatAmount(selectedClient.total_purchases)
-                                }}
-                                FCFA
-                            </span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="summary-label">Créance Totale:</span>
-                            <span
-                                class="summary-value"
-                                :style="{
-                                    color:
-                                        selectedClient.total_debt > 0
-                                            ? '#dc3545'
-                                            : '#28a745',
-                                }"
-                            >
-                                {{ formatAmount(selectedClient.total_debt) }}
-                                FCFA
-                            </span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="summary-label">Total Payé:</span>
-                            <span class="summary-value" style="color: #667eea">
-                                {{ formatAmount(selectedClient.total_paid) }}
-                                FCFA
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="detail-actions">
-                        <button @click="openAddDebtModal" class="btn-add-debt">
-                            <i class="fas fa-plus"></i>
-                            Ajouter Créance
-                        </button>
-                        <button
-                            @click="openAddPaymentModal"
-                            class="btn-add-payment"
-                        >
-                            <i class="fas fa-money-bill"></i>
-                            Enregistrer Paiement
-                        </button>
-                    </div>
-
-                    <!-- Tabs for History -->
-                    <div class="tabs-container">
-                        <button
-                            @click="activeTab = 'purchases'"
-                            :class="[
-                                'tab-btn',
-                                { active: activeTab === 'purchases' },
-                            ]"
-                        >
-                            <i class="fas fa-shopping-cart"></i>
-                            Historique d'Achats
-                        </button>
-                        <button
-                            @click="activeTab = 'payments'"
-                            :class="[
-                                'tab-btn',
-                                { active: activeTab === 'payments' },
-                            ]"
-                        >
-                            <i class="fas fa-receipt"></i>
-                            Historique de Paiements
-                        </button>
-                        <button
-                            @click="activeTab = 'debts'"
-                            :class="[
-                                'tab-btn',
-                                { active: activeTab === 'debts' },
-                            ]"
-                        >
-                            <i class="fas fa-file-invoice-dollar"></i>
-                            Créances
-                        </button>
-                    </div>
-
-                    <!-- Purchase History Tab -->
-                    <div v-if="activeTab === 'purchases'" class="tab-content">
-                        <h4>Historique des Achats</h4>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>N° Facture</th>
-                                    <th>Montant</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="purchase in purchaseHistory"
-                                    :key="purchase.id"
-                                >
-                                    <td data-label="Date">
-                                        {{
-                                            formatDateTime(purchase.created_at)
-                                        }}
-                                    </td>
-                                    <td data-label="N° Facture">
-                                        <strong>N° {{ purchase.id }}</strong>
-                                    </td>
-                                    <td data-label="Montant">
-                                        <strong style="color: #28a745">
-                                            {{ formatAmount(purchase.total) }}
-                                            FCFA
-                                        </strong>
-                                    </td>
-                                    <td data-label="Statut">
-                                        <span
-                                            :class="
-                                                getStatusClass(purchase.status)
-                                            "
-                                            class="status-badge"
-                                        >
-                                            {{
-                                                purchase.status === 'done'
-                                                    ? 'Terminée'
-                                                    : 'Annulée'
-                                            }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div
-                            v-if="purchaseHistory.length === 0"
-                            class="empty-state"
-                        >
-                            <i class="fas fa-shopping-cart"></i>
-                            <p>Aucun achat trouvé</p>
-                        </div>
-                    </div>
-
-                    <!-- Payment History Tab -->
-                    <div v-if="activeTab === 'payments'" class="tab-content">
-                        <h4>Historique des Paiements</h4>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Montant</th>
-                                    <th>Méthode</th>
-                                    <th>Commentaire</th>
-                                    <th>Justificatif</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="payment in paymentHistory"
-                                    :key="payment.id"
-                                >
-                                    <td data-label="Date">
-                                        {{ formatDateTime(payment.created_at) }}
-                                    </td>
-                                    <td data-label="Montant">
-                                        <strong style="color: #28a745">
-                                            {{ formatAmount(payment.amount) }}
-                                            FCFA
-                                        </strong>
-                                    </td>
-                                    <td data-label="Méthode">
-                                        {{ payment.payment_method || 'N/A' }}
-                                    </td>
-                                    <td data-label="Commentaire">
-                                        {{ payment.comment || '-' }}
-                                    </td>
-                                    <td data-label="Justificatif">
-                                        <button
-                                            v-if="payment.receipt_url"
-                                            @click="
-                                                viewReceipt(payment.receipt_url)
-                                            "
-                                            class="view-receipt-btn"
-                                        >
-                                            <i class="fas fa-file-image"></i>
-                                            Voir
-                                        </button>
-                                        <span v-else>-</span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div
-                            v-if="paymentHistory.length === 0"
-                            class="empty-state"
-                        >
-                            <i class="fas fa-receipt"></i>
-                            <p>Aucun paiement trouvé</p>
-                        </div>
-                    </div>
-
-                    <!-- Debts Tab -->
-                    <div v-if="activeTab === 'debts'" class="tab-content">
-                        <h4>Créances</h4>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Montant</th>
-                                    <th>Commentaire</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="debt in debtHistory" :key="debt.id">
-                                    <td data-label="Date">
-                                        {{ formatDateTime(debt.created_at) }}
-                                    </td>
-                                    <td data-label="Montant">
-                                        <strong style="color: #dc3545">
-                                            {{ formatAmount(debt.amount) }} FCFA
-                                        </strong>
-                                    </td>
-                                    <td data-label="Commentaire">
-                                        {{ debt.comment || '-' }}
-                                    </td>
-                                    <td data-label="Statut">
-                                        <span
-                                            :class="
-                                                debt.is_paid
-                                                    ? 'status-paid'
-                                                    : 'status-unpaid'
-                                            "
-                                            class="status-badge"
-                                        >
-                                            {{
-                                                debt.is_paid
-                                                    ? 'Payée'
-                                                    : 'Impayée'
-                                            }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div
-                            v-if="debtHistory.length === 0"
-                            class="empty-state"
-                        >
-                            <i class="fas fa-file-invoice-dollar"></i>
-                            <p>Aucune créance trouvée</p>
-                        </div>
-                    </div>
+        <!-- Vue détaillée des créances d'un client -->
+        <div class="showClaims" v-if="showClaims">
+            <div class="table-container">
+                <div
+                    class="table-header"
+                    style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                    "
+                >
+                    <h3
+                        style="
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            flex: 1 1 100%;
+                        "
+                    >
+                        <span @click="backToClients()" class="back-button">
+                            <i
+                                class="fas fa-arrow-left"
+                                style="color: white"
+                            ></i>
+                            <span style="color: white">Retour</span>
+                        </span>
+                        | Créances de
+                        <strong>{{ selectedClient.name }}</strong>
+                    </h3>
+                    <strong style="flex: 1 1 100%; text-align: right">
+                        Total: {{ clientClaims.length }}
+                    </strong>
                 </div>
+
+                <table class="table" v-if="clientClaims.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Montant</th>
+                            <th>Commentaire</th>
+                            <th>Total payé</th>
+                            <th>Reste à payer</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="claim in clientClaims" :key="claim.id">
+                            <td data-label="Montant">
+                                <strong>
+                                    {{ formatAmount(claim.amount) }} FCFA
+                                </strong>
+                            </td>
+                            <td data-label="Commentaire">
+                                {{ claim.comment }}
+                            </td>
+                            <td data-label="Total payé">
+                                {{ formatAmount(getClaimTotalPaid(claim.id)) }}
+                                FCFA
+                            </td>
+                            <td data-label="Reste à payer">
+                                <strong>
+                                    {{
+                                        formatAmount(
+                                            claim.amount -
+                                                getClaimTotalPaid(claim.id)
+                                        )
+                                    }}
+                                    FCFA
+                                </strong>
+                            </td>
+                            <td data-label="Statut">
+                                <span
+                                    :class="[
+                                        'status-badge',
+                                        getClaimTotalPaid(claim.id) >=
+                                        claim.amount
+                                            ? 'status-paid'
+                                            : 'status-pending',
+                                    ]"
+                                >
+                                    {{
+                                        getClaimTotalPaid(claim.id) >=
+                                        claim.amount
+                                            ? 'Payé'
+                                            : 'En cours'
+                                    }}
+                                </span>
+                            </td>
+                            <td data-label="Date">
+                                {{ formatDateTime(claim.created_at) }}
+                            </td>
+                            <td data-label="Actions">
+                                <div class="action-buttons">
+                                    <!-- <CHANGE> Added print button per claim -->
+                                    <button
+                                        class="btn-sm btn-print"
+                                        title="Imprimer"
+                                        @click="printClaim(claim)"
+                                    >
+                                        <i class="fas fa-print"></i>
+                                    </button>
+
+                                    <button
+                                        class="btn-sm btn-warning"
+                                        title="Voir les paiements"
+                                        @click="viewClaimPayments(claim)"
+                                    >
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </button>
+
+                                    <button
+                                        class="btn-sm btn-success"
+                                        title="Ajouter un paiement"
+                                        @click="openAddPaymentModal(claim)"
+                                        v-if="
+                                            getClaimTotalPaid(claim.id) <
+                                            claim.amount
+                                        "
+                                    >
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+
+                                    <button
+                                        class="btn-sm btn-delete"
+                                        title="Supprimer la créance"
+                                        @click="openDeleteClaimModal(claim)"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <strong v-if="clientClaims.length == 0" class="no-data">
+                    Aucune créance pour ce client
+                </strong>
             </div>
         </div>
 
-        <!-- Add Debt Modal -->
-        <div
-            v-if="showAddDebtModal"
-            class="modal-overlay"
-            @click.self="closeAddDebtModal"
-        >
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h5>Ajouter une Créance</h5>
-                    <button @click="closeAddDebtModal" class="modal-close">
-                        &times;
-                    </button>
+        <!-- Vue des paiements d'une créance -->
+        <div class="showPayments" v-if="showPayments">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 style="display: flex; align-items: center; gap: 0.5rem">
+                        <span @click="backToClaims()" class="back-button">
+                            <i
+                                class="fas fa-arrow-left"
+                                style="color: white"
+                            ></i>
+                            <span style="color: white">Retour</span>
+                        </span>
+                        | Paiements pour la créance de
+                        <strong>
+                            {{ formatAmount(selectedClaim.amount) }} FCFA
+                        </strong>
+                    </h3>
+                    <strong>Total: {{ claimPayments.length }}</strong>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Montant (FCFA)</label>
-                        <input
-                            v-model.number="newDebt.amount"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            class="form-control"
-                            placeholder="Entrer le montant"
-                            required
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label>Commentaire</label>
-                        <textarea
-                            v-model="newDebt.comment"
-                            class="form-control"
-                            rows="3"
-                            placeholder="Raison de la créance..."
-                        ></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button @click="closeAddDebtModal" class="btn-cancel">
-                        Annuler
-                    </button>
-                    <button @click="addDebt" class="btn-submit">Ajouter</button>
-                </div>
+
+                <table class="table" v-if="claimPayments.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Montant</th>
+                            <th>Méthode</th>
+                            <th>Commentaire</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="payment in claimPayments" :key="payment.id">
+                            <td data-label="Montant">
+                                <strong>
+                                    {{ formatAmount(payment.amount) }} FCFA
+                                </strong>
+                            </td>
+                            <td data-label="Méthode">
+                                <span class="payment-method-badge">
+                                    {{
+                                        payment.payment_method || 'Non spécifié'
+                                    }}
+                                </span>
+                            </td>
+                            <td data-label="Commentaire">
+                                {{ payment.comment }}
+                            </td>
+                            <td data-label="Date">
+                                {{ formatDateTime(payment.created_at) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <strong v-if="claimPayments.length == 0" class="no-data">
+                    Aucun paiement enregistré
+                </strong>
             </div>
         </div>
+    </div>
 
-        <!-- Add Payment Modal -->
-        <div
-            v-if="showAddPaymentModal"
-            class="modal-overlay"
-            @click.self="closeAddPaymentModal"
-        >
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h5>Enregistrer un Paiement</h5>
-                    <button @click="closeAddPaymentModal" class="modal-close">
-                        &times;
-                    </button>
+    <!-- Modal Ajouter Client -->
+    <div
+        v-if="showAddClientModal"
+        class="modal-overlay"
+        @click.self="closeAddClientModal()"
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ajouter un nouveau client</h3>
+                <span class="close" @click="closeAddClientModal()">
+                    &times;
+                </span>
+            </div>
+
+            <form @submit.prevent="addClient">
+                <div class="form-group">
+                    <label>Nom du client</label>
+                    <input
+                        v-model="newClient.name"
+                        type="text"
+                        class="form-control"
+                        required
+                        placeholder="Entrez le nom"
+                    />
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Montant Payé (FCFA)</label>
-                        <input
-                            v-model.number="newPayment.amount"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            class="form-control"
-                            placeholder="Entrer le montant payé"
-                            required
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label>Méthode de Paiement</label>
-                        <select
-                            v-model="newPayment.payment_method"
-                            class="form-control"
-                        >
-                            <option value="">Sélectionner...</option>
-                            <option value="Espèces">Espèces</option>
-                            <option value="Mobile Money">Mobile Money</option>
-                            <option value="Virement">Virement</option>
-                            <option value="Chèque">Chèque</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Justificatif de Paiement</label>
-                        <input
-                            type="file"
-                            @change="handleReceiptUpload"
-                            class="form-control"
-                            accept="image/*,application/pdf"
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label>Commentaire</label>
-                        <textarea
-                            v-model="newPayment.comment"
-                            class="form-control"
-                            rows="3"
-                            placeholder="Commentaire optionnel..."
-                        ></textarea>
-                    </div>
+
+                <div class="form-group">
+                    <label>Téléphone</label>
+                    <input
+                        v-model="newClient.phone"
+                        type="tel"
+                        class="form-control"
+                        required
+                        placeholder="Entrez le numéro de téléphone"
+                    />
                 </div>
-                <div class="modal-footer">
-                    <button @click="closeAddPaymentModal" class="btn-cancel">
-                        Annuler
-                    </button>
-                    <button @click="addPayment" class="btn-submit">
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i>
                         Enregistrer
                     </button>
+                    <button
+                        type="button"
+                        @click="closeAddClientModal()"
+                        class="btn-secondary"
+                    >
+                        Annuler
+                    </button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Ajouter Créance -->
+    <div
+        v-if="showAddClaimModal"
+        class="modal-overlay"
+        @click.self="closeAddClaimModal()"
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>
+                    Ajouter une créance pour
+                    <strong>{{ selectedClient.name }}</strong>
+                </h3>
+                <span class="close" @click="closeAddClaimModal()">&times;</span>
+            </div>
+
+            <form @submit.prevent="addClaim">
+                <div class="form-group">
+                    <label>Montant de la créance</label>
+                    <input
+                        v-model.number="newClaim.amount"
+                        type="number"
+                        class="form-control"
+                        step="0.01"
+                        min="0"
+                        required
+                        placeholder="Entrez le montant"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>Commentaire</label>
+                    <textarea
+                        v-model="newClaim.comment"
+                        class="form-control"
+                        rows="3"
+                        placeholder="Ajoutez un commentaire (optionnel)"
+                    ></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                    <button
+                        type="button"
+                        @click="closeAddClaimModal()"
+                        class="btn-secondary"
+                    >
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Ajouter Paiement -->
+    <div
+        v-if="showAddPaymentModal"
+        class="modal-overlay"
+        @click.self="closeAddPaymentModal()"
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Enregistrer un paiement</h3>
+                <span class="close" @click="closeAddPaymentModal()">
+                    &times;
+                </span>
+            </div>
+
+            <form @submit.prevent="addPayment">
+                <div class="form-group">
+                    <label>Montant du paiement</label>
+                    <input
+                        v-model.number="newPayment.amount"
+                        type="number"
+                        class="form-control"
+                        step="0.01"
+                        min="0"
+                        :max="
+                            selectedClaim.amount -
+                            getClaimTotalPaid(selectedClaim.id)
+                        "
+                        required
+                        placeholder="Entrez le montant"
+                    />
+                    <small class="form-hint">
+                        Reste à payer:
+                        {{
+                            formatAmount(
+                                selectedClaim.amount -
+                                    getClaimTotalPaid(selectedClaim.id)
+                            )
+                        }}
+                        FCFA
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>Méthode de paiement</label>
+                    <!-- <CHANGE> Set default value to "espèces" -->
+                    <select
+                        v-model="newPayment.payment_method"
+                        class="form-control"
+                        required
+                    >
+                        <option value="espèces">Espèces</option>
+                        <option value="mobile money">Mobile Money</option>
+                        <option value="transfert bancaire">
+                            Transfert Bancaire
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Commentaire</label>
+                    <textarea
+                        v-model="newPayment.comment"
+                        class="form-control"
+                        rows="3"
+                        placeholder="Ajoutez un commentaire (optionnel)"
+                    ></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                    <button
+                        type="button"
+                        @click="closeAddPaymentModal()"
+                        class="btn-secondary"
+                    >
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Supprimer Client -->
+    <div
+        v-if="showDeleteClientModal"
+        class="modal-overlay"
+        @click.self="closeDeleteClientModal()"
+    >
+        <div class="modal-content modal-confirm">
+            <div class="modal-header">
+                <h3>Confirmer la suppression</h3>
+                <span class="close" @click="closeDeleteClientModal()">
+                    &times;
+                </span>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Voulez-vous vraiment supprimer le client
+                    <strong>{{ selectedClient.name }}</strong>
+                    ?
+                </p>
+                <p class="warning-text">
+                    Cette action supprimera également toutes les créances
+                    associées.
+                </p>
+            </div>
+            <div class="form-actions">
+                <button @click="deleteClient" class="btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Supprimer
+                </button>
+                <button @click="closeDeleteClientModal()" class="btn-secondary">
+                    Annuler
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Supprimer Créance -->
+    <div
+        v-if="showDeleteClaimModal"
+        class="modal-overlay"
+        @click.self="closeDeleteClaimModal()"
+    >
+        <div class="modal-content modal-confirm">
+            <div class="modal-header">
+                <h3>Confirmer la suppression</h3>
+                <span class="close" @click="closeDeleteClaimModal()">
+                    &times;
+                </span>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Voulez-vous vraiment supprimer cette créance de
+                    <strong>
+                        {{ formatAmount(selectedClaim.amount) }} FCFA
+                    </strong>
+                    ?
+                </p>
+            </div>
+            <div class="form-actions">
+                <button @click="deleteClaim" class="btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Supprimer
+                </button>
+                <button @click="closeDeleteClaimModal()" class="btn-secondary">
+                    Annuler
+                </button>
             </div>
         </div>
     </div>
@@ -594,544 +632,781 @@
         data() {
             return {
                 clients: [],
-                selectedClient: null,
-                showClientDetails: false,
-                purchaseHistory: [],
-                paymentHistory: [],
-                debtHistory: [],
-                activeTab: 'purchases',
+                claims: [],
+                payments: [],
 
-                // Modals
-                showAddDebtModal: false,
+                // Vue states
+                showClients: true,
+                showClaims: false,
+                showPayments: false,
+
+                // Modal states
+                showAddClientModal: false,
+                showAddClaimModal: false,
                 showAddPaymentModal: false,
+                showDeleteClientModal: false,
+                showDeleteClaimModal: false,
 
-                // Forms
-                newDebt: {
-                    amount: 0,
-                    comment: '',
-                },
-                newPayment: {
-                    amount: 0,
-                    payment_method: '',
-                    receipt: null,
-                    comment: '',
-                },
+                // Selected items
+                selectedClient: {},
+                selectedClaim: {},
 
-                // Filters and Search
+                // Filters
                 searchQuery: '',
-                sortOption: 'name_asc',
+                statusFilter: 'Tous les statuts',
 
-                // Pagination
+                // <CHANGE> Added pagination variables
                 currentPage: 1,
-                perPage: 10,
+                itemsPerPage: 10,
+
+                // Form data
+                newClient: {
+                    name: '',
+                    phone: '',
+                },
+                newClaim: {
+                    amount: '',
+                    comment: '',
+                },
+                // <CHANGE> Set default payment method to "espèces"
+                newPayment: {
+                    amount: '',
+                    payment_method: 'espèces',
+                    comment: '',
+                },
             };
         },
 
         mounted() {
-            this.fetchClientsData();
+            this.fetchAllData();
+        },
+
+        computed: {
+            filteredClients() {
+                let filtered = this.clients;
+
+                // Filter by search query
+                if (this.searchQuery) {
+                    const query = this.searchQuery.toLowerCase();
+                    filtered = filtered.filter(
+                        (c) =>
+                            c.name.toLowerCase().includes(query) ||
+                            c.phone.includes(query)
+                    );
+                }
+
+                // Filter by status
+                if (this.statusFilter === 'Avec créances') {
+                    filtered = filtered.filter(
+                        (c) => this.getClientClaimsCount(c.id) > 0
+                    );
+                } else if (this.statusFilter === 'Sans créances') {
+                    filtered = filtered.filter(
+                        (c) => this.getClientClaimsCount(c.id) === 0
+                    );
+                }
+
+                return filtered;
+            },
+
+            // <CHANGE> Added pagination computed properties
+            paginatedClients() {
+                const start = (this.currentPage - 1) * this.itemsPerPage;
+                const end = start + this.itemsPerPage;
+                return this.filteredClients.slice(start, end);
+            },
+
+            totalPages() {
+                return Math.ceil(
+                    this.filteredClients.length / this.itemsPerPage
+                );
+            },
+
+            clientClaims() {
+                return this.claims.filter(
+                    (claim) => claim.client_id === this.selectedClient.id
+                );
+            },
+
+            claimPayments() {
+                return this.payments.filter(
+                    (payment) => payment.claim_id === this.selectedClaim.id
+                );
+            },
         },
 
         methods: {
-            fetchClientsData() {
-                // Fix: Declare axios as a global variable or import it.
-                // For this example, assuming axios is globally available via a CDN.
-                axios
-                    .get('/clientsList')
-                    .then((response) => {
-                        if (Array.isArray(response.data)) {
-                            this.clients = response.data;
-                        } else if (
-                            response.data.success &&
-                            Array.isArray(response.data.data)
-                        ) {
-                            this.clients = response.data.data;
-                        } else {
-                            this.clients = [];
-                        }
-                    })
-                    .catch((error) => {
-                        console.error('Error fetching clients:', error);
-                        this.clients = [];
-                        alert('Erreur lors de la récupération des clients');
-                    });
-            },
+            // Fetch data from API
+            async fetchAllData() {
+                try {
+                    const [clientsRes, claimsRes, paymentsRes] =
+                        await Promise.all([
+                            axios.get('/clientslist'),
+                            axios.get('/claimslist'),
+                            axios.get('/claims/payments'),
+                        ]);
 
-            viewClientDetails(clientId) {
-                axios
-                    .get(`/clients/${clientId}/details`)
-                    .then((response) => {
-                        this.selectedClient = response.data.client;
-                        this.purchaseHistory =
-                            response.data.purchase_history || [];
-                        this.paymentHistory =
-                            response.data.payment_history || [];
-                        this.debtHistory = response.data.debt_history || [];
-                        this.showClientDetails = true;
-                        this.activeTab = 'purchases';
-                    })
-                    .catch((error) => {
-                        console.error('Error fetching client details:', error);
-                        alert(
-                            'Erreur lors de la récupération des détails du client'
-                        );
-                    });
-            },
-
-            closeClientDetails() {
-                this.showClientDetails = false;
-                this.selectedClient = null;
-                this.purchaseHistory = [];
-                this.paymentHistory = [];
-                this.debtHistory = [];
-            },
-
-            openAddDebtModal() {
-                this.showAddDebtModal = true;
-            },
-
-            closeAddDebtModal() {
-                this.showAddDebtModal = false;
-                this.newDebt = {
-                    amount: 0,
-                    comment: '',
-                };
-            },
-
-            addDebt() {
-                if (this.newDebt.amount <= 0) {
-                    alert('Le montant doit être supérieur à 0');
-                    return;
+                    this.clients = clientsRes.data;
+                    this.claims = claimsRes.data;
+                    this.payments = paymentsRes.data;
+                } catch (error) {
+                    console.error(
+                        'Erreur lors de la récupération des données:',
+                        error
+                    );
+                    alert('Erreur lors du chargement des données');
                 }
-
-                axios
-                    .post(`/clients/${this.selectedClient.id}/debt`, {
-                        amount: this.newDebt.amount,
-                        comment: this.newDebt.comment,
-                    })
-                    .then((response) => {
-                        alert('Créance ajoutée avec succès');
-                        this.closeAddDebtModal();
-                        this.viewClientDetails(this.selectedClient.id);
-                        this.fetchClientsData();
-                    })
-                    .catch((error) => {
-                        console.error('Error adding debt:', error);
-                        alert("Erreur lors de l'ajout de la créance");
-                    });
             },
 
-            openAddPaymentModal() {
-                this.showAddPaymentModal = true;
-            },
-
-            closeAddPaymentModal() {
-                this.showAddPaymentModal = false;
-                this.newPayment = {
-                    amount: 0,
-                    payment_method: '',
-                    receipt: null,
-                    comment: '',
-                };
-            },
-
-            handleReceiptUpload(event) {
-                this.newPayment.receipt = event.target.files[0];
-            },
-
-            addPayment() {
-                if (this.newPayment.amount <= 0) {
-                    alert('Le montant doit être supérieur à 0');
-                    return;
+            // <CHANGE> Added pagination methods
+            nextPage() {
+                if (this.currentPage < this.totalPages) {
+                    this.currentPage++;
                 }
+            },
 
-                const formData = new FormData();
-                formData.append('amount', this.newPayment.amount);
-                formData.append(
-                    'payment_method',
-                    this.newPayment.payment_method
-                );
-                formData.append('comment', this.newPayment.comment);
-                if (this.newPayment.receipt) {
-                    formData.append('receipt', this.newPayment.receipt);
+            previousPage() {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
                 }
-
-                axios
-                    .post(
-                        `/clients/${this.selectedClient.id}/payment`,
-                        formData,
-                        {
-                            headers: {
-                                'Content-Type': 'multipart/form-data',
-                            },
-                        }
-                    )
-                    .then((response) => {
-                        alert('Paiement enregistré avec succès');
-                        this.closeAddPaymentModal();
-                        this.viewClientDetails(this.selectedClient.id);
-                        this.fetchClientsData();
-                    })
-                    .catch((error) => {
-                        console.error('Error adding payment:', error);
-                        alert("Erreur lors de l'enregistrement du paiement");
-                    });
             },
 
-            callClient(phone) {
-                window.location.href = `tel:${phone}`;
-            },
-
-            whatsappClient(phone) {
-                const cleanPhone = phone.replace(/\D/g, '');
-                window.open(`https://wa.me/${cleanPhone}`, '_blank');
-            },
-
-            viewReceipt(url) {
-                window.open(url, '_blank');
-            },
-
-            printClientsList() {
+            // <CHANGE> Added print methods inspired by ProductsComponent
+            printAllClients() {
                 const printWindow = window.open('', '_blank');
-                const printContent = this.generateClientsListPrint();
-
-                printWindow.document.write(printContent);
-                printWindow.document.close();
-                printWindow.focus();
-
-                setTimeout(() => {
-                    printWindow.print();
-                    printWindow.close();
-                }, 250);
-            },
-
-            generateClientsListPrint() {
-                let html = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Liste des Clients</title>
-                    <style>
-                        * {
-                            margin: 0;
-                            padding: 0;
-                            box-sizing: border-box;
-                        }
-                        body {
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                            padding: 30px;
-                            color: #333;
-                        }
-                        .header {
-                            text-align: center;
-                            margin-bottom: 30px;
-                            padding-bottom: 20px;
-                            border-bottom: 3px solid #667eea;
-                        }
-                        .header h1 {
-                            color: #667eea;
-                            font-size: 2.5rem;
-                            margin-bottom: 10px;
-                        }
-                        .print-info {
-                            text-align: center;
-                            margin-bottom: 30px;
-                            padding: 20px;
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                            color: white;
-                            border-radius: 10px;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-top: 20px;
-                        }
-                        th {
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                            color: white;
-                            padding: 15px;
-                            text-align: left;
-                            font-weight: 600;
-                        }
-                        td {
-                            padding: 12px 15px;
-                            border-bottom: 1px solid #e9ecef;
-                        }
-                        tr:nth-child(even) {
-                            background-color: #f8f9fa;
-                        }
-                        .footer {
-                            margin-top: 40px;
-                            text-align: center;
-                            padding-top: 20px;
-                            border-top: 2px solid #e9ecef;
-                            color: #666;
-                        }
-                        @media print {
-                            body { padding: 20px; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>Liste des Clients</h1>
-                    </div>
-                    <div class="print-info">
-                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
-                            'fr-FR'
-                        )}</p>
-                        <p><strong>Nombre de clients:</strong> ${
-                            this.filteredClients.length
-                        }</p>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Client</th>
-                                <th>Téléphone</th>
-                                <th>Total Achats</th>
-                                <th>Créance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-                this.filteredClients.forEach((client) => {
-                    html += `
-                    <tr>
-                        <td><strong>${client.name}</strong></td>
-                        <td>${client.phone || 'N/A'}</td>
-                        <td><strong style="color: #28a745;">${this.formatAmount(
-                            client.total_purchases
-                        )} FCFA</strong></td>
-                        <td><strong style="color: ${
-                            client.total_debt > 0 ? '#dc3545' : '#28a745'
-                        };">${this.formatAmount(
-                        client.total_debt
-                    )} FCFA</strong></td>
-                    </tr>
-                `;
+                const currentDate = new Date().toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
                 });
 
-                html += `
-                        </tbody>
-                    </table>
-                    <div class="footer">
-                        <p>Document généré automatiquement - Système de Gestion des Clients</p>
-                    </div>
-                </body>
-                </html>
-            `;
+                let totalDebt = 0;
+                let totalClients = this.filteredClients.length;
+                let clientsWithDebt = 0;
 
-                return html;
-            },
+                let tableRows = '';
+                this.filteredClients.forEach((client) => {
+                    const claimsCount = this.getClientClaimsCount(client.id);
+                    const debt = this.getClientTotalDebt(client.id);
+                    totalDebt += debt;
+                    if (claimsCount > 0) clientsWithDebt++;
 
-            printClientReport() {
-                const printWindow = window.open('', '_blank');
-                const printContent = this.generateClientReportPrint();
+                    tableRows += `
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                client.name
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                client.phone
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${claimsCount}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold;">${this.formatAmount(
+                                debt
+                            )} FCFA</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                                <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; ${
+                                    claimsCount > 0
+                                        ? 'background: #fff3cd; color: #856404;'
+                                        : 'background: #d4edda; color: #155724;'
+                                }">
+                                    ${
+                                        claimsCount > 0
+                                            ? 'Créances en cours'
+                                            : 'Aucune créance'
+                                    }
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
 
-                printWindow.document.write(printContent);
-                printWindow.document.close();
-                printWindow.focus();
-
-                setTimeout(() => {
-                    printWindow.print();
-                    printWindow.close();
-                }, 250);
-            },
-
-            generateClientReportPrint() {
-                let html = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Rapport Client - ${this.selectedClient.name}</title>
-                    <style>
-                        * {
-                            margin: 0;
-                            padding: 0;
-                            box-sizing: border-box;
-                        }
-                        body {
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                            padding: 30px;
-                            color: #333;
-                            line-height: 1.6;
-                        }
-                        .header {
-                            text-align: center;
-                            margin-bottom: 40px;
-                            padding-bottom: 20px;
-                            border-bottom: 3px solid #667eea;
-                        }
-                        .header h1 {
-                            color: #667eea;
-                            font-size: 2rem;
-                            margin-bottom: 10px;
-                        }
-                        .client-info {
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                            color: white;
-                            padding: 20px;
-                            border-radius: 10px;
-                            margin-bottom: 30px;
-                        }
-                        .client-info h2 {
-                            margin-bottom: 15px;
-                        }
-                        .info-grid {
-                            display: grid;
-                            grid-template-columns: repeat(2, 1fr);
-                            gap: 15px;
-                        }
-                        .info-item {
-                            padding: 10px;
-                            background: rgba(255, 255, 255, 0.1);
-                            border-radius: 5px;
-                        }
-                        .section-title {
-                            color: #667eea;
-                            font-size: 1.5rem;
-                            margin: 30px 0 15px 0;
-                            padding-bottom: 10px;
-                            border-bottom: 2px solid #667eea;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-bottom: 30px;
-                        }
-                        th {
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                            color: white;
-                            padding: 12px;
-                            text-align: left;
-                            font-weight: 600;
-                        }
-                        td {
-                            padding: 10px 12px;
-                            border-bottom: 1px solid #e9ecef;
-                        }
-                        tr:nth-child(even) {
-                            background-color: #f8f9fa;
-                        }
-                        .footer {
-                            margin-top: 40px;
-                            text-align: center;
-                            padding-top: 20px;
-                            border-top: 2px solid #e9ecef;
-                            color: #666;
-                        }
-                        @media print {
-                            body { padding: 20px; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>Rapport Client</h1>
-                    </div>
-                    <div class="client-info">
-                        <h2>${this.selectedClient.name}</h2>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <strong>Téléphone:</strong> ${
-                                    this.selectedClient.phone || 'N/A'
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Liste des Clients - ${currentDate}</title>
+                        <meta charset="UTF-8">
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                padding: 20px;
+                                color: #333;
+                            }
+                            .print-header {
+                                text-align: center;
+                                margin-bottom: 30px;
+                                border-bottom: 3px solid #17a2b8;
+                                padding-bottom: 20px;
+                            }
+                            .print-header h1 {
+                                margin: 0;
+                                color: #17a2b8;
+                                font-size: 28px;
+                            }
+                            .print-header p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            .info-section {
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 15px;
+                                margin-bottom: 30px;
+                                padding: 20px;
+                                background: #f8f9fa;
+                                border-radius: 8px;
+                            }
+                            .info-item {
+                                display: flex;
+                                justify-content: space-between;
+                                padding: 8px 0;
+                            }
+                            .info-label {
+                                font-weight: 600;
+                                color: #495057;
+                            }
+                            .info-value {
+                                color: #212529;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-bottom: 30px;
+                            }
+                            th {
+                                background: #17a2b8;
+                                color: white;
+                                padding: 12px;
+                                text-align: left;
+                                border: 1px solid #138496;
+                            }
+                            tr:nth-child(even) {
+                                background: #f8f9fa;
+                            }
+                            .print-button {
+                                background: #17a2b8;
+                                color: white;
+                                border: none;
+                                padding: 12px 24px;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                display: block;
+                                margin: 20px auto;
+                            }
+                            .print-button:hover {
+                                background: #138496;
+                            }
+                            @media print {
+                                .print-button {
+                                    display: none;
                                 }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-header">
+                            <h1>Liste des Clients et Créances</h1>
+                            <p>Date d'impression: ${currentDate}</p>
+                        </div>
+
+                        <div class="info-section">
+                            <div class="info-item">
+                                <span class="info-label">Total clients:</span>
+                                <span class="info-value">${totalClients}</span>
                             </div>
                             <div class="info-item">
-                                <strong>Total Achats:</strong> ${this.formatAmount(
-                                    this.selectedClient.total_purchases
-                                )} FCFA
+                                <span class="info-label">Clients avec créances:</span>
+                                <span class="info-value">${clientsWithDebt}</span>
                             </div>
                             <div class="info-item">
-                                <strong>Créance Totale:</strong> ${this.formatAmount(
-                                    this.selectedClient.total_debt
-                                )} FCFA
+                                <span class="info-label">Total dû:</span>
+                                <span class="info-value" style="font-weight: bold; color: #dc3545;">${this.formatAmount(
+                                    totalDebt
+                                )} FCFA</span>
                             </div>
                             <div class="info-item">
-                                <strong>Total Payé:</strong> ${this.formatAmount(
-                                    this.selectedClient.total_paid
-                                )} FCFA
+                                <span class="info-label">Clients sans créances:</span>
+                                <span class="info-value">${
+                                    totalClients - clientsWithDebt
+                                }</span>
                             </div>
                         </div>
-                    </div>
 
-                    <h3 class="section-title">Historique des Achats</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>N° Facture</th>
-                                <th>Montant</th>
-                                <th>Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Téléphone</th>
+                                    <th style="text-align: center;">Créances</th>
+                                    <th style="text-align: right;">Total dû</th>
+                                    <th style="text-align: center;">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
 
-                this.purchaseHistory.forEach((purchase) => {
-                    html += `
-                    <tr>
-                        <td>${this.formatDateTime(purchase.created_at)}</td>
-                        <td>N° ${purchase.id}</td>
-                        <td><strong>${this.formatAmount(
-                            purchase.total
-                        )} FCFA</strong></td>
-                        <td>${
-                            purchase.status === 'done' ? 'Terminée' : 'Annulée'
-                        }</td>
-                    </tr>
+                        <button class="print-button" onclick="window.print()">
+                            Imprimer
+                        </button>
+                    </body>
+                    </html>
                 `;
+
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            },
+
+            printClient(client) {
+                const printWindow = window.open('', '_blank');
+                const currentDate = new Date().toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
                 });
 
-                html += `
-                        </tbody>
-                    </table>
+                const clientClaims = this.claims.filter(
+                    (claim) => claim.client_id === client.id
+                );
+                const totalDebt = this.getClientTotalDebt(client.id);
 
-                    <h3 class="section-title">Historique des Paiements</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Montant</th>
-                                <th>Méthode</th>
-                                <th>Commentaire</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
+                let claimsRows = '';
+                clientClaims.forEach((claim) => {
+                    const totalPaid = this.getClaimTotalPaid(claim.id);
+                    const remaining = claim.amount - totalPaid;
+                    const isPaid = totalPaid >= claim.amount;
 
-                this.paymentHistory.forEach((payment) => {
-                    html += `
-                    <tr>
-                        <td>${this.formatDateTime(payment.created_at)}</td>
-                        <td><strong>${this.formatAmount(
-                            payment.amount
-                        )} FCFA</strong></td>
-                        <td>${payment.payment_method || 'N/A'}</td>
-                        <td>${payment.comment || '-'}</td>
-                    </tr>
-                `;
+                    claimsRows += `
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">${this.formatAmount(
+                                claim.amount
+                            )} FCFA</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                claim.comment || 'N/A'
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                totalPaid
+                            )} FCFA</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold;">${this.formatAmount(
+                                remaining
+                            )} FCFA</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                                <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; ${
+                                    isPaid
+                                        ? 'background: #d4edda; color: #155724;'
+                                        : 'background: #fff3cd; color: #856404;'
+                                }">
+                                    ${isPaid ? 'Payé' : 'En cours'}
+                                </span>
+                            </td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDateTime(
+                                claim.created_at
+                            )}</td>
+                        </tr>
+                    `;
                 });
 
-                html += `
-                        </tbody>
-                    </table>
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Détails Client - ${client.name}</title>
+                        <meta charset="UTF-8">
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                padding: 20px;
+                                color: #333;
+                            }
+                            .print-header {
+                                text-align: center;
+                                margin-bottom: 30px;
+                                border-bottom: 3px solid #17a2b8;
+                                padding-bottom: 20px;
+                            }
+                            .print-header h1 {
+                                margin: 0;
+                                color: #17a2b8;
+                                font-size: 28px;
+                            }
+                            .print-header p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            .info-section {
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 15px;
+                                margin-bottom: 30px;
+                                padding: 20px;
+                                background: #f8f9fa;
+                                border-radius: 8px;
+                            }
+                            .info-item {
+                                display: flex;
+                                justify-content: space-between;
+                                padding: 8px 0;
+                            }
+                            .info-label {
+                                font-weight: 600;
+                                color: #495057;
+                            }
+                            .info-value {
+                                color: #212529;
+                            }
+                            .section-title {
+                                font-size: 20px;
+                                font-weight: 600;
+                                color: #17a2b8;
+                                margin: 30px 0 15px 0;
+                                padding-bottom: 10px;
+                                border-bottom: 2px solid #17a2b8;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-bottom: 30px;
+                            }
+                            th {
+                                background: #17a2b8;
+                                color: white;
+                                padding: 12px;
+                                text-align: left;
+                                border: 1px solid #138496;
+                            }
+                            tr:nth-child(even) {
+                                background: #f8f9fa;
+                            }
+                            .print-button {
+                                background: #17a2b8;
+                                color: white;
+                                border: none;
+                                padding: 12px 24px;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                display: block;
+                                margin: 20px auto;
+                            }
+                            .print-button:hover {
+                                background: #138496;
+                            }
+                            @media print {
+                                .print-button {
+                                    display: none;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-header">
+                            <h1>Détails du Client</h1>
+                            <p>Date d'impression: ${currentDate}</p>
+                        </div>
 
-                    <div class="footer">
-                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
-                            'fr-FR'
-                        )}</p>
-                        <p>Document généré automatiquement - Système de Gestion des Clients</p>
-                    </div>
-                </body>
-                </html>
-            `;
+                        <div class="info-section">
+                            <div class="info-item">
+                                <span class="info-label">Nom:</span>
+                                <span class="info-value">${client.name}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Téléphone:</span>
+                                <span class="info-value">${client.phone}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Nombre de créances:</span>
+                                <span class="info-value">${
+                                    clientClaims.length
+                                }</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Total dû:</span>
+                                <span class="info-value" style="font-weight: bold; color: #dc3545;">${this.formatAmount(
+                                    totalDebt
+                                )} FCFA</span>
+                            </div>
+                        </div>
 
-                return html;
+                        <h2 class="section-title">Créances</h2>
+
+                        ${
+                            clientClaims.length > 0
+                                ? `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Montant</th>
+                                    <th>Commentaire</th>
+                                    <th style="text-align: right;">Total payé</th>
+                                    <th style="text-align: right;">Reste à payer</th>
+                                    <th style="text-align: center;">Statut</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${claimsRows}
+                            </tbody>
+                        </table>
+                        `
+                                : '<p style="text-align: center; color: #6c757d; padding: 20px;">Aucune créance pour ce client</p>'
+                        }
+
+                        <button class="print-button" onclick="window.print()">
+                            Imprimer
+                        </button>
+                    </body>
+                    </html>
+                `;
+
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            },
+
+            printClaim(claim) {
+                const printWindow = window.open('', '_blank');
+                const currentDate = new Date().toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                });
+
+                const claimPayments = this.payments.filter(
+                    (payment) => payment.claim_id === claim.id
+                );
+                const totalPaid = this.getClaimTotalPaid(claim.id);
+                const remaining = claim.amount - totalPaid;
+
+                let paymentsRows = '';
+                claimPayments.forEach((payment) => {
+                    paymentsRows += `
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">${this.formatAmount(
+                                payment.amount
+                            )} FCFA</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">
+                                <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; background: #e7f3ff; color: #0056b3;">
+                                    ${payment.payment_method || 'Non spécifié'}
+                                </span>
+                            </td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                payment.comment || 'N/A'
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDateTime(
+                                payment.created_at
+                            )}</td>
+                        </tr>
+                    `;
+                });
+
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Détails Créance - ${this.formatAmount(
+                            claim.amount
+                        )} FCFA</title>
+                        <meta charset="UTF-8">
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                padding: 20px;
+                                color: #333;
+                            }
+                            .print-header {
+                                text-align: center;
+                                margin-bottom: 30px;
+                                border-bottom: 3px solid #17a2b8;
+                                padding-bottom: 20px;
+                            }
+                            .print-header h1 {
+                                margin: 0;
+                                color: #17a2b8;
+                                font-size: 28px;
+                            }
+                            .print-header p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            .info-section {
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 15px;
+                                margin-bottom: 30px;
+                                padding: 20px;
+                                background: #f8f9fa;
+                                border-radius: 8px;
+                            }
+                            .info-item {
+                                display: flex;
+                                justify-content: space-between;
+                                padding: 8px 0;
+                            }
+                            .info-label {
+                                font-weight: 600;
+                                color: #495057;
+                            }
+                            .info-value {
+                                color: #212529;
+                            }
+                            .section-title {
+                                font-size: 20px;
+                                font-weight: 600;
+                                color: #17a2b8;
+                                margin: 30px 0 15px 0;
+                                padding-bottom: 10px;
+                                border-bottom: 2px solid #17a2b8;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-bottom: 30px;
+                            }
+                            th {
+                                background: #17a2b8;
+                                color: white;
+                                padding: 12px;
+                                text-align: left;
+                                border: 1px solid #138496;
+                            }
+                            tr:nth-child(even) {
+                                background: #f8f9fa;
+                            }
+                            .print-button {
+                                background: #17a2b8;
+                                color: white;
+                                border: none;
+                                padding: 12px 24px;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                display: block;
+                                margin: 20px auto;
+                            }
+                            .print-button:hover {
+                                background: #138496;
+                            }
+                            @media print {
+                                .print-button {
+                                    display: none;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-header">
+                            <h1>Détails de la Créance</h1>
+                            <p>Date d'impression: ${currentDate}</p>
+                        </div>
+
+                        <div class="info-section">
+                            <div class="info-item">
+                                <span class="info-label">Client:</span>
+                                <span class="info-value">${
+                                    this.selectedClient.name
+                                }</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Montant initial:</span>
+                                <span class="info-value" style="font-weight: bold;">${this.formatAmount(
+                                    claim.amount
+                                )} FCFA</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Total payé:</span>
+                                <span class="info-value" style="color: #28a745; font-weight: bold;">${this.formatAmount(
+                                    totalPaid
+                                )} FCFA</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Reste à payer:</span>
+                                <span class="info-value" style="color: #dc3545; font-weight: bold;">${this.formatAmount(
+                                    remaining
+                                )} FCFA</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Commentaire:</span>
+                                <span class="info-value">${
+                                    claim.comment || 'N/A'
+                                }</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Date de création:</span>
+                                <span class="info-value">${this.formatDateTime(
+                                    claim.created_at
+                                )}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Nombre de paiements:</span>
+                                <span class="info-value">${
+                                    claimPayments.length
+                                }</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Statut:</span>
+                                <span class="info-value">
+                                    <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; ${
+                                        totalPaid >= claim.amount
+                                            ? 'background: #d4edda; color: #155724;'
+                                            : 'background: #fff3cd; color: #856404;'
+                                    }">
+                                        ${
+                                            totalPaid >= claim.amount
+                                                ? 'Payé'
+                                                : 'En cours'
+                                        }
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <h2 class="section-title">Historique des Paiements</h2>
+
+                        ${
+                            claimPayments.length > 0
+                                ? `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Montant</th>
+                                    <th>Méthode</th>
+                                    <th>Commentaire</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${paymentsRows}
+                            </tbody>
+                        </table>
+                        `
+                                : '<p style="text-align: center; color: #6c757d; padding: 20px;">Aucun paiement enregistré</p>'
+                        }
+
+                        <button class="print-button" onclick="window.print()">
+                            Imprimer
+                        </button>
+                    </body>
+                    </html>
+                `;
+
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            },
+
+            // Helper methods
+            formatAmount(value) {
+                return Number(value).toLocaleString('fr-FR');
             },
 
             formatDateTime(datetime) {
+                if (!datetime) return 'N/A';
                 const date = new Date(datetime);
                 const options = {
                     day: '2-digit',
@@ -1143,582 +1418,575 @@
                 return date.toLocaleString('fr-FR', options);
             },
 
-            formatAmount(value) {
-                return Number(value).toLocaleString('fr-FR', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 2,
-                });
+            getClientClaimsCount(clientId) {
+                return this.claims.filter(
+                    (claim) => claim.client_id === clientId
+                ).length;
             },
 
-            getStatusClass(status) {
-                if (status === 'done') {
-                    return 'status-completed';
-                } else if (status === 'cancelled') {
-                    return 'status-cancelled';
+            getClientTotalDebt(clientId) {
+                const clientClaims = this.claims.filter(
+                    (claim) => claim.client_id === clientId
+                );
+                return clientClaims.reduce((total, claim) => {
+                    const paid = this.getClaimTotalPaid(claim.id);
+                    const remaining = parseFloat(claim.amount) - paid;
+                    return total + remaining;
+                }, 0);
+            },
+
+            getClaimTotalPaid(claimId) {
+                const claimPayments = this.payments.filter(
+                    (payment) => payment.claim_id === claimId
+                );
+                return claimPayments.reduce(
+                    (total, payment) => total + parseFloat(payment.amount),
+                    0
+                );
+            },
+
+            // Navigation methods
+            viewClientClaims(client) {
+                this.selectedClient = client;
+                this.showClients = false;
+                this.showClaims = true;
+                this.showPayments = false;
+            },
+
+            viewClaimPayments(claim) {
+                this.selectedClaim = claim;
+                this.showClaims = false;
+                this.showPayments = true;
+            },
+
+            backToClients() {
+                this.showClients = true;
+                this.showClaims = false;
+                this.showPayments = false;
+                this.selectedClient = {};
+                // <CHANGE> Reset to first page when returning to clients list
+                this.currentPage = 1;
+            },
+
+            backToClaims() {
+                this.showClaims = true;
+                this.showPayments = false;
+                this.selectedClaim = {};
+            },
+
+            // Modal methods - Client
+            openAddClientModal() {
+                this.showAddClientModal = true;
+            },
+
+            closeAddClientModal() {
+                this.showAddClientModal = false;
+                this.newClient = { name: '', phone: '' };
+            },
+
+            async addClient() {
+                try {
+                    await axios.post('/clients', this.newClient);
+                    alert('Client ajouté avec succès');
+                    this.closeAddClientModal();
+                    this.fetchAllData();
+                } catch (error) {
+                    console.error("Erreur lors de l'ajout du client:", error);
+                    alert("Erreur lors de l'ajout du client");
                 }
-                return '';
             },
 
-            goToPage(page) {
-                if (page >= 1 && page <= this.totalPages) {
-                    this.currentPage = page;
-                }
+            openDeleteClientModal(client) {
+                this.selectedClient = client;
+                this.showDeleteClientModal = true;
             },
-        },
 
-        computed: {
-            filteredClients() {
-                let filtered = [...this.clients];
+            closeDeleteClientModal() {
+                this.showDeleteClientModal = false;
+                this.selectedClient = {};
+            },
 
-                // Search filter
-                if (this.searchQuery) {
-                    const query = this.searchQuery.toLowerCase();
-                    filtered = filtered.filter(
-                        (client) =>
-                            client.name.toLowerCase().includes(query) ||
-                            (client.phone &&
-                                client.phone.toLowerCase().includes(query))
+            async deleteClient() {
+                try {
+                    await axios.delete(`/clients/${this.selectedClient.id}`);
+                    alert('Client supprimé avec succès');
+                    this.closeDeleteClientModal();
+                    this.fetchAllData();
+                } catch (error) {
+                    console.error(
+                        'Erreur lors de la suppression du client:',
+                        error
                     );
+                    alert('Erreur lors de la suppression du client');
                 }
-
-                // Sort
-                switch (this.sortOption) {
-                    case 'name_asc':
-                        filtered.sort((a, b) => a.name.localeCompare(b.name));
-                        break;
-                    case 'name_desc':
-                        filtered.sort((a, b) => b.name.localeCompare(a.name));
-                        break;
-                    case 'purchases_desc':
-                        filtered.sort(
-                            (a, b) => b.total_purchases - a.total_purchases
-                        );
-                        break;
-                    case 'debt_desc':
-                        filtered.sort((a, b) => b.total_debt - a.total_debt);
-                        break;
-                    case 'recent':
-                        filtered.sort(
-                            (a, b) =>
-                                new Date(b.last_purchase_date) -
-                                new Date(a.last_purchase_date)
-                        );
-                        break;
-                }
-
-                return filtered;
             },
 
-            totalPages() {
-                return Math.ceil(this.filteredClients.length / this.perPage);
+            // Modal methods - Claim
+            openAddClaimModal(client) {
+                this.selectedClient = client;
+                this.showAddClaimModal = true;
             },
 
-            paginatedClients() {
-                const start = (this.currentPage - 1) * this.perPage;
-                const end = start + this.perPage;
-                return this.filteredClients.slice(start, end);
+            closeAddClaimModal() {
+                this.showAddClaimModal = false;
+                this.newClaim = { amount: '', comment: '' };
+            },
+
+            async addClaim() {
+                try {
+                    const claimData = {
+                        client_id: this.selectedClient.id,
+                        amount: this.newClaim.amount,
+                        comment: this.newClaim.comment,
+                    };
+                    await axios.post('/claims/add', claimData);
+                    alert('Créance ajoutée avec succès');
+                    this.closeAddClaimModal();
+                    this.fetchAllData();
+                } catch (error) {
+                    console.error(
+                        "Erreur lors de l'ajout de la créance:",
+                        error
+                    );
+                    alert("Erreur lors de l'ajout de la créance");
+                }
+            },
+
+            openDeleteClaimModal(claim) {
+                this.selectedClaim = claim;
+                this.showDeleteClaimModal = true;
+            },
+
+            closeDeleteClaimModal() {
+                this.showDeleteClaimModal = false;
+                this.selectedClaim = {};
+            },
+
+            async deleteClaim() {
+                try {
+                    await axios.delete(`/claims/${this.selectedClaim.id}`);
+                    alert('Créance supprimée avec succès');
+                    this.closeDeleteClaimModal();
+                    this.fetchAllData();
+                } catch (error) {
+                    console.error(
+                        'Erreur lors de la suppression de la créance:',
+                        error
+                    );
+                    alert('Erreur lors de la suppression de la créance');
+                }
+            },
+
+            // Modal methods - Payment
+            openAddPaymentModal(claim) {
+                this.selectedClaim = claim;
+                this.showAddPaymentModal = true;
+            },
+
+            closeAddPaymentModal() {
+                this.showAddPaymentModal = false;
+                // <CHANGE> Reset to default payment method "espèces"
+                this.newPayment = {
+                    amount: '',
+                    payment_method: 'espèces',
+                    comment: '',
+                };
+            },
+
+            async addPayment() {
+                try {
+                    const paymentData = {
+                        claim_id: this.selectedClaim.id,
+                        amount: this.newPayment.amount,
+                        payment_method: this.newPayment.payment_method,
+                        comment: this.newPayment.comment,
+                    };
+                    await axios.post('/claims/pay', paymentData);
+                    alert('Paiement enregistré avec succès');
+                    this.closeAddPaymentModal();
+                    this.fetchAllData();
+                } catch (error) {
+                    console.error("Erreur lors de l'ajout du paiement:", error);
+                    alert("Erreur lors de l'ajout du paiement");
+                }
             },
         },
     };
 </script>
 
 <style scoped>
-    .sales-content {
-        padding: 20px;
+    /* Main container */
+    .clients-content {
+        padding: 2rem;
+        background: #f8f9fa;
+        min-height: 100vh;
     }
 
-    .sales-history {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        padding: 20px;
+    /* Header */
+    .clients-header {
+        margin-bottom: 2rem;
     }
 
-    .history-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-
-    .history-header h3 {
-        margin: 0;
+    .clients-header h2 {
         color: #333;
-        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 1.8rem;
+        font-weight: 600;
     }
 
     .header-actions {
         display: flex;
         gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
     }
 
-    .btn-print-all {
-        padding: 10px 20px;
+    /* Buttons */
+    .btn {
+        padding: 0.75rem 1.5rem;
         border: none;
         border-radius: 8px;
-        font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        font-weight: 500;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    /* <CHANGE> Added print button styling with #17a2b8 color */
+    .btn-print {
         background: #17a2b8;
         color: white;
     }
 
-    .btn-print-all:hover {
+    .btn-print:hover {
         background: #138496;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
     }
 
-    .filters-container {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
     }
 
-    .search-input {
-        flex: 1;
-        min-width: 250px;
-        padding: 10px 15px;
-        border: 2px solid #e1e5e9;
-        border-radius: 8px;
-        font-size: 1rem;
-        transition: border-color 0.3s ease;
+    .btn-secondary:hover {
+        background: #5a6268;
     }
 
-    .search-input:focus {
-        outline: none;
-        border-color: #667eea;
+    .btn-danger {
+        background: #dc3545;
+        color: white;
     }
 
-    .filter-select {
-        padding: 10px 15px;
-        border: 2px solid #e1e5e9;
-        border-radius: 8px;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: border-color 0.3s ease;
+    .btn-danger:hover {
+        background: #c82333;
     }
 
-    .filter-select:focus {
-        outline: none;
-        border-color: #667eea;
-    }
-
-    .table-container {
-        overflow-x: auto;
-    }
-
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-    }
-
-    .table th,
-    .table td {
-        padding: 12px;
-        text-align: left;
-        border-bottom: 1px solid #eee;
-    }
-
-    .table th {
-        background-color: #f8f9fa;
-        color: #333;
-        font-weight: 600;
-        position: sticky;
-        top: 0;
-    }
-
-    .table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 5px;
-        flex-wrap: wrap;
-    }
-
-    .action-btn {
-        padding: 8px 12px;
+    .btn-sm {
+        padding: 0.5rem 0.75rem;
         border: none;
         border-radius: 6px;
         cursor: pointer;
-        transition: all 0.3s ease;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn-info {
+        background: #17a2b8;
         color: white;
     }
 
-    .view-btn {
-        background: #667eea;
+    .btn-info:hover {
+        background: #138496;
     }
 
-    .view-btn:hover {
-        background: #5568d3;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
-    }
-
-    .call-btn {
+    .btn-success {
         background: #28a745;
-    }
-
-    .call-btn:hover {
-        background: #218838;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-    }
-
-    .whatsapp-btn {
-        background: #25d366;
-    }
-
-    .whatsapp-btn:hover {
-        background: #1ebe57;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(37, 211, 102, 0.3);
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #999;
-    }
-
-    .empty-state i {
-        font-size: 4rem;
-        margin-bottom: 20px;
-        opacity: 0.5;
-    }
-
-    .empty-state p {
-        font-size: 1.2rem;
-    }
-
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 15px;
-        margin-top: 20px;
-    }
-
-    .page-btn {
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        background: white;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .page-btn:hover:not(:disabled) {
-        background: #667eea;
         color: white;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+    }
+
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .btn-warning:hover {
+        background: #e0a800;
+    }
+
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background: #c82333;
+    }
+
+    /* Inputs */
+    .search-input,
+    .filter-select {
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        min-width: 200px;
+    }
+
+    .search-input:focus,
+    .filter-select:focus {
+        outline: none;
         border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
-    .page-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .page-info {
-        font-weight: 600;
-        color: #333;
-    }
-
-    /* Client Details View */
-    .showStock {
+    /* Table container */
+    .table-container {
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        padding: 20px;
+        overflow: hidden;
     }
 
     .table-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #e9ecef;
-        flex-wrap: wrap;
-        gap: 10px;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
     }
 
     .table-header h3 {
         margin: 0;
-        color: #333;
         font-size: 1.3rem;
+        font-weight: 600;
     }
 
-    .btn-print-history {
-        padding: 8px 16px;
-        background: #17a2b8;
-        color: white;
-        border: none;
+    /* Table */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table thead {
+        background: #f8f9fa;
+    }
+
+    .table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .table td {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    /* <CHANGE> Added pagination styling */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .pagination-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid #dee2e6;
+        background: white;
         border-radius: 6px;
         cursor: pointer;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .btn-print-history:hover {
-        background: #138496;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
-    }
-
-    .client-summary-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-    }
-
-    .summary-item {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .summary-label {
         font-size: 0.9rem;
-        opacity: 0.9;
-    }
-
-    .summary-value {
-        font-size: 1.2rem;
-        font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
     }
 
-    .inline-action-btn {
-        padding: 4px 8px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        background: rgba(255, 255, 255, 0.2);
+    .pagination-btn:hover:not(:disabled) {
+        background: #667eea;
         color: white;
-        transition: all 0.3s ease;
+        border-color: #667eea;
     }
 
-    .inline-action-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
-    .inline-action-btn.whatsapp {
-        background: rgba(37, 211, 102, 0.3);
+    .pagination-info {
+        font-weight: 500;
+        color: #495057;
     }
 
-    .inline-action-btn.whatsapp:hover {
-        background: rgba(37, 211, 102, 0.5);
-    }
-
-    .detail-actions {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
-
-    .btn-add-debt,
-    .btn-add-payment {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: white;
-    }
-
-    .btn-add-debt {
-        background: #dc3545;
-    }
-
-    .btn-add-debt:hover {
-        background: #c82333;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-    }
-
-    .btn-add-payment {
-        background: #28a745;
-    }
-
-    .btn-add-payment:hover {
-        background: #218838;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-    }
-
-    .tabs-container {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #e9ecef;
-        flex-wrap: wrap;
-    }
-
-    .tab-btn {
-        padding: 10px 20px;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        font-weight: 600;
-        color: #666;
-        border-bottom: 3px solid transparent;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .tab-btn:hover {
-        color: #667eea;
-    }
-
-    .tab-btn.active {
-        color: #667eea;
-        border-bottom-color: #667eea;
-    }
-
-    .tab-content {
-        margin-top: 20px;
-    }
-
-    .tab-content h4 {
-        color: #333;
-        margin-bottom: 15px;
-        font-size: 1.2rem;
-    }
-
+    /* Status badges */
     .status-badge {
-        padding: 4px 12px;
-        border-radius: 12px;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
         font-size: 0.85rem;
         font-weight: 600;
         display: inline-block;
     }
 
-    .status-completed {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-
-    .status-cancelled {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-
-    .status-paid {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-
-    .status-unpaid {
-        background-color: #fff3cd;
+    .status-debt {
+        background: #fff3cd;
         color: #856404;
         border: 1px solid #ffeaa7;
     }
 
-    .view-receipt-btn {
-        padding: 6px 12px;
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.85rem;
-        transition: all 0.3s ease;
-        display: inline-flex;
+    .status-clear {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-paid {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .payment-method-badge {
+        padding: 0.3rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        background: #e7f3ff;
+        color: #0056b3;
+        font-weight: 500;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    /* Back button */
+    .back-button {
+        display: flex;
         align-items: center;
-        gap: 5px;
+        cursor: pointer;
+        color: #667eea;
+        font-weight: bold;
+        transition: all 0.2s ease;
     }
 
-    .view-receipt-btn:hover {
-        background: #5568d3;
-        transform: translateY(-1px);
+    .back-button:hover {
+        color: #764ba2;
     }
 
-    /* Modal Styles */
+    /* No data message */
+    .no-data {
+        display: block;
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    /* Modal overlay */
     .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 2000;
-        animation: fadeIn 0.3s ease;
+        z-index: 9999;
     }
 
-    .modal-container {
+    /* Modal content */
+    .modal-content {
         background: white;
-        border-radius: 15px;
-        width: 90%;
+        border-radius: 12px;
+        padding: 2rem;
         max-width: 500px;
+        width: 90%;
         max-height: 90vh;
         overflow-y: auto;
-        animation: slideIn 0.3s ease;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-confirm {
+        max-width: 400px;
     }
 
     .modal-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1.5rem;
-        border-bottom: 1px solid #eee;
+        margin-bottom: 1.5rem;
     }
 
-    .modal-header h5 {
+    .modal-header h3 {
         margin: 0;
-        font-size: 1.5rem;
         color: #333;
+        font-size: 1.3rem;
     }
 
-    .modal-close {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
+    .close {
         cursor: pointer;
-        color: #999;
-        transition: color 0.3s ease;
+        font-size: 1.5rem;
+        color: #6c757d;
+        transition: color 0.2s ease;
     }
 
-    .modal-close:hover {
+    .close:hover {
         color: #333;
     }
 
     .modal-body {
-        padding: 1.5rem;
+        margin-bottom: 1.5rem;
     }
 
+    .modal-body p {
+        margin: 0.5rem 0;
+        color: #495057;
+    }
+
+    .warning-text {
+        color: #dc3545;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    /* Form elements */
     .form-group {
         margin-bottom: 1.5rem;
     }
@@ -1726,17 +1994,17 @@
     .form-group label {
         display: block;
         margin-bottom: 0.5rem;
-        font-weight: 600;
-        color: #333;
+        color: #495057;
+        font-weight: 500;
     }
 
     .form-control {
         width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
+        padding: 0.75rem;
+        border: 1px solid #ced4da;
         border-radius: 8px;
-        font-size: 1rem;
-        transition: border-color 0.3s ease;
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease;
     }
 
     .form-control:focus {
@@ -1745,82 +2013,37 @@
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
-    .modal-footer {
+    textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .form-hint {
+        display: block;
+        margin-top: 0.5rem;
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+
+    .form-actions {
         display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        padding: 1rem 1.5rem;
-        border-top: 1px solid #eee;
+        gap: 1rem;
+        margin-top: 2rem;
     }
 
-    .btn-cancel,
-    .btn-submit {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
+    .form-actions button {
+        flex: 1;
     }
 
-    .btn-cancel {
-        background: #f8f9fa;
-        color: #333;
-    }
-
-    .btn-cancel:hover {
-        background: #e9ecef;
-    }
-
-    .btn-submit {
-        background: #667eea;
-        color: white;
-    }
-
-    .btn-submit:hover {
-        background: #5568d3;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-
-    @keyframes slideIn {
-        from {
-            transform: translateY(-50px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-
-    /* Responsive Styles */
+    /* Responsive design */
     @media (max-width: 768px) {
-        .history-header {
-            flex-direction: column;
-            align-items: flex-start;
+        .clients-content {
+            padding: 1rem;
         }
 
         .header-actions {
-            width: 100%;
-        }
-
-        .btn-print-all {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .filters-container {
             flex-direction: column;
+            align-items: stretch;
         }
 
         .search-input,
@@ -1828,66 +2051,54 @@
             width: 100%;
         }
 
-        table.table,
-        thead,
-        tbody,
-        th,
-        td,
-        tr {
-            display: block !important;
-            width: 100% !important;
+        .table {
+            display: block;
+            overflow-x: auto;
         }
 
-        thead tr {
-            display: none !important;
+        .table thead {
+            display: none;
         }
 
-        tbody tr {
-            margin-bottom: 1.5rem;
-            border: 1px solid #ccc;
-            padding: 15px 10px;
+        .table tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid #dee2e6;
             border-radius: 8px;
-            background-color: #fff;
         }
 
-        tbody td {
-            position: relative;
-            padding-left: 50% !important;
-            text-align: left !important;
-            border: none !important;
-            border-bottom: 1px solid #eee !important;
-            min-height: 40px;
+        .table td {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            border-bottom: 1px solid #f1f1f1;
         }
 
-        tbody td:last-child {
-            border-bottom: 0 !important;
-        }
-
-        tbody td::before {
-            position: absolute;
-            top: 50%;
-            left: 10px;
-            transform: translateY(-50%);
-            width: 45%;
-            white-space: nowrap;
-            font-weight: 600;
+        .table td:before {
             content: attr(data-label);
-            color: #333;
+            font-weight: 600;
+            color: #495057;
         }
 
-        .modal-container {
+        .action-buttons {
+            justify-content: flex-end;
+        }
+
+        .modal-content {
             width: 95%;
+            padding: 1.5rem;
         }
 
-        .client-summary-card {
-            grid-template-columns: 1fr;
-        }
-
-        .tabs-container {
+        .form-actions {
             flex-direction: column;
         }
 
-        .tab-btn {
+        .pagination {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
             width: 100%;
             justify-content: center;
         }
