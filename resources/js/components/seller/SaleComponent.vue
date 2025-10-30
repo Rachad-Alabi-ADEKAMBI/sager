@@ -9,19 +9,61 @@
                 </h3>
 
                 <form @submit.prevent="validateOrder">
-                    <!-- Customer Information -->
+                    <!-- Customer Information with Search -->
                     <div class="customer-info">
                         <div class="form-group">
                             <label>Nom du client</label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="customerName"
-                                v-model="customer_name"
-                                placeholder="Nom complet du client"
-                                style="width: 200px"
-                                required
-                            />
+                            <!-- Ajout d'un système de recherche de clients avec autocomplétion -->
+                            <div class="customer-search-container">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="customerSearchQuery"
+                                    @input="onCustomerSearch"
+                                    @focus="showCustomerDropdown = true"
+                                    placeholder="Rechercher ou créer un client"
+                                    style="width: 300px"
+                                    required
+                                />
+
+                                <!-- Dropdown des clients filtrés -->
+                                <div
+                                    v-if="
+                                        showCustomerDropdown &&
+                                        filteredCustomers.length > 0
+                                    "
+                                    class="customer-dropdown"
+                                >
+                                    <div
+                                        v-for="customer in filteredCustomers"
+                                        :key="customer.id"
+                                        @click="selectCustomer(customer)"
+                                        class="customer-dropdown-item"
+                                    >
+                                        <div class="customer-item-name">
+                                            {{ customer.name }}
+                                        </div>
+                                        <div class="customer-item-phone">
+                                            {{ customer.phone }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bouton pour créer un nouveau client -->
+                                <button
+                                    v-if="
+                                        customerSearchQuery &&
+                                        !customerSelected &&
+                                        filteredCustomers.length === 0
+                                    "
+                                    type="button"
+                                    @click="openCreateCustomerModal"
+                                    class="btn-create-customer"
+                                >
+                                    <i class="fas fa-plus"></i>
+                                    Créer "{{ customerSearchQuery }}"
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -31,137 +73,67 @@
                             Produits à vendre
                         </h4>
                         <div id="productLinesContainer">
+                            <!-- Réorganisation pour aligner tous les inputs sur la même ligne -->
                             <div
                                 class="product-line"
                                 v-for="(line, index) in productLines"
                                 :key="index"
                             >
-                                <!-- Ajout de la recherche et sélection de produit -->
-                                <div class="form-group">
+                                <!-- Produit -->
+                                <div class="form-group product-group">
                                     <label>Produit</label>
-                                    <div
-                                        style="
-                                            display: flex;
-                                            flex-direction: column;
-                                            gap: 0.5rem;
-                                        "
+                                    <select
+                                        v-model="line.productId"
+                                        @change="onProductChange(index)"
+                                        class="form-control product-select"
                                     >
-                                        <!-- Select de produit -->
-                                        <select
-                                            v-model="line.productId"
-                                            @change="onProductChange(index)"
-                                            class="form-control product-select"
-                                            style="width: 170px"
+                                        <option disabled value="">
+                                            Sélectionner un produit
+                                        </option>
+                                        <option
+                                            v-for="product in filteredProducts(
+                                                index
+                                            )"
+                                            :key="product.id"
+                                            :value="product.id"
                                         >
-                                            <option disabled value="">
-                                                Sélectionner un produit
-                                            </option>
-                                            <option
-                                                v-for="product in filteredProducts(
-                                                    index
-                                                )"
-                                                :key="product.id"
-                                                :value="product.id"
-                                            >
-                                                {{ product.name }}
-                                            </option>
-                                        </select>
+                                            {{ product.name }}
+                                        </option>
+                                    </select>
 
-                                        <!-- Affichage de l'indicateur consignable, quantité restante et prix consignation -->
-                                        <div
-                                            v-if="line.product"
-                                            style="
-                                                font-size: 0.85rem;
-                                                color: #666;
-                                            "
+                                    <!-- Info produit en dessous -->
+                                    <div
+                                        v-if="line.product"
+                                        class="product-info-text"
+                                    >
+                                        <span
+                                            v-if="line.product.is_depositable"
+                                            class="badge-small"
                                         >
-                                            <span
-                                                v-if="
-                                                    line.product.is_depositable
-                                                "
-                                                style="
-                                                    background: #28a745;
-                                                    color: white;
-                                                    padding: 2px 6px;
-                                                    border-radius: 3px;
-                                                    margin-right: 8px;
-                                                "
-                                            >
-                                                Consignable
-                                            </span>
-                                            <span
-                                                style="
-                                                    color: #007bff;
-                                                    font-weight: 500;
-                                                    margin-right: 10px;
-                                                "
-                                            >
-                                                Stock:
-                                                {{ line.product.quantity }}
-                                                disponible(s)
-                                            </span>
-
-                                            <!-- Affichage des prix de consignation et rechargement avec filling_price -->
-                                            <div
-                                                v-if="
-                                                    line.product.is_depositable
-                                                "
-                                                style="
-                                                    margin-top: 0.25rem;
-                                                    display: flex;
-                                                    gap: 1rem;
-                                                    flex-wrap: wrap;
-                                                "
-                                            >
-                                                <span
-                                                    style="
-                                                        color: #888;
-                                                        font-style: italic;
-                                                    "
-                                                >
-                                                    Consignation :
-                                                    {{
-                                                        formatAmount(
-                                                            line.product
-                                                                .deposit_price
-                                                        )
-                                                    }}
-                                                    FCFA
-                                                </span>
-                                                <span
-                                                    style="
-                                                        color: #888;
-                                                        font-style: italic;
-                                                    "
-                                                >
-                                                    Recharge :
-                                                    {{
-                                                        formatAmount(
-                                                            line.product
-                                                                .filling_price
-                                                        )
-                                                    }}
-                                                    FCFA
-                                                </span>
-                                            </div>
-                                        </div>
+                                            Consignable
+                                        </span>
+                                        <span class="stock-info">
+                                            Stock: {{ line.product.quantity }}
+                                        </span>
                                     </div>
                                 </div>
 
-                                <!-- Sélecteur type de prix -->
-                                <div class="form-group" v-if="line.product">
+                                <!-- Type de prix -->
+                                <div
+                                    class="form-group price-type-group"
+                                    v-if="line.product"
+                                >
                                     <label>Type de prix</label>
                                     <select
                                         class="form-control price-type"
                                         v-model="line.selectedPrice"
                                         @change="updateUnitPrice(index)"
-                                        style="width: 170px"
                                     >
                                         <option disabled value="">
                                             Sélectionner le type
                                         </option>
 
-                                        <!-- Options pour produits consignables avec filling_price -->
+                                        <!-- Options pour produits consignables -->
                                         <template
                                             v-if="line.product.is_depositable"
                                         >
@@ -174,15 +146,13 @@
                                                     })
                                                 "
                                             >
-                                                Consignation
-                                                <br />
-                                                {{
+                                                Consignation ({{
                                                     formatAmount(
                                                         line.product
                                                             .deposit_price
                                                     )
                                                 }}
-                                                FCFA
+                                                FCFA)
                                             </option>
                                             <option
                                                 :value="
@@ -193,15 +163,13 @@
                                                     })
                                                 "
                                             >
-                                                Recharge
-                                                <br />
-                                                {{
+                                                Recharge ({{
                                                     formatAmount(
                                                         line.product
                                                             .filling_price
                                                     )
                                                 }}
-                                                FCFA
+                                                FCFA)
                                             </option>
                                             <option
                                                 :value="
@@ -219,9 +187,7 @@
                                                     })
                                                 "
                                             >
-                                                Consignation + Recharge
-                                                <br />
-                                                {{
+                                                Consig. + Recharge ({{
                                                     formatAmount(
                                                         Number(
                                                             line.product
@@ -233,7 +199,7 @@
                                                             )
                                                     )
                                                 }}
-                                                FCFA
+                                                FCFA)
                                             </option>
                                         </template>
 
@@ -248,15 +214,13 @@
                                                     })
                                                 "
                                             >
-                                                Détail
-                                                <br />
-                                                {{
+                                                Détail ({{
                                                     formatAmount(
                                                         line.product
                                                             .price_detail
                                                     )
                                                 }}
-                                                FCFA
+                                                FCFA)
                                             </option>
                                             <option
                                                 :value="
@@ -267,15 +231,13 @@
                                                     })
                                                 "
                                             >
-                                                Semi gros
-                                                <br />
-                                                {{
+                                                Semi gros ({{
                                                     formatAmount(
                                                         line.product
                                                             .price_semi_bulk
                                                     )
                                                 }}
-                                                FCFA
+                                                FCFA)
                                             </option>
                                             <option
                                                 :value="
@@ -286,21 +248,19 @@
                                                     })
                                                 "
                                             >
-                                                Gros
-                                                <br />
-                                                {{
+                                                Gros ({{
                                                     formatAmount(
                                                         line.product.price_bulk
                                                     )
                                                 }}
-                                                FCFA
+                                                FCFA)
                                             </option>
                                         </template>
                                     </select>
                                 </div>
 
-                                <!-- Quantité décimale -->
-                                <div class="form-group">
+                                <!-- Quantité -->
+                                <div class="form-group quantity-group">
                                     <label>Quantité</label>
                                     <input
                                         type="number"
@@ -309,26 +269,24 @@
                                         step="0.01"
                                         :max="line.product?.quantity || 0"
                                         v-model.number="line.quantity"
-                                        style="width: 100px"
                                         @input="onQuantityChange(index)"
                                     />
                                 </div>
 
                                 <!-- Prix unitaire -->
-                                <div class="form-group">
+                                <div class="form-group price-group">
                                     <label>Prix unitaire</label>
                                     <input
                                         type="number"
                                         class="form-control"
-                                        style="width: 100px"
                                         step="0.01"
                                         v-model="line.unitPrice"
                                         readonly
                                     />
                                 </div>
 
-                                <!-- Supprimer ligne -->
-                                <div class="form-group">
+                                <!-- Bouton supprimer -->
+                                <div class="form-group action-group">
                                     <label style="opacity: 0">Action</label>
                                     <button
                                         type="button"
@@ -360,7 +318,6 @@
                                 Total: {{ formatAmount(total) }} FCFA
                             </div>
                         </div>
-                        <!-- Remplacement du bouton "Finaliser" par "Valider" -->
                         <div style="text-align: center; margin-top: 1.5rem">
                             <button class="btn-primary" type="submit">
                                 <i class="fas fa-check"></i>
@@ -493,6 +450,63 @@
                     >
                         Suivant
                         <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nouveau modal pour créer un client -->
+        <div
+            v-if="showCreateCustomerModal"
+            class="modal-overlay"
+            @click.self="closeCreateCustomerModal"
+        >
+            <div class="modal-container create-customer-modal">
+                <div class="modal-header">
+                    <h5>
+                        <i class="fas fa-user-plus"></i>
+                        Créer un nouveau client
+                    </h5>
+                    <button
+                        @click="closeCreateCustomerModal"
+                        class="modal-close"
+                    >
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Nom du client *</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            v-model="newCustomer.name"
+                            placeholder="Nom complet"
+                            required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Téléphone *</label>
+                        <input
+                            type="tel"
+                            class="form-control"
+                            v-model="newCustomer.phone"
+                            placeholder="Numéro de téléphone"
+                            required
+                        />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        @click="closeCreateCustomerModal"
+                        class="btn-secondary"
+                    >
+                        <i class="fas fa-times"></i>
+                        Annuler
+                    </button>
+                    <button @click="createCustomer" class="btn-primary">
+                        <i class="fas fa-check"></i>
+                        Créer le client
                     </button>
                 </div>
             </div>
@@ -635,9 +649,9 @@
                             v-model="payment_method"
                             class="form-control payment-select"
                         >
-                            <option value="Especes">Espèces</option>
-                            <option value="Credit">Crédit</option>
-                            <option value="Mobile money">Mobile money</option>
+                            <option value="cash">Espèces (Cash)</option>
+                            <option value="credit">Crédit</option>
+                            <option value="mobile_money">Mobile Money</option>
                         </select>
                     </div>
                 </div>
@@ -733,14 +747,31 @@
                 showSaleModal: false,
                 selectedSale: null,
                 showSummaryModal: false,
-                payment_method: 'Especes',
+                payment_method: 'Cash',
+                customers: [],
+                customerSearchQuery: '',
+                showCustomerDropdown: false,
+                customerSelected: false,
+                selectedCustomerId: null,
+                showCreateCustomerModal: false,
+                newCustomer: {
+                    name: '',
+                    phone: '',
+                },
             };
         },
 
         mounted() {
             this.fetchSalesData();
+            this.fetchCustomers(); // Récupération des clients au chargement
             this.addProductLine();
+            document.addEventListener('click', this.handleClickOutside);
         },
+
+        beforeUnmount() {
+            document.removeEventListener('click', this.handleClickOutside);
+        },
+
         computed: {
             paginatedSales() {
                 const start = (this.currentPage - 1) * this.salesPerPage;
@@ -779,9 +810,100 @@
 
                 return pages;
             },
+            filteredCustomers() {
+                if (!this.customerSearchQuery)
+                    return this.customers.slice(0, 5);
+
+                const query = this.customerSearchQuery.toLowerCase();
+                return this.customers
+                    .filter(
+                        (customer) =>
+                            customer.name.toLowerCase().includes(query) ||
+                            customer.phone.includes(query)
+                    )
+                    .slice(0, 5);
+            },
         },
 
         methods: {
+            fetchCustomers() {
+                axios
+                    .get('/clientslist')
+                    .then((response) => {
+                        this.customers = response.data;
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Erreur lors de la récupération des clients:',
+                            error
+                        );
+                    });
+            },
+
+            onCustomerSearch() {
+                this.showCustomerDropdown = true;
+                this.customerSelected = false;
+            },
+
+            selectCustomer(customer) {
+                this.customerSearchQuery = customer.name;
+                this.customer_name = customer.name;
+                this.customer_phone = customer.phone;
+                this.selectedCustomerId = customer.id;
+                this.customerSelected = true;
+                this.showCustomerDropdown = false;
+            },
+
+            handleClickOutside(event) {
+                const container = event.target.closest(
+                    '.customer-search-container'
+                );
+                if (!container) {
+                    this.showCustomerDropdown = false;
+                }
+            },
+
+            openCreateCustomerModal() {
+                this.newCustomer.name = this.customerSearchQuery;
+                this.newCustomer.phone = '';
+                this.showCreateCustomerModal = true;
+            },
+
+            closeCreateCustomerModal() {
+                this.showCreateCustomerModal = false;
+                this.newCustomer = { name: '', phone: '' };
+            },
+
+            createCustomer() {
+                if (!this.newCustomer.name || !this.newCustomer.phone) {
+                    alert('Veuillez remplir tous les champs obligatoires.');
+                    return;
+                }
+
+                axios
+                    .post('/clients', {
+                        name: this.newCustomer.name,
+                        phone: this.newCustomer.phone,
+                    })
+                    .then((response) => {
+                        alert('Client créé avec succès !');
+                        // Ajouter le nouveau client à la liste
+                        const client = response.data.client;
+                        this.customers.push(client);
+                        this.selectCustomer(client);
+                        this.closeCreateCustomerModal();
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Erreur lors de la création du client:',
+                            error
+                        );
+                        alert(
+                            'Erreur lors de la création du client. Veuillez réessayer.'
+                        );
+                    });
+            },
+
             fetchSalesData() {
                 axios
                     .get('/productsList')
@@ -810,7 +932,7 @@
                     unitPrice: 0,
                     quantity: 1,
                     searchQuery: '',
-                    priceType: '', // Ajout du tracking du type de prix
+                    priceType: '',
                 });
             },
 
@@ -819,29 +941,12 @@
                 this.updateTotal();
             },
 
-            onSearchChange(index) {
-                // La recherche filtre automatiquement via filteredProducts
-            },
-
             filteredProducts(currentIndex) {
-                const line = this.productLines[currentIndex];
-                const searchQuery = (line.searchQuery || '').toLowerCase();
-
                 const selectedIds = this.productLines
                     .map((l, i) => (i !== currentIndex ? l.productId : null))
                     .filter((id) => id);
 
-                let available = this.products.filter(
-                    (p) => !selectedIds.includes(p.id)
-                );
-
-                if (searchQuery) {
-                    available = available.filter((p) =>
-                        p.name.toLowerCase().includes(searchQuery)
-                    );
-                }
-
-                return available;
+                return this.products.filter((p) => !selectedIds.includes(p.id));
             },
 
             onProductChange(index) {
@@ -855,7 +960,7 @@
                         this.productLines[index].selectedPrice = '';
                         this.productLines[index].unitPrice = 0;
                         this.productLines[index].quantity = 1;
-                        this.productLines[index].priceType = ''; // Reset du type de prix
+                        this.productLines[index].priceType = '';
                         this.updateTotal();
                     })
                     .catch((error) => {
@@ -873,7 +978,6 @@
                     line.unitPrice = parseFloat(priceData.price) || 0;
                     line.priceType = priceData.type || '';
                 } catch (e) {
-                    // Fallback pour compatibilité avec l'ancien format
                     line.unitPrice = parseFloat(line.selectedPrice) || 0;
                     line.priceType = '';
                 }
@@ -890,15 +994,6 @@
                 }
 
                 this.updateTotal();
-            },
-
-            availableProducts(currentIndex) {
-                const selectedIds = this.productLines
-                    .map((line, i) =>
-                        i !== currentIndex ? line.productId : null
-                    )
-                    .filter((id) => id);
-                return this.products.filter((p) => !selectedIds.includes(p.id));
             },
 
             updateTotal() {
@@ -928,8 +1023,11 @@
             },
 
             validateOrder() {
-                if (!this.customer_name || this.customer_name.trim() === '') {
-                    alert('Veuillez entrer le nom du client.');
+                if (
+                    !this.customerSearchQuery ||
+                    this.customerSearchQuery.trim() === ''
+                ) {
+                    alert('Veuillez sélectionner ou créer un client.');
                     return;
                 }
 
@@ -945,6 +1043,9 @@
                         return;
                     }
                 }
+
+                // Mettre à jour le nom du client pour le récapitulatif
+                this.customer_name = this.customerSearchQuery;
 
                 // Afficher le modal de récapitulatif
                 this.showSummaryModal = true;
@@ -1024,6 +1125,171 @@
 </script>
 
 <style>
+    /* Styles pour la recherche de clients */
+    .customer-search-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .customer-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 100;
+        margin-top: 0.25rem;
+    }
+
+    .customer-dropdown-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s;
+    }
+
+    .customer-dropdown-item:hover {
+        background: #f8f9fa;
+    }
+
+    .customer-dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .customer-item-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.25rem;
+    }
+
+    .customer-item-phone {
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .btn-create-customer {
+        padding: 0.75rem 1rem;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+        transition: background 0.2s;
+        width: fit-content;
+    }
+
+    .btn-create-customer:hover {
+        background: #218838;
+    }
+
+    .create-customer-modal .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .create-customer-modal .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .create-customer-modal .form-control {
+        width: 100%;
+    }
+
+    /* Amélioration de l'alignement des lignes de produits pour desktop/tablette */
+    .product-line {
+        display: flex;
+        align-items: flex-end;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    /* Largeurs spécifiques pour chaque colonne */
+    .product-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .price-type-group {
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .quantity-group {
+        width: 120px;
+        flex-shrink: 0;
+    }
+
+    .price-group {
+        width: 130px;
+        flex-shrink: 0;
+    }
+
+    .action-group {
+        width: 50px;
+        flex-shrink: 0;
+    }
+
+    .product-info-text {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-top: 0.25rem;
+        font-size: 0.8rem;
+    }
+
+    .badge-small {
+        background: #28a745;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.7rem;
+    }
+
+    .stock-info {
+        color: #007bff;
+        font-weight: 500;
+    }
+
+    /* Responsive: empiler sur mobile */
+    @media (max-width: 768px) {
+        .product-line {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .product-group,
+        .price-type-group,
+        .quantity-group,
+        .price-group,
+        .action-group {
+            width: 100%;
+            min-width: unset;
+        }
+
+        .customer-search-container {
+            width: 100%;
+        }
+
+        .customer-search-container input {
+            width: 100% !important;
+        }
+    }
+
+    /* Styles existants */
     .pagination-container {
         display: flex;
         justify-content: center;
@@ -1082,7 +1348,6 @@
         background: #f5f5f5;
     }
 
-    /* Styles pour le modal de récapitulatif */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -1278,7 +1543,6 @@
         background: #218838;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
         .modal-container {
             width: 95%;
@@ -1307,15 +1571,6 @@
             padding: 0.4rem 0.6rem;
             font-size: 0.85rem;
         }
-    }
-
-    /* Ajout de styles pour aligner tous les inputs et selects sur la même ligne */
-    .product-line {
-        display: flex;
-        align-items: flex-end;
-        gap: 1rem;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
     }
 
     .form-group {
@@ -1350,5 +1605,28 @@
 
     .btn-remove:hover {
         background: #c82333;
+    }
+
+    .btn-add-line {
+        margin-top: 1rem;
+        padding: 0.75rem 1.5rem;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background 0.2s;
+    }
+
+    .btn-add-line:hover:not(:disabled) {
+        background: #0056b3;
+    }
+
+    .btn-add-line:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 </style>

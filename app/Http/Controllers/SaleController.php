@@ -17,6 +17,9 @@ use App\Http\Controllers\ProductController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
+use App\Models\Client;
+use App\Models\Claim;
+
 class SaleController extends Controller
 {
     public function index()
@@ -26,12 +29,14 @@ class SaleController extends Controller
     }
 
 
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'seller_name' => 'required|string',
             'buyer_name' => 'required|string',
             'buyer_phone' => 'nullable|string',
+            'payment_method' => 'required|string', // Payment method
             'products' => 'required|array|min:1',
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity'   => 'required|numeric|min:0.01',
@@ -44,16 +49,31 @@ class SaleController extends Controller
         try {
             $total = collect($validated['products'])->sum(fn($item) => $item['quantity'] * $item['price']);
 
+            // 🔹 Créer la vente
             $sale = Sale::create([
                 'seller_name' => $validated['seller_name'],
                 'buyer_name' => $validated['buyer_name'],
                 'buyer_phone' => $validated['buyer_phone'],
+                'payment_method' => $validated['payment_method'],
                 'total' => $total,
                 'status' => 'done',
             ]);
 
+            // 🔹 Si paiement à crédit, créer la créance
+            if (strtolower($validated['payment_method']) === 'credit') {
+                $client = Client::where('name', $validated['buyer_name'])->first();
+                if ($client) {
+                    Claim::create([
+                        'client_id' => $client->id,
+                        'amount' => $total,
+                        'comment' => 'Vente N°' . $sale->id . ' à crédit',
+                    ]);
+                }
+            }
+
             $details = [];
 
+            // 🔹 Traiter chaque produit
             foreach ($validated['products'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
                 $initial_quantity = $product->quantity;
@@ -62,7 +82,7 @@ class SaleController extends Controller
                     throw new \Exception("Stock insuffisant pour le produit : {$product->name}");
                 }
 
-                // Déterminer le prix correct selon price_type
+                // Déterminer le prix selon price_type
                 $unitPrice = $item['price'];
                 if ($product->is_depositable && isset($item['price_type'])) {
                     switch ($item['price_type']) {
@@ -78,7 +98,7 @@ class SaleController extends Controller
                     }
                 }
 
-                // Ligne de vente
+                // Créer la ligne de vente
                 SaleProduct::create([
                     'sale_id' => $sale->id,
                     'product_id' => $product->id,
@@ -86,11 +106,10 @@ class SaleController extends Controller
                     'price' => $unitPrice,
                 ]);
 
-                // Mise à jour du stock produit
+                // Mettre à jour le stock
                 $product->decrement('quantity', $item['quantity']);
                 $final_quantity = $initial_quantity - $item['quantity'];
 
-                // Historique du stock
                 Stock::create([
                     'date' => now()->toDateString(),
                     'initial_stock' => $initial_quantity,
@@ -103,25 +122,18 @@ class SaleController extends Controller
                     'seller_name' => $sale->seller_name,
                 ]);
 
-                // 🔹 Gestion des dépôts pour produits consignables
+                // Gestion des produits consignables
                 if ($product->is_depositable) {
                     $comment = 'Facture ' . $sale->id . ' à ' . $sale->buyer_name;
 
                     switch ($item['price_type']) {
-                        case 'deposit':
-                            // On ne modifie que le stock produit, pas la table deposits
-                            break;
-
                         case 'refill':
-                            // Mettre à jour la table deposits uniquement avec la quantité
                             $deposit = Deposit::firstOrCreate(
                                 ['product_id' => $product->id],
                                 ['product_name' => $product->name, 'quantity' => 0]
                             );
-
                             $deposit->increment('quantity', $item['quantity']);
 
-                            // Historique du dépôt dans stocks_deposits
                             StockDeposit::create([
                                 'product_id' => $product->id,
                                 'initial_stock' => $deposit->quantity - $item['quantity'],
@@ -130,9 +142,9 @@ class SaleController extends Controller
                                 'comment' => $comment,
                             ]);
                             break;
-
+                        case 'deposit':
                         case 'both':
-                            // Rien à faire pour deposits, seulement stock déjà géré
+                            // Le stock du produit est déjà géré, rien à faire
                             break;
                     }
                 }
@@ -168,6 +180,7 @@ class SaleController extends Controller
         }
     }
 
+
     public function show($id)
     {
         $sale = Sale::with('products')->findOrFail($id);
@@ -186,6 +199,7 @@ class SaleController extends Controller
         return view('pages.back.seller.sale', compact('products'));
     }
 
+
     public function cancel($id)
     {
         DB::beginTransaction();
@@ -203,30 +217,17 @@ class SaleController extends Controller
 
             $saleProducts = SaleProduct::where('sale_id', $sale->id)->get();
 
-            // Vérification du stock avant annulation
-            foreach ($saleProducts as $item) {
-                $product = Product::findOrFail($item->product_id);
-                if ($product->quantity < 0) {
-                    return response()->json([
-                        'error' => 'Stock insuffisant',
-                        'message' => "Impossible d'annuler la facture. Stock actuel insuffisant pour le produit '{$product->name}'."
-                    ], 409);
-                }
-            }
-
-            // Restauration du stock
+            // 🔹 Restauration du stock des produits principaux
             foreach ($saleProducts as $item) {
                 $product = Product::findOrFail($item->product_id);
                 $initial_quantity = $product->quantity;
 
-                // Restaure la quantité vendue
                 $product->increment('quantity', $item->quantity);
 
-                // Enregistrement dans l’historique du stock
                 Stock::create([
                     'date' => now()->toDateString(),
                     'initial_stock' => $initial_quantity,
-                    'label' => 'Annulation de la facture N°' . $id . ' pour '
+                    'label' => 'Annulation de la facture N°' . $sale->id . ' pour '
                         . $sale->buyer_name . ' par '
                         . (Auth::user()->role === 'admin' ? 'admin' : $sale->seller_name) . '.',
                     'quantity' => $item->quantity,
@@ -238,21 +239,43 @@ class SaleController extends Controller
                 ]);
             }
 
-            // ✅ Annulation des produits consignés
+            // 🔹 Annulation des produits consignables et recharges (StockDeposit)
             $deposits = Deposit::where('sale_id', $sale->id)->get();
-            if ($deposits->isNotEmpty()) {
-                foreach ($deposits as $deposit) {
-                    $deposit->update(['status' => 'Annulée']);
+            foreach ($deposits as $deposit) {
+                $deposit->update(['status' => 'Annulée']);
+            }
+
+            // Remettre à jour les StockDeposit
+            $stockDeposits = StockDeposit::where('sale_id', $sale->id)->get();
+            foreach ($stockDeposits as $sd) {
+                $deposit = Deposit::find($sd->product_id);
+                if ($deposit) {
+                    $deposit->decrement('quantity', $sd->quantity);
+                }
+                $sd->update(['comment' => $sd->comment . ' (Annulé)']);
+            }
+
+            // 🔹 Annulation de la créance si paiement à crédit
+            if (strtolower($sale->payment_method) === 'credit') {
+                $client = Client::where('name', $sale->buyer_name)->first();
+                if ($client) {
+                    $claim = Claim::where('client_id', $client->id)
+                        ->where('amount', $sale->total)
+                        ->where('comment', 'Vente N°' . $sale->id . ' à crédit')
+                        ->first();
+                    if ($claim) {
+                        $claim->delete(); // ou $claim->update(['status' => 'Annulée']);
+                    }
                 }
             }
 
-            // Mise à jour du statut de la vente
+            // 🔹 Mise à jour du statut de la vente
             $sale->status = 'cancelled';
             $sale->save();
 
-            // Notification
+            // 🔹 Notification
             Notification::create([
-                'description' => 'Annulation de la facture N°' . $id . ' pour '
+                'description' => 'Annulation de la facture N°' . $sale->id . ' pour '
                     . $sale->buyer_name . ' par '
                     . (Auth::user()->role === 'admin' ? 'admin' : $sale->seller_name) . '.',
             ]);

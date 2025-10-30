@@ -15,7 +15,7 @@ use App\Http\Controllers\{
     RentabilityController,
     DepositController,
     StockDepositController,
-    Clientcontroller,
+    ClientController,
     ClaimController,
     ClaimsPaymentController,
 };

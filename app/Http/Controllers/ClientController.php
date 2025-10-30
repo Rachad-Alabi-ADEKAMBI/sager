@@ -27,9 +27,10 @@ class ClientController extends Controller
     public function clientsList()
     {
         // Vérifie que l'utilisateur est connecté et est admin
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        /*  if (!auth()->check() || auth()->user()->role !== 'admin') {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
+            */
 
         // Récupère tous les clients
         $clients = Client::all();
@@ -58,13 +59,19 @@ class ClientController extends Controller
             'phone' => 'nullable|string|max:20',
         ]);
 
-        Client::create([
+        $client = Client::create([
             'name' => $request->name,
             'phone' => $request->phone,
         ]);
 
-        return redirect()->back()->with('success', 'Client créé avec succès.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Client créé avec succès.',
+            'client' => $client
+        ], 200); // <-- Assure-toi que le code HTTP est bien 200
     }
+
+
 
 
     /**
