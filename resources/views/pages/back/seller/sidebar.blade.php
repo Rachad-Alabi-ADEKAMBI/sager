@@ -3,7 +3,7 @@
      <div class="sidebar-header">
          <h2>
              <a href="{{ route('home') }}" style='color: white; text-decoration: none;'>
-                 SAGER
+                 SAGER MARKET
              </a>
          </h2>
      </div>

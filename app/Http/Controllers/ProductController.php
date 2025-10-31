@@ -196,22 +196,23 @@ class ProductController extends BaseController
                 'regex:/^\d+(\.\d{1,2})?$/',
                 'min:0.01',
             ],
+            'note' => ['nullable', 'string'],
         ]);
 
         $product = Product::findOrFail($id);
 
         $initial_quantity = $product->quantity;
         $added_quantity = $request->input('quantity');
-
         $product->quantity += $added_quantity;
         $product->save();
 
-        $label = "Mise à jour du stock de {$product->name}. Quantité ajoutée : {$added_quantity}.";
+        $defaultLabel = "Mise à jour du stock de {$product->name}. Quantité ajoutée : {$added_quantity}.";
+        $notificationDescription = $request->input('note') ?: $defaultLabel;
 
         Stock::create([
             'date' => now()->toDateString(),
             'initial_stock' => $initial_quantity,
-            'label' => $label,
+            'label' =>  $notificationDescription,
             'quantity' => $added_quantity,
             'final_stock' => $product->quantity,
             'product_id' => $product->id,
@@ -219,11 +220,12 @@ class ProductController extends BaseController
         ]);
 
         Notification::create([
-            'description' => $label,
+            'description' => $notificationDescription,
         ]);
 
         return response()->json(['message' => 'Stock ajouté avec succès.']);
     }
+
 
     public function removeStock(Request $request, $id)
     {
@@ -234,6 +236,7 @@ class ProductController extends BaseController
                 'regex:/^\d+(\.\d{1,2})?$/',
                 'min:0.01',
             ],
+            'note' => ['nullable', 'string'],
         ]);
 
         $product = Product::findOrFail($id);
@@ -249,12 +252,16 @@ class ProductController extends BaseController
         $product->quantity -= $removed_quantity;
         $product->save();
 
-        $label = "Retrait de stock pour {$product->name}. Quantité retirée : {$removed_quantity}.";
+        // Label par défaut
+        $defaultLabel = "Retrait de stock pour {$product->name}. Quantité retirée : {$removed_quantity}.";
+
+        // Utiliser la note si fournie
+        $notificationDescription = $request->input('note') ?: $defaultLabel;
 
         Stock::create([
             'date' => now()->toDateString(),
             'initial_stock' => $initial_quantity,
-            'label' => $label,
+            'label' =>  $notificationDescription,
             'quantity' => -$removed_quantity,
             'final_stock' => $product->quantity,
             'product_id' => $product->id,
@@ -262,12 +269,11 @@ class ProductController extends BaseController
         ]);
 
         Notification::create([
-            'description' => $label,
+            'description' => $notificationDescription,
         ]);
 
         return response()->json(['message' => 'Stock retiré avec succès.']);
     }
-
 
 
     public function getAccountingData($id)

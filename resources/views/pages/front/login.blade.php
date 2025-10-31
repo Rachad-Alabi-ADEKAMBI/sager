@@ -203,7 +203,7 @@
     <main class="main-content">
         <div class="login-container">
             <div class="logo">
-                <h1>SAGER</h1>
+                <h1>SAGER MARKET</h1>
                 <p>Système de Gestion de Stock</p>
             </div>
 

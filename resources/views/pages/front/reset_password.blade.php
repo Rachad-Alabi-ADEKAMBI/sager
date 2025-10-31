@@ -1,7 +1,7 @@
 <main class="main-content">
     <div class="login-container">
         <div class="logo">
-            <h1>SAGER</h1>
+            <h1>SAGER MARKET</h1>
             <p>Système de Gestion de Stock</p>
         </div>
 
@@ -13,7 +13,7 @@
             </div>
 
             <button type="submit" class="btn-login">
-                <i class="fas fa-sign-in-alt"></i> Réintilaiser le mot de passe
+                <i class="fas fa-sign-in-alt"></i> Réinitialiser le mot de passe
             </button>
 
             <div class="forgot-password">

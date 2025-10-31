@@ -25,7 +25,7 @@
     <section
         style="max-width: 500px; margin: 3rem auto; background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
         <h3 style="margin-bottom: 1.5rem;">Modifier les Paramètres du compte</h3>
-        <form action="" method="POST">
+        <form action="{{ route('settings.updatePassword') }}" method="POST">
             @csrf
             <div class="form-group">
                 <label for="old_password">Ancien mot de passe</label>
@@ -37,7 +37,7 @@
             </div>
             <div class="form-group">
                 <label for="password_confirmation">Confirmer le mot de passe</label>
-                <input type="password" id="password_confirmation" name="password_confirmation" class="form-control"
+                <input type="password" id="password_confirmation" name="new_password_confirmation" class="form-control"
                     required>
             </div>
             <div style="display: flex; justify-content: center; margin-top: 2rem;">

@@ -1,6 +1,6 @@
 <head>
     <meta charset="UTF-8">
-    <title>@yield('title', 'Sager')</title>
+    <title>@yield('title', 'Sager Market')</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 
@@ -14,21 +14,19 @@
         rel="stylesheet">
 
     <meta name="description"
-        content="SAGER, votre distributeur de confiance pour boissons, eaux, sodas, bières et gaz domestique. Vente en gros et détail avec livraison rapide. Contactez-nous au +237 XXX XXX XXX">
+        content="SAGER MARKET, votre distributeur de confiance pour boissons, eaux, sodas, bières et gaz domestique. Vente en gros et détail avec livraison rapide. Contactez-nous au +237 XXX XXX XXX">
     <meta name="keywords"
-        content="distributeur boissons, vente gaz domestique, eau en gros, sodas, bières, livraison boissons, SAGER Cameroun">
-    <meta name="author" content="SAGER">
+        content="distributeur boissons, vente gaz domestique, eau en gros, sodas, bières, livraison boissons, SAGER MARKET Benin">
+    <meta name="author" content="SAGER MARKET">
     <meta name="robots" content="index, follow">
 
 
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="SAGER - Distributeur de Boissons et Gaz Domestique">
+    <meta property="og:title" content="SAGER MARKET - Distributeur de Boissons et Gaz Domestique">
     <meta property="og:description"
         content="Votre distributeur de confiance pour boissons et gaz domestique. Vente en gros et détail avec livraison rapide.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://www.sager-distribution.com">
-    <meta property="og:image" content="https://www.sager-distribution.com/images/sager-logo.jpg">
-
+    <meta property="og:url" content="https://www.sagermarket.com">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
 </head>
@@ -37,7 +35,7 @@
     <header class="header">
         <div class="nav-container">
             <div class="logo">SAGE<a href="{{ route('login') }}"
-                    style="color: white; text-decoration: none; margin-left: -7px">R</a>
+                    style="color: white; text-decoration: none; margin-left: -7px">R</a> MARKET
             </div>
 
         </div>
@@ -46,7 +44,7 @@
     <section id="accueil" class="hero">
         <div class="hero-background"></div>
         <div class="hero-content">
-            <h1>Bienvenue chez SAGER</h1>
+            <h1>Bienvenue chez SAGER MARKET</h1>
             <p class="hero-subtitle">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique
             </p>
             <p class="hero-description">Distribution professionnelle • Vente en gros et détail </p>
@@ -111,13 +109,13 @@
     <!-- À propos simplifié -->
     <section id="apropos" class="about">
         <div class="container">
-            <h2 class="section-title">À propos de SAGER</h2>
+            <h2 class="section-title">À propos de SAGER MARKET</h2>
             <p class="section-subtitle">Distributeur local de boissons et gaz à Cotonou</p>
 
             <div class="about-content">
                 <div class="about-text">
                     <h3><i class="fas fa-info-circle"></i> Qui sommes-nous ?</h3>
-                    <p>SAGER est une boutique locale spécialisée dans la distribution de boissons et de gaz domestique.
+                    <p>SAGER MARKET est une boutique locale spécialisée dans la distribution de boissons et de gaz domestique.
                         Nous
                         servons particuliers et professionnels avec des produits fiables et un service simple.</p>
 
@@ -286,7 +284,7 @@
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Oui nous délivrons une facture pro format pour chaque achat.</p>
+                        <p>Oui nous délivrons une facture normalisée pour chaque achat.</p>
                     </div>
                 </div>
                 <div class="faq-item">
@@ -355,7 +353,7 @@
                         <i class="fas fa-envelope"></i>
                         <div>
                             <strong>Email</strong><br>
-                            contact@sager.bj<br>
+                            contact@sager-market.com<br>
                             <small>Réponse sous 48h garantie</small>
                         </div>
                     </div>
@@ -363,7 +361,7 @@
                         <i class="fas fa-clock"></i>
                         <div>
                             <strong>Horaires d'ouverture</strong><br>
-                            Lundi - Samedi: 08h00 - 19h00
+                            Lundi - Samedi: 08h00 - 22h00
                         </div>
                     </div>
                     <div class="contact-buttons">
@@ -419,7 +417,7 @@
                 <iframe
                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3979.8234567890123!2d9.7678901234567!3d4.0123456789012!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNMKwMDAnMjguNCJOIDnCsDQ2JzA0LjQiRQ!5e0!3m2!1sfr!2scm!4v1234567890123!5m2!1sfr!2scm"
                     allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-                    title="Localisation SAGER"></iframe>
+                    title="Localisation SAGER MARKET"></iframe>
             </div>
         </div>
     </section>
@@ -430,7 +428,7 @@
     <div class="footer-content">
         <div class="footer-main">
             <div class="footer-section">
-                <h3><i class="fas fa-store"></i> SAGER</h3>
+                <h3><i class="fas fa-store"></i> SAGER MARKET</h3>
                 <p>Votre distributeur de confiance pour boissons, eaux, sodas, bières et gaz domestique</p>
                 <div class="social-links">
                     <a href="#"><i class="fab fa-facebook"></i></a>
@@ -452,7 +450,7 @@
                 <div class="footer-contact">
                     <p><i class="fas fa-map-marker-alt"></i> Ayélawadjè, Cotonou</p>
                     <p><i class="fas fa-phone"></i> +229 01 96 46 66 25</p>
-                    <p><i class="fas fa-envelope"></i> contact@sager.bj</p>
+                    <p><i class="fas fa-envelope"></i> contact@sager-market.com</p>
                     <p><i class="fas fa-clock"></i> Lun-Sam: 8h-19h</p>
                 </div>
             </div>
@@ -461,40 +459,41 @@
         <nav>
 
             @auth
-                @if (auth()->user() && auth()->user()->role == 'admin')
-                    <a href="{{ route('dashboardAdmin') }}" style="color: white; text-decoration: none;"><i
-                            class="fas fa-tachometer-alt"></i>
-                        Tableau de
-                        bord |</a>
-                @else
-                    <a href="{{ route('dashboard') }}" style="color: white; text-decoration: none;"><i
-                            class="fas fa-tachometer-alt"></i>
-                        Tableau de
-                        bord |</a>
-                @endif
+            @if (auth()->user() && auth()->user()->role == 'admin')
+            <a href="{{ route('dashboardAdmin') }}" style="color: white; text-decoration: none;"><i
+                    class="fas fa-tachometer-alt"></i>
+                Tableau de
+                bord |</a>
+            @else
+            <a href="{{ route('dashboard') }}" style="color: white; text-decoration: none;"><i
+                    class="fas fa-tachometer-alt"></i>
+                Tableau de
+                bord |</a>
+            @endif
 
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: inline;">
-                    @csrf
-                    <button type="submit" class="logout-button"
-                        style="background: none; border: none; color: inherit; cursor: pointer; font-weight: bold;
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: inline;">
+                @csrf
+                <button type="submit" class="logout-button"
+                    style="background: none; border: none; color: inherit; cursor: pointer; font-weight: bold;
                                     font-size: 0.9rem; padding: 0;">
-                        <i class="fas fa-sign-out-alt"></i> Déconnexion
-                    </button>
-                </form>
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </form>
             @endauth
 
             @guest
-                <div class="">
-                    <a href="/login" style="color: white; text-decoration: none;"><i class="fas fa-sign-in-alt"></i>
-                        Connexion</a>
-                </div>
+            <div class="">
+                <a href="/login" style="color: white; text-decoration: none;"><i class="fas fa-sign-in-alt"></i>
+                    Connexion</a>
+            </div>
             @endguest
             <div class="footer-bottom">
-                <p>&copy; 2024 SAGER. Tous droits réservés.</p>
+                <p>&copy; 2025 SAGER MARKET. Tous droits réservés. <br>
+                    Built with Blood, Sweat and Tears by
+                    <a href="https://rachad-alabi-adekambi.github.io/portfolio/#/"
+                        style="color:  #667eea; text-decoration: none; font-weight: bold;"><span>CC</span></a>
+                </p>
                 <div class="footer-links">
-                    <a href="#">Mentions légales</a>
-                    <a href="#">Politique de confidentialité</a>
-                    <a href="#">CGV</a>
                 </div>
             </div>
     </div>

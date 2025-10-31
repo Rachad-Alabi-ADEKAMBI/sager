@@ -1379,6 +1379,13 @@
             },
 
             submitAddStockForm() {
+                // Afficher les données envoyées
+                console.log('Données envoyées pour la mise à jour du stock :', {
+                    product_id: this.selectedProduct.id,
+                    quantity: this.stockQuantity,
+                    note: this.stockNote,
+                });
+
                 axios
                     .post(`/products/${this.selectedProductId}/stock`, {
                         product_id: this.selectedProduct.id,
