@@ -649,7 +649,9 @@
                             v-model="payment_method"
                             class="form-control payment-select"
                         >
-                            <option value="cash">Espèces (Cash)</option>
+                            <option value="cash" selected>
+                                Espèces (Cash)
+                            </option>
                             <option value="credit">Crédit</option>
                             <option value="mobile_money">Mobile Money</option>
                         </select>
@@ -747,7 +749,7 @@
                 showSaleModal: false,
                 selectedSale: null,
                 showSummaryModal: false,
-                payment_method: 'Cash',
+                payment_method: 'cash',
                 customers: [],
                 customerSearchQuery: '',
                 showCustomerDropdown: false,
@@ -908,7 +910,9 @@
                 axios
                     .get('/productsList')
                     .then((response) => {
-                        this.products = response.data;
+                        this.products = response.data.sort((a, b) => {
+                            return a.name.localeCompare(b.name); // Tri alphabétique sur le champ name
+                        });
                     })
                     .catch((error) => {
                         console.error('Erreur produits :', error);
@@ -1075,6 +1079,7 @@
                     })),
                 };
 
+                console.log(saleData);
                 axios
                     .post('/sale', saleData)
                     .then((response) => {

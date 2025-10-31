@@ -3,8 +3,9 @@
         <div class="sales-content">
             <!-- Main deposits list view -->
             <div class="sales-history" v-if="!showHistoryView">
-                <div class="history-header">
-                    <h3>Historique des Consignations</h3>
+                <!-- Added header with buttons at the top -->
+                <div class="page-header">
+                    <h2>Historique des Consignations</h2>
                     <div class="header-actions">
                         <button
                             @click="showAddStockModal = true"
@@ -15,13 +16,23 @@
                         </button>
                         <button @click="printAllDeposits" class="btn-print-all">
                             <i class="fas fa-print"></i>
-                            Imprimer la Liste
+                            Imprimer
                         </button>
                     </div>
                 </div>
 
-                <!-- Deposits Table -->
+                <!-- Added table container with blue gradient header -->
                 <div class="table-container">
+                    <div class="table-header">
+                        <h3>Liste des Produits en Stock</h3>
+                        <div class="header-info">
+                            <strong>
+                                Total: {{ deposits.length }} produits
+                            </strong>
+                        </div>
+                    </div>
+
+                    <!-- Deposits Table -->
                     <table class="table">
                         <thead>
                             <tr>
@@ -112,14 +123,16 @@
                                     display: flex;
                                     align-items: center;
                                     cursor: pointer;
-                                    color: #007bff;
+                                    color: white;
                                     font-weight: bold;
                                 "
                             >
-                                <i class="fas fa-arrow-left"></i>
-                                <span style="margin-left: 5px">Retour</span>
+                                <i
+                                    class="fas fa-arrow-left"
+                                    style="color: white"
+                                ></i>
                             </span>
-                            | Liste des opérations sur
+                            |
                             <strong>{{ selectedProductName }}</strong>
                         </h3>
                         <div
@@ -722,14 +735,8 @@
         padding: 20px;
     }
 
-    .sales-history {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-    }
-
-    .history-header {
+    /* Added page header styling */
+    .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -738,10 +745,11 @@
         gap: 15px;
     }
 
-    .history-header h3 {
+    .page-header h2 {
         margin: 0;
         color: #333;
-        font-size: 1.5rem;
+        font-size: 1.8rem;
+        font-weight: 600;
     }
 
     .header-actions {
@@ -763,14 +771,13 @@
     }
 
     .btn-add-stock {
-        background: #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
 
     .btn-add-stock:hover {
-        background: #5568d3;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
     .btn-print-all {
@@ -784,33 +791,62 @@
         box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
     }
 
-    .table-container {
-        overflow-x: auto;
+    .sales-history {
+        background: transparent;
     }
 
+    /* Updated table container with blue gradient header */
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .table-header h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+
+    .header-info {
+        color: white;
+    }
+
+    /* Updated table styling to match clients page */
     .table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 20px;
     }
 
-    .table th,
-    .table td {
-        padding: 12px;
-        text-align: left;
-        border-bottom: 1px solid #eee;
+    .table thead {
+        background: #f8f9fa;
     }
 
     .table th {
-        background-color: #f8f9fa;
-        color: #333;
+        padding: 1rem;
+        text-align: left;
         font-weight: 600;
-        position: sticky;
-        top: 0;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .table td {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
     }
 
     .table tbody tr:hover {
-        background-color: #f8f9fa;
+        background: #f8f9fa;
     }
 
     .action-btn {
@@ -822,7 +858,6 @@
         margin-right: 5px;
     }
 
-    /* Improved history button styling with green background and white icon */
     .history-btn {
         background: #28a745;
         color: white;
@@ -830,19 +865,9 @@
 
     .history-btn:hover {
         background: #218838;
+        color: white;
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-    }
-
-    .print-btn {
-        background: #17a2b8;
-        color: white;
-    }
-
-    .print-btn:hover {
-        background: #138496;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
     }
 
     .empty-state {
@@ -894,35 +919,14 @@
         color: #333;
     }
 
-    /* Added styles for history view matching ProductsComponent */
     .showStock {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-    }
-
-    .table-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #e9ecef;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .table-header h3 {
-        margin: 0;
-        color: #333;
-        font-size: 1.3rem;
+        background: transparent;
     }
 
     .btn-print-history {
         padding: 8px 16px;
-        background: #17a2b8;
-        color: white;
+        background: white;
+        color: #667eea;
         border: none;
         border-radius: 6px;
         cursor: pointer;
@@ -930,12 +934,12 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        font-weight: 600;
     }
 
     .btn-print-history:hover {
-        background: #138496;
+        background: rgba(255, 255, 255, 0.9);
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
     }
 
     /* Modal Styles */
@@ -1081,7 +1085,7 @@
 
     /* Responsive Styles */
     @media (max-width: 768px) {
-        .history-header {
+        .page-header {
             flex-direction: column;
             align-items: flex-start;
         }
@@ -1095,6 +1099,12 @@
         .btn-print-all {
             width: 100%;
             justify-content: center;
+        }
+
+        .table-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
         }
 
         table.table,

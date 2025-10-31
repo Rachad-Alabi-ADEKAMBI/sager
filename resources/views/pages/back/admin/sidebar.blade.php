@@ -3,7 +3,7 @@
      <div class="sidebar-header">
          <h2>
              <a href="{{ route('home') }}" style='color: white; text-decoration: none;'>
-                 SAGER
+                 SAGER MARKET
              </a>
          </h2>
      </div>
@@ -44,7 +44,7 @@
 
          <li>
              <a href="{{ route('clients') }}" class="{{ request()->routeIs('clients') ? 'active' : '' }}">
-                 <i class="fas fa-user-tie"></i> Clients
+                 <i class="fas fa-briefcase"></i> Clients
              </a>
          </li>
 

@@ -11,6 +11,7 @@ class SaleProduct extends Model
         'product_id',
         'quantity',
         'price',
+        'price_type'
     ];
 
     public function product()

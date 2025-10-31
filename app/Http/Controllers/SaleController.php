@@ -36,10 +36,10 @@ class SaleController extends Controller
             'seller_name' => 'required|string',
             'buyer_name' => 'required|string',
             'buyer_phone' => 'nullable|string',
-            'payment_method' => 'required|string', // Payment method
+            'payment_method' => 'required|string',
             'products' => 'required|array|min:1',
             'products.*.product_id' => 'required|exists:products,id',
-            'products.*.quantity'   => 'required|numeric|min:0.01',
+            'products.*.quantity' => 'required|numeric|min:0.01',
             'products.*.price' => 'required|numeric|min:0',
             'products.*.price_type' => 'nullable|string',
         ]);
@@ -49,7 +49,6 @@ class SaleController extends Controller
         try {
             $total = collect($validated['products'])->sum(fn($item) => $item['quantity'] * $item['price']);
 
-            // 🔹 Créer la vente
             $sale = Sale::create([
                 'seller_name' => $validated['seller_name'],
                 'buyer_name' => $validated['buyer_name'],
@@ -59,7 +58,6 @@ class SaleController extends Controller
                 'status' => 'done',
             ]);
 
-            // 🔹 Si paiement à crédit, créer la créance
             if (strtolower($validated['payment_method']) === 'credit') {
                 $client = Client::where('name', $validated['buyer_name'])->first();
                 if ($client) {
@@ -73,7 +71,6 @@ class SaleController extends Controller
 
             $details = [];
 
-            // 🔹 Traiter chaque produit
             foreach ($validated['products'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
                 $initial_quantity = $product->quantity;
@@ -82,31 +79,17 @@ class SaleController extends Controller
                     throw new \Exception("Stock insuffisant pour le produit : {$product->name}");
                 }
 
-                // Déterminer le prix selon price_type
                 $unitPrice = $item['price'];
-                if ($product->is_depositable && isset($item['price_type'])) {
-                    switch ($item['price_type']) {
-                        case 'deposit':
-                            $unitPrice = $product->deposit_price;
-                            break;
-                        case 'refill':
-                            $unitPrice = $product->filling_price;
-                            break;
-                        case 'both':
-                            $unitPrice = $product->deposit_price + $product->filling_price;
-                            break;
-                    }
-                }
+                $priceType = $item['price_type'] ?? null; // Utilise directement le price_type envoyé par le front
 
-                // Créer la ligne de vente
                 SaleProduct::create([
                     'sale_id' => $sale->id,
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
                     'price' => $unitPrice,
+                    'price_type' => $priceType,
                 ]);
 
-                // Mettre à jour le stock
                 $product->decrement('quantity', $item['quantity']);
                 $final_quantity = $initial_quantity - $item['quantity'];
 
@@ -122,41 +105,32 @@ class SaleController extends Controller
                     'seller_name' => $sale->seller_name,
                 ]);
 
-                // Gestion des produits consignables
-                if ($product->is_depositable) {
+                if ($product->is_depositable && $priceType === 'refill') {
                     $comment = 'Facture ' . $sale->id . ' à ' . $sale->buyer_name;
 
-                    switch ($item['price_type']) {
-                        case 'refill':
-                            $deposit = Deposit::firstOrCreate(
-                                ['product_id' => $product->id],
-                                ['product_name' => $product->name, 'quantity' => 0]
-                            );
-                            $deposit->increment('quantity', $item['quantity']);
+                    $deposit = Deposit::firstOrCreate(
+                        ['product_id' => $product->id],
+                        ['product_name' => $product->name, 'quantity' => 0]
+                    );
+                    $deposit->increment('quantity', $item['quantity']);
 
-                            StockDeposit::create([
-                                'product_id' => $product->id,
-                                'initial_stock' => $deposit->quantity - $item['quantity'],
-                                'quantity' => $item['quantity'],
-                                'final_stock' => $deposit->quantity,
-                                'comment' => $comment,
-                            ]);
-                            break;
-                        case 'deposit':
-                        case 'both':
-                            // Le stock du produit est déjà géré, rien à faire
-                            break;
-                    }
+                    StockDeposit::create([
+                        'product_id' => $product->id,
+                        'initial_stock' => $deposit->quantity - $item['quantity'],
+                        'quantity' => $item['quantity'],
+                        'final_stock' => $deposit->quantity,
+                        'comment' => $comment,
+                    ]);
                 }
 
                 $details[] = [
                     'product' => $product->name,
                     'quantity_sold' => $item['quantity'],
                     'price' => $unitPrice,
+                    'price_type' => $priceType,
                 ];
             }
 
-            // Notification
             Notification::create([
                 'description' => 'Facture N°' . $sale->id . '/' . now()->format('m') . '/' . now()->format('y')
                     . '/FR-N pour ' . $sale->buyer_name . ' par ' . $sale->seller_name
@@ -179,6 +153,8 @@ class SaleController extends Controller
             ], 500);
         }
     }
+
+
 
 
     public function show($id)
@@ -207,29 +183,24 @@ class SaleController extends Controller
         try {
             $sale = Sale::findOrFail($id);
 
-            // Vérifie que la vente est bien "done"
-            if ($sale->status !== 'done') {
+            if ($sale->status === 'cancelled') {
                 return response()->json([
-                    'error' => 'Annulation impossible',
-                    'message' => 'Seules les ventes avec le statut "done" peuvent être annulées.'
-                ], 403);
+                    'error' => 'La vente est déjà annulée.'
+                ], 400);
             }
 
-            $saleProducts = SaleProduct::where('sale_id', $sale->id)->get();
+            $saleProducts = SaleProduct::where('sale_id', $id)->get();
 
-            // 🔹 Restauration du stock des produits principaux
             foreach ($saleProducts as $item) {
                 $product = Product::findOrFail($item->product_id);
-                $initial_quantity = $product->quantity;
 
+                // Restaurer le stock principal
                 $product->increment('quantity', $item->quantity);
 
                 Stock::create([
                     'date' => now()->toDateString(),
-                    'initial_stock' => $initial_quantity,
-                    'label' => 'Annulation de la facture N°' . $sale->id . ' pour '
-                        . $sale->buyer_name . ' par '
-                        . (Auth::user()->role === 'admin' ? 'admin' : $sale->seller_name) . '.',
+                    'initial_stock' => $product->quantity - $item->quantity,
+                    'label' => 'Annulation facture ' . $sale->id . ' produit ' . $product->name,
                     'quantity' => $item->quantity,
                     'final_stock' => $product->quantity,
                     'product_id' => $product->id,
@@ -237,57 +208,57 @@ class SaleController extends Controller
                     'sale_id' => $sale->id,
                     'seller_name' => $sale->seller_name,
                 ]);
-            }
 
-            // 🔹 Annulation des produits consignables et recharges (StockDeposit)
-            $deposits = Deposit::where('sale_id', $sale->id)->get();
-            foreach ($deposits as $deposit) {
-                $deposit->update(['status' => 'Annulée']);
-            }
+                // Produits consignables
+                if ($product->is_depositable && $item->price_type) {
+                    $comment = 'Annulation facture ' . $sale->id . ' à ' . $sale->buyer_name;
 
-            // Remettre à jour les StockDeposit
-            $stockDeposits = StockDeposit::where('sale_id', $sale->id)->get();
-            foreach ($stockDeposits as $sd) {
-                $deposit = Deposit::find($sd->product_id);
-                if ($deposit) {
-                    $deposit->decrement('quantity', $sd->quantity);
-                }
-                $sd->update(['comment' => $sd->comment . ' (Annulé)']);
-            }
+                    switch ($item->price_type) {
+                        case 'refill':
+                            $deposit = Deposit::firstOrCreate(
+                                ['product_id' => $product->id],
+                                ['product_name' => $product->name, 'quantity' => 0]
+                            );
 
-            // 🔹 Annulation de la créance si paiement à crédit
-            if (strtolower($sale->payment_method) === 'credit') {
-                $client = Client::where('name', $sale->buyer_name)->first();
-                if ($client) {
-                    $claim = Claim::where('client_id', $client->id)
-                        ->where('amount', $sale->total)
-                        ->where('comment', 'Vente N°' . $sale->id . ' à crédit')
-                        ->first();
-                    if ($claim) {
-                        $claim->delete(); // ou $claim->update(['status' => 'Annulée']);
+                            $deposit->decrement('quantity', $item->quantity);
+
+                            StockDeposit::create([
+                                'product_id' => $product->id,
+                                'initial_stock' => $deposit->quantity + $item->quantity,
+                                'quantity' => $item->quantity,
+                                'final_stock' => $deposit->quantity,
+                                'comment' => $comment,
+                            ]);
+                            break;
+
+                        case 'deposit':
+                        case 'both':
+                            // Le stock a déjà été géré
+                            break;
                     }
                 }
             }
 
-            // 🔹 Mise à jour du statut de la vente
-            $sale->status = 'cancelled';
-            $sale->save();
+            $sale->update(['status' => 'cancelled']);
 
-            // 🔹 Notification
+            // Notification systématique
             Notification::create([
-                'description' => 'Annulation de la facture N°' . $sale->id . ' pour '
-                    . $sale->buyer_name . ' par '
-                    . (Auth::user()->role === 'admin' ? 'admin' : $sale->seller_name) . '.',
+                'description' => 'Annulation de la facture N°' . $sale->id . '/' . now()->format('m') . '/' . now()->format('y')
+                    . ' pour ' . $sale->buyer_name . ' par ' . $sale->seller_name . '.',
             ]);
 
             DB::commit();
 
-            return response()->json(['message' => 'Facture annulée avec succès.']);
+            return response()->json([
+                'message' => 'Vente annulée avec succès.',
+                'sale_id' => $sale->id,
+            ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
-                'error' => 'Échec de l\'annulation de la facture.',
-                'message' => $e->getMessage()
+                'error' => 'Échec de l\'annulation de la vente.',
+                'message' => $e->getMessage(),
             ], 500);
         }
     }

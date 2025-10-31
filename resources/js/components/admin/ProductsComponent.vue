@@ -1,66 +1,33 @@
 <template>
     <div class="stock-content">
-        <div class="stock-header">
+        <div class="products-header">
             <h2>Inventaire des Produits</h2>
-            <div
-                style="
-                    display: flex;
-                    gap: 10px;
-                    margin-bottom: 20px;
-                    flex-wrap: wrap;
-                    align-items: center;
-                "
-            >
+            <div class="header-actions">
                 <button class="btn btn-primary" @click="openAddProductModal()">
                     <i class="fas fa-plus"></i>
                     Ajouter un produit
                 </button>
 
-                <button
-                    @click="printList"
-                    class="btn-secondary"
-                    style="background-color: #17a2b8; padding: 0.75rem 1.5rem"
-                >
+                <button @click="printList" class="btn btn-print">
                     <i class="fas fa-print"></i>
                     Imprimer la liste
                 </button>
 
                 <input
                     type="text"
-                    style="
-                        padding: 0.75rem;
-                        border: 1px solid #ddd;
-                        border-radius: 5px;
-                        min-width: 200px;
-                    "
+                    class="search-input"
                     placeholder="Rechercher un produit..."
                     v-model="searchQuery"
                 />
 
-                <select
-                    style="
-                        padding: 0.75rem;
-                        border: 1px solid #ddd;
-                        border-radius: 5px;
-                        min-width: 200px;
-                    "
-                    v-model="statusFilter"
-                >
+                <select class="filter-select" v-model="statusFilter">
                     <option>Tous les statuts</option>
                     <option>En stock (plus de 5)</option>
                     <option>Stock faible (entre 1 et 5)</option>
                     <option>Rupture de stock (stock a zero)</option>
                 </select>
 
-                <select
-                    style="
-                        padding: 0.75rem;
-                        border: 1px solid #ddd;
-                        border-radius: 5px;
-                        min-width: 180px;
-                    "
-                    v-model="sortOption"
-                >
+                <select class="filter-select" v-model="sortOption">
                     <option>Nom (A-Z)</option>
                     <option>Nom (Z-A)</option>
                     <option>Prix (croissant)</option>
@@ -225,6 +192,18 @@
                                     </button>
 
                                     <button
+                                        class="btn-sm"
+                                        style="
+                                            background-color: #8b3840ff;
+                                            color: white;
+                                        "
+                                        title="Retirer du stock"
+                                        @click="openRemoveStockModal(product)"
+                                    >
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+
+                                    <button
                                         class="btn-sm btn-edit"
                                         title="Modifier"
                                         @click="openEditPricesModal(product)"
@@ -269,10 +248,12 @@
                                 font-weight: bold;
                             "
                         >
-                            <i class="fas fa-arrow-left"></i>
-                            <span style="margin-left: 5px">Retour</span>
+                            <i
+                                class="fas fa-arrow-left"
+                                style="color: white"
+                            ></i>
                         </span>
-                        | Liste des opérations sur
+                        |
                         <strong>{{ stocks[0]?.product_name }}</strong>
                     </h3>
                     <strong>Total: {{ stocks.length }}</strong>
@@ -286,7 +267,6 @@
                             <th>Libellé</th>
                             <th>Quantité</th>
                             <th>Stock final</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -301,24 +281,6 @@
                             <td data-label="Quantité">{{ stock.quantity }}</td>
                             <td data-label="Stock final">
                                 <strong>{{ stock.final_stock }}</strong>
-                            </td>
-                            <td data-label="Actions">
-                                <button
-                                    v-if="index === firstRelevantIndex"
-                                    class="btn-sm"
-                                    style="
-                                        background-color: #6f42c1;
-                                        color: white;
-                                    "
-                                    title="Annuler l'opération"
-                                    @click="
-                                        openRevertAddStockModal(
-                                            stock.product_id
-                                        )
-                                    "
-                                >
-                                    <i class="fas fa-undo"></i>
-                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -341,8 +303,10 @@
                                 font-weight: bold;
                             "
                         >
-                            <i class="fas fa-arrow-left"></i>
-                            <span style="margin-left: 5px">Retour</span>
+                            <i
+                                class="fas fa-arrow-left"
+                                style="color: white"
+                            ></i>
                         </span>
                         | Rentabilité de
                         <strong>{{ selectedProduct.name }}</strong>
@@ -676,6 +640,16 @@
                     />
                 </div>
 
+                <div class="form-group">
+                    <label>Note (optionnel)</label>
+                    <input
+                        v-model="stockNote"
+                        type="text"
+                        class="form-control"
+                        placeholder="Ex: Réapprovisionnement fournisseur..."
+                    />
+                </div>
+
                 <div
                     class="form-actions"
                     style="margin-top: 1rem; display: flex; gap: 1rem"
@@ -695,40 +669,50 @@
         </div>
     </div>
 
-    <!--modal revert add stock-->
-    <div v-if="showRevertAddStockModal" class="modal-revert-stock">
+    <!-- Modal Remove Stock -->
+    <div v-if="showRemoveStockModal" class="modal-remove-stock">
         <div class="modal-content">
             <h3>
-                Annuler cette opération d'ajout de stock pour
+                Retirer du stock pour
                 <strong>{{ selectedProduct.name }}</strong>
-                ?
-                <span
-                    class="close"
-                    @click="closeRevertAddStockModal"
-                    style="cursor: pointer; float: right; font-size: 1.5rem"
-                >
-                    &times;
-                </span>
             </h3>
 
-            <form @submit.prevent="submitRevertAddStockForm">
+            <form @submit.prevent="submitRemoveStockForm">
+                <div class="form-group">
+                    <label>Quantité à retirer</label>
+                    <input
+                        v-model.number="stockQuantity"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        class="form-control"
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>Note (optionnel)</label>
+                    <input
+                        v-model="stockNote"
+                        type="text"
+                        class="form-control"
+                        placeholder="Ex: Produit endommagé, perte..."
+                    />
+                </div>
+
                 <div
                     class="form-actions"
                     style="margin-top: 1rem; display: flex; gap: 1rem"
                 >
-                    <button
-                        type="submit"
-                        class="btn btn-primary"
-                        style="background: red"
-                    >
-                        Oui
+                    <button type="submit" class="btn btn-primary">
+                        Retirer
                     </button>
                     <button
                         type="button"
                         class="btn btn-secondary"
-                        @click="closeRevertAddStockModal"
+                        @click="closeRemoveStockModal"
                     >
-                        Non
+                        Annuler
                     </button>
                 </div>
             </form>
@@ -959,13 +943,14 @@
                 // Modales diverses
                 showDeleteProductModal: false,
                 showAddStockModal: false,
+                showRemoveStockModal: false,
                 showTransactions: false,
-                showRevertAddStockModal: false,
 
                 // Stock
                 selectedProduct: {},
                 selectedProductId: '',
                 stockQuantity: 1,
+                stockNote: '',
 
                 // Comptabilité
                 accountingData: {
@@ -1382,6 +1367,7 @@
                 this.selectedProduct = product;
                 this.selectedProductId = product.id;
                 this.stockQuantity = 1;
+                this.stockNote = '';
                 this.showAddStockModal = true;
             },
 
@@ -1389,6 +1375,7 @@
                 this.showAddStockModal = false;
                 this.selectedProduct = {};
                 this.stockQuantity = 0;
+                this.stockNote = '';
             },
 
             submitAddStockForm() {
@@ -1396,6 +1383,7 @@
                     .post(`/products/${this.selectedProductId}/stock`, {
                         product_id: this.selectedProduct.id,
                         quantity: this.stockQuantity,
+                        note: this.stockNote,
                     })
                     .then(() => {
                         alert('Stock ajouté avec succès.');
@@ -1410,61 +1398,39 @@
                         alert('Erreur lors de l’ajout du stock.');
                     });
             },
-            openRevertAddStockModal(product_id) {
-                this.selectedProductId = product_id;
-                this.showRevertAddStockModal = true;
-                console.log('Id produit à annuler :', product_id);
-                axios
-                    .get(`/product/${this.selectedProductId}`, {})
-                    .then((response) => {
-                        this.selectedProduct = response.data;
-                        console.log(
-                            'Produit sélectionné:',
-                            this.selectedProduct
-                        );
-                    })
-                    .catch((error) => {
-                        console.error(
-                            'Erreur suppression:',
-                            error.response.data
-                        );
-                    });
+
+            openRemoveStockModal(product) {
+                this.selectedProduct = product;
+                this.selectedProductId = product.id;
+                this.stockQuantity = 1;
+                this.stockNote = '';
+                this.showRemoveStockModal = true;
             },
-            closeRevertAddStockModal() {
-                this.showRevertAddStockModal = false;
+
+            closeRemoveStockModal() {
+                this.showRemoveStockModal = false;
                 this.selectedProduct = {};
+                this.stockQuantity = 0;
+                this.stockNote = '';
             },
-            submitRevertAddStockForm() {
+
+            submitRemoveStockForm() {
                 axios
-                    .post('/revertAddStock', {
-                        product_id: this.selectedProductId,
+                    .post(`/products/${this.selectedProductId}/stock/remove`, {
+                        quantity: this.stockQuantity,
+                        note: this.stockNote,
                     })
-                    .then((response) => {
-                        alert(
-                            "Opération d'annulation réussie !",
-                            response.data
-                        );
-
-                        // 1. Mettez à jour le tableau du stock pour refléter le changement
-                        this.displayStock(this.selectedProductId);
-
-                        // 2. Fermez la modale d'annulation
-                        this.closeRevertAddStockModal();
-
-                        // 3. (Optionnel) Affichez une notification de succès à l'utilisateur
-                        // Par exemple : alert('Opération annulée avec succès !');
+                    .then(() => {
+                        alert('Stock retiré avec succès.');
+                        this.closeRemoveStockModal();
+                        this.fetchProducts();
                     })
                     .catch((error) => {
                         console.error(
-                            "Erreur lors de l'annulation de l'opération:",
+                            'Erreur lors du retrait du stock :',
                             error
                         );
-
-                        // 1. (Optionnel) Affichez un message d'erreur à l'utilisateur
-                        // Par exemple : alert('Erreur : ' + error.response.data.message);
-
-                        // 2. Fermez la modale même en cas d'erreur
-                        this.closeRevertAddStockModal();
+                        alert('Erreur lors du retrait du stock.');
                     });
             },
         },
@@ -1559,6 +1525,7 @@
 
 <style>
     .modal-add-stock,
+    .modal-remove-stock,
     .modal-revert-stock {
         position: fixed;
         top: 0;
@@ -1590,5 +1557,97 @@
 
     .action-buttons button {
         flex: 0 0 auto; /* Empêche l'étirement des boutons */
+    }
+</style>
+
+<style>
+    /* Header */
+    .products-header {
+        margin-bottom: 2rem;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .products-header h2 {
+        color: #333;
+        margin-bottom: 1.5rem;
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-print {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .btn-print:hover {
+        background: #138496;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+
+    /* Inputs */
+    .search-input,
+    .filter-select {
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        min-width: 200px;
+        transition: border-color 0.3s ease;
+    }
+
+    .search-input:focus,
+    .filter-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 </style>

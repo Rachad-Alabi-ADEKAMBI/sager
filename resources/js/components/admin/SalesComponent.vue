@@ -2,72 +2,59 @@
     <div>
         <div class="sales-content">
             <div class="sales-history">
-                <div class="history-header">
-                    <h3>Historique des ventes</h3>
-                    <div
-                        style="
-                            display: flex;
-                            gap: 1rem;
-                            align-items: center;
-                            flex-wrap: wrap;
-                        "
-                    >
-                        <!-- Ajout des filtres et bouton d'impression en haut -->
-                        <select
-                            v-model="filterPeriod"
-                            style="
-                                padding: 0.5rem;
-                                border: 1px solid #ddd;
-                                border-radius: 5px;
-                            "
-                        >
-                            <option>Aujourd'hui</option>
-                            <option>Hier</option>
-                            <option>Cette semaine</option>
-                            <option>Ce mois</option>
-                            <option>Toutes les ventes</option>
-                            <option>À une date précise</option>
-                        </select>
+                <!-- Ajout d'un header stylisé en haut avec les filtres et bouton d'impression -->
+                <div class="page-header">
+                    <div class="header-content">
+                        <div class="header-filters">
+                            <select
+                                v-model="filterPeriod"
+                                class="filter-select"
+                            >
+                                <option>Aujourd'hui</option>
+                                <option>Hier</option>
+                                <option>Cette semaine</option>
+                                <option>Ce mois</option>
+                                <option>Toutes les ventes</option>
+                                <option>À une date précise</option>
+                            </select>
 
-                        <select
-                            v-model="filterStatus"
-                            style="
-                                padding: 0.5rem;
-                                border: 1px solid #ddd;
-                                border-radius: 5px;
-                            "
-                        >
-                            <option value="">Tous les statuts</option>
-                            <option value="done">Terminée</option>
-                            <option value="cancelled">Annulée</option>
-                        </select>
+                            <select
+                                v-model="filterStatus"
+                                class="filter-select"
+                            >
+                                <option value="">Tous les statuts</option>
+                                <option value="done">Terminée</option>
+                                <option value="cancelled">Annulée</option>
+                            </select>
+
+                            <div
+                                v-if="filterPeriod === 'À une date précise'"
+                                style="display: inline-block"
+                            >
+                                <input
+                                    type="date"
+                                    v-model="selectedDate"
+                                    class="date-picker"
+                                />
+                            </div>
+                        </div>
 
                         <button
                             @click="printCurrentList"
-                            class="btn-primary"
-                            style="
-                                background: #17a2b8;
-                                color: white;
-                                border: none;
-                                padding: 0.5rem 1rem;
-                                border-radius: 5px;
-                                cursor: pointer;
-                                display: inline-flex;
-                                align-items: center;
-                                gap: 0.5rem;
-                            "
+                            class="btn-print-header"
                         >
                             <i class="fas fa-print"></i>
                             Imprimer la liste
                         </button>
-
-                        <div
-                            v-if="filterPeriod === 'À une date précise'"
-                            style="width: 100%; margin-top: 0.5rem"
-                        >
-                            <input type="date" v-model="selectedDate" />
-                        </div>
                     </div>
+                </div>
+
+                <!-- Ajout d'un joli header de table avec gradient bleu -->
+                <div class="table-header-styled">
+                    <h3>Historique des ventes</h3>
+                    <span class="table-count">
+                        {{ filteredSales.length }} vente(s)
+                    </span>
                 </div>
 
                 <table class="table" v-if="paginatedSales.length > 0">
@@ -101,7 +88,6 @@
                                 </strong>
                             </td>
                             <td data-label="Statut">
-                                <!-- Ajout des badges colorés pour les statuts -->
                                 <span
                                     :class="getStatusClass(sale.status)"
                                     style="
@@ -229,7 +215,6 @@
                                 <strong>Total :</strong>
                                 {{ formatAmount(selectedSale.total) }} FCFA
                             </p>
-                            <!-- Ajout du statut avec badge coloré dans le modal -->
                             <p>
                                 <strong>Statut :</strong>
                                 <span
@@ -309,11 +294,9 @@
                 saleModalInstance: null,
                 showSaleModal: false,
                 filterPeriod: 'Toutes les ventes',
-                filterStatus: '', // Ajout du filtre de statut
-
-                // AJOUTÉ POUR LA PAGINATION
+                filterStatus: '',
                 currentPage: 1,
-                perPage: 10, // Nombre d'éléments par page
+                perPage: 10,
             };
         },
 
@@ -923,14 +906,6 @@
         border-radius: 15px;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         overflow: hidden;
-    }
-
-    .history-header {
-        padding: 1.5rem;
-        border-bottom: 1px solid #eee;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
     }
 
     .table {
@@ -1548,5 +1523,121 @@
         background: #5568d3;
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .page-header {
+        background: white;
+        padding: 1.5rem 2rem;
+        border-radius: 15px 15px 0 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-filters {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-select {
+        padding: 0.6rem 1rem;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: white;
+        cursor: pointer;
+        transition: border-color 0.3s ease;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .date-picker {
+        padding: 0.6rem 1rem;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: white;
+        cursor: pointer;
+        transition: border-color 0.3s ease;
+    }
+
+    .date-picker:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .btn-print-header {
+        background: #17a2b8;
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-print-header:hover {
+        background: #138496;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(23, 162, 184, 0.3);
+    }
+
+    /* Ajout du style pour le header de table avec gradient bleu */
+    .table-header-styled {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-header-styled h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .table-count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .sales-history {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .table thead {
+        background: #f8f9fa;
+    }
+
+    .table thead th {
+        color: #495057;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
     }
 </style>

@@ -95,11 +95,11 @@
                             class="fas fa-arrow-left"
                             style="
                                 cursor: pointer;
-                                color: #007bff;
+                                color: white;
                                 font-weight: bold;
                             "
                         ></i>
-                        | Liste des opérations sur
+                        |
                         <strong>gaz</strong>
                     </h3>
                     <strong>Total: {{ stocks.length }}</strong>

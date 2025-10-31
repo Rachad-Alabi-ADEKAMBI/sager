@@ -490,11 +490,7 @@ Route::get('/stock/{id}', function ($id) {
 
 //mise a jour du stock
 Route::post('/products/{id}/stock', [ProductController::class, 'updateStock']);
-
-//annulation de la MAJ
-Route::post('/revertAddStock', [App\Http\Controllers\ProductController::class, 'revertAddStock'])
-    ->middleware('auth')
-    ->name('revertAddStock');
+Route::post('/products/{id}/stock/remove', [ProductController::class, 'removeStock']);
 
 //seller sales
 Route::get('/sellerSalesList', function (Request $request) {
