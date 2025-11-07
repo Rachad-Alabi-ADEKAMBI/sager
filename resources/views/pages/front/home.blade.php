@@ -375,50 +375,16 @@
                         </a>
                     </div>
                 </div>
+
+
                 <div class="contact-form-container">
-                    <h3>Envoyez-nous un message</h3>
-                    <form class="contact-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="name">Nom complet</label>
-                                <input type="text" id="name" name="name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="phone">Téléphone</label>
-                                <input type="tel" id="phone" name="phone" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="subject">Sujet</label>
-                            <select id="subject" name="subject" required>
-                                <option value="">Choisissez un sujet</option>
-                                <option value="devis">Demande de devis</option>
-                                <option value="livraison">Information livraison</option>
-                                <option value="produit">Question produit</option>
-                                <option value="autre">Autre</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="message">Message</label>
-                            <textarea id="message" name="message" rows="5" required></textarea>
-                        </div>
-                        <button type="submit" class="submit-btn">
-                            <i class="fas fa-paper-plane"></i>
-                            Envoyer le message
-                        </button>
-                    </form>
+                    <div class="map-container">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3965.1321266232458!2d2.4449721749917126!3d6.3769397936133405!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zNsKwMjInMzcuMCJOIDLCsDI2JzUxLjIiRQ!5e0!3m2!1sfr!2sbj!4v1762189056842!5m2!1sfr!2sbj"
+                            width="600" height="750" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
                 </div>
             </div>
-            <div class="map-container">
-                <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3979.8234567890123!2d9.7678901234567!3d4.0123456789012!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNMKwMDAnMjguNCJOIDnCsDQ2JzA0LjQiRQ!5e0!3m2!1sfr!2scm!4v1234567890123!5m2!1sfr!2scm"
-                    allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-                    title="Localisation SAGER MARKET"></iframe>
-            </div>
+
         </div>
     </section>
 </main>

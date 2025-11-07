@@ -148,15 +148,20 @@ Route::get('/sales', function () {
     return view('pages/back/admin/sales', compact('sales'));
 })->name('sales');
 
+
+
 //route clients
 Route::get('/clients', [ClientController::class, 'index'])->name('clients');
 Route::get('/clientslist', [ClientController::class, 'clientsList'])->name('clients.list');
 Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
 Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
+Route::post('/clients/{id}/delete', [ClientController::class, 'delete']);
 
 //route claims
 Route::post('/claims/add', [ClaimController::class, 'add'])->name('claims.add');
 Route::get('/claimslist', [ClaimController::class, 'list'])->name('claims.list');
+Route::post('/claims/{id}/delete', [ClaimController::class, 'delete']);
+Route::get('/claims', [ClaimController::class, 'index'])->name('claims');
 
 //route claims payments
 Route::post('/claims/pay', [ClaimsPaymentController::class, 'addPayment'])->name('claims.pay');
@@ -636,9 +641,7 @@ Route::get('/login', function () {
     return view('pages/front/login');
 })->name('login');
 
-Route::post('/login', [AuthenticatedSessionController::class, 'store'])
-    ->middleware('guest')
-    ->name('login');
+Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.post');
 
 Route::get('/reset_password', function () {
     return view('pages/front/reset_password');

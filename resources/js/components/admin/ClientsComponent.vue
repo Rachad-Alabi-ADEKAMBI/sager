@@ -1,5 +1,17 @@
 <template>
     <div class="clients-content">
+        <!-- Added loading and error states -->
+        <div v-if="isLoading" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Chargement des données...</p>
+        </div>
+
+        <div v-if="errorMessage" class="error-banner">
+            <i class="fas fa-exclamation-triangle"></i>
+            {{ errorMessage }}
+            <button @click="retryFetch" class="btn-retry">Réessayer</button>
+        </div>
+
         <div class="clients-header">
             <h2>Gestion des Clients et Créances</h2>
             <div class="header-actions">
@@ -8,7 +20,7 @@
                     Ajouter un client
                 </button>
 
-                <!-- <CHANGE> Added global print button with #17a2b8 color -->
+                <!-- Added global print button with #17a2b8 color -->
                 <button class="btn btn-print" @click="printAllClients()">
                     <i class="fas fa-print"></i>
                     Imprimer tout
@@ -49,7 +61,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- <CHANGE> Using paginatedClients instead of filteredClients -->
+                        <!-- Using paginatedClients instead of filteredClients -->
                         <tr v-for="client in paginatedClients" :key="client.id">
                             <td data-label="Nom">
                                 <strong>{{ client.name }}</strong>
@@ -86,7 +98,7 @@
                             </td>
                             <td data-label="Actions">
                                 <div class="action-buttons">
-                                    <!-- <CHANGE> Added print button per client -->
+                                    <!-- Added print button per client -->
                                     <button
                                         class="btn-sm btn-print"
                                         title="Imprimer"
@@ -126,30 +138,31 @@
                     </tbody>
                 </table>
 
-                <strong v-if="filteredClients.length == 0" class="no-data">
-                    Aucun client disponible
+                <!-- Updated no data message and check paginatedClients -->
+                <strong v-if="paginatedClients.length == 0" class="no-data">
+                    Aucun client trouvé
                 </strong>
 
-                <!-- <CHANGE> Added pagination controls -->
+                <!-- Added pagination controls -->
                 <div class="pagination" v-if="totalPages > 1">
+                    <!-- Updated pagination button classes and simplified logic -->
                     <button
-                        class="pagination-btn"
-                        @click="previousPage"
+                        @click="currentPage--"
                         :disabled="currentPage === 1"
+                        class="btn-pagination"
                     >
-                        <i class="fas fa-chevron-left"></i>
                         Précédent
                     </button>
-                    <span class="pagination-info">
+                    <!-- Updated page info span -->
+                    <span class="page-info">
                         Page {{ currentPage }} sur {{ totalPages }}
                     </span>
                     <button
-                        class="pagination-btn"
-                        @click="nextPage"
+                        @click="currentPage++"
                         :disabled="currentPage === totalPages"
+                        class="btn-pagination"
                     >
                         Suivant
-                        <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
             </div>
@@ -251,7 +264,7 @@
                             </td>
                             <td data-label="Actions">
                                 <div class="action-buttons">
-                                    <!-- <CHANGE> Added print button per claim -->
+                                    <!-- Added print button per claim -->
                                     <button
                                         class="btn-sm btn-print"
                                         title="Imprimer"
@@ -293,8 +306,9 @@
                     </tbody>
                 </table>
 
+                <!-- Updated no data message -->
                 <strong v-if="clientClaims.length == 0" class="no-data">
-                    Aucune créance pour ce client
+                    Aucune créance enregistrée
                 </strong>
             </div>
         </div>
@@ -352,6 +366,7 @@
                     </tbody>
                 </table>
 
+                <!-- Updated no data message -->
                 <strong v-if="claimPayments.length == 0" class="no-data">
                     Aucun paiement enregistré
                 </strong>
@@ -513,7 +528,7 @@
 
                 <div class="form-group">
                     <label>Méthode de paiement</label>
-                    <!-- <CHANGE> Set default value to "espèces" -->
+                    <!-- Set default value to "espèces" -->
                     <select
                         v-model="newPayment.payment_method"
                         class="form-control"
@@ -579,7 +594,10 @@
                 </p>
             </div>
             <div class="form-actions">
-                <button @click="deleteClient" class="btn-danger">
+                <button
+                    @click="deleteClient"
+                    class="btn btn-danger text-center"
+                >
                     <i class="fas fa-trash"></i>
                     Supprimer
                 </button>
@@ -613,7 +631,7 @@
                 </p>
             </div>
             <div class="form-actions">
-                <button @click="deleteClaim" class="btn-danger">
+                <button @click="deleteClaim" class="btn btn-danger">
                     <i class="fas fa-trash"></i>
                     Supprimer
                 </button>
@@ -635,6 +653,9 @@
                 claims: [],
                 payments: [],
 
+                isLoading: false,
+                errorMessage: '',
+
                 // Vue states
                 showClients: true,
                 showClaims: false,
@@ -655,7 +676,7 @@
                 searchQuery: '',
                 statusFilter: 'Tous les statuts',
 
-                // <CHANGE> Added pagination variables
+                // Added pagination variables
                 currentPage: 1,
                 itemsPerPage: 10,
 
@@ -668,7 +689,7 @@
                     amount: '',
                     comment: '',
                 },
-                // <CHANGE> Set default payment method to "espèces"
+                // Set default payment method to "espèces"
                 newPayment: {
                     amount: '',
                     payment_method: 'espèces',
@@ -678,6 +699,7 @@
         },
 
         mounted() {
+            console.log('[v0] Component mounted, fetching data...');
             this.fetchAllData();
         },
 
@@ -709,7 +731,7 @@
                 return filtered;
             },
 
-            // <CHANGE> Added pagination computed properties
+            // Added pagination computed properties
             paginatedClients() {
                 const start = (this.currentPage - 1) * this.itemsPerPage;
                 const end = start + this.itemsPerPage;
@@ -723,9 +745,31 @@
             },
 
             clientClaims() {
-                return this.claims.filter(
+                console.log('[v0] clientClaims computed appelé');
+                console.log('[v0] selectedClient:', this.selectedClient);
+                console.log(
+                    '[v0] Total claims disponibles:',
+                    this.claims.length
+                );
+
+                if (!this.selectedClient || !this.selectedClient.id) {
+                    console.log('[v0] Pas de client sélectionné');
+                    return [];
+                }
+
+                const filtered = this.claims.filter(
                     (claim) => claim.client_id === this.selectedClient.id
                 );
+
+                console.log(
+                    '[v0] Créances filtrées pour client',
+                    this.selectedClient.id,
+                    ':',
+                    filtered.length
+                );
+                console.log('[v0] Créances:', filtered);
+
+                return filtered;
             },
 
             claimPayments() {
@@ -736,42 +780,218 @@
         },
 
         methods: {
-            // Fetch data from API
             async fetchAllData() {
+                this.isLoading = true;
+                this.errorMessage = '';
+
+                console.log('[v0] ========================================');
+                console.log('[v0] Début du chargement des données...');
+                console.log('[v0] URL de base:', window.location.origin);
+                console.log('[v0] Environment:', process.env.NODE_ENV);
+
                 try {
-                    const [clientsRes, claimsRes, paymentsRes] =
-                        await Promise.all([
-                            axios.get('/clientslist'),
-                            axios.get('/claimslist'),
-                            axios.get('/claims/payments'),
-                        ]);
+                    console.log('[v0] Appel API: /clientslist');
+                    const clientsRes = await axios.get('/clientslist');
+                    console.log(
+                        '[v0] ✓ Clients reçus:',
+                        clientsRes.data.length,
+                        'clients'
+                    );
+
+                    console.log('[v0] Appel API: /claimslist');
+                    const claimsRes = await axios.get('/claimslist');
+                    console.log(
+                        '[v0] ✓ Créances reçues:',
+                        claimsRes.data.length,
+                        'créances'
+                    );
+                    console.log(
+                        '[v0] Structure de la première créance:',
+                        claimsRes.data[0]
+                    );
+
+                    console.log('[v0] Appel API: /claims/payments');
+                    const paymentsRes = await axios.get('/claims/payments');
+                    console.log(
+                        '[v0] ✓ Paiements reçus:',
+                        paymentsRes.data.length,
+                        'paiements'
+                    );
+
+                    if (!Array.isArray(clientsRes.data)) {
+                        throw new Error(
+                            'Les données clients ne sont pas au format attendu (pas un tableau)'
+                        );
+                    }
+                    if (!Array.isArray(claimsRes.data)) {
+                        throw new Error(
+                            'Les données créances ne sont pas au format attendu (pas un tableau)'
+                        );
+                    }
+                    if (!Array.isArray(paymentsRes.data)) {
+                        throw new Error(
+                            'Les données paiements ne sont pas au format attendu (pas un tableau)'
+                        );
+                    }
+
+                    const normalizedClaims = this.normalizeClaims(
+                        claimsRes.data
+                    );
+                    console.log(
+                        '[v0] Créances normalisées:',
+                        normalizedClaims.length
+                    );
+                    if (normalizedClaims.length > 0) {
+                        console.log(
+                            '[v0] Première créance normalisée:',
+                            normalizedClaims[0]
+                        );
+                    }
 
                     this.clients = clientsRes.data;
-                    this.claims = claimsRes.data;
+                    this.claims = normalizedClaims;
                     this.payments = paymentsRes.data;
-                } catch (error) {
-                    console.error(
-                        'Erreur lors de la récupération des données:',
-                        error
+
+                    console.log('[v0] ✓ Données assignées avec succès');
+                    console.log(
+                        '[v0] this.clients.length:',
+                        this.clients.length
                     );
-                    alert('Erreur lors du chargement des données');
+                    console.log('[v0] this.claims.length:', this.claims.length);
+                    console.log(
+                        '[v0] this.payments.length:',
+                        this.payments.length
+                    );
+
+                    await this.$nextTick();
+                    console.log('[v0] ✓ DOM mis à jour (après $nextTick)');
+
+                    console.log('[v0] Vérification finale des données:');
+                    console.log(
+                        '[v0] - Nombre de clients:',
+                        this.clients.length
+                    );
+                    console.log(
+                        '[v0] - Nombre de créances:',
+                        this.claims.length
+                    );
+                    console.log(
+                        '[v0] - Nombre de paiements:',
+                        this.payments.length
+                    );
+                } catch (error) {
+                    console.error('[v0] ❌ ERREUR lors du chargement:', error);
+
+                    if (error.response) {
+                        this.errorMessage = `Erreur ${error.response.status}: ${error.response.statusText}`;
+                        console.error(
+                            "[v0] Détails de l'erreur:",
+                            error.response.data
+                        );
+                    } else if (error.request) {
+                        this.errorMessage =
+                            'Impossible de contacter le serveur. Vérifiez votre connexion.';
+                        console.error('[v0] Pas de réponse du serveur');
+                    } else {
+                        this.errorMessage =
+                            error.message || 'Une erreur est survenue';
+                    }
+
+                    console.log(
+                        '[v0] ========================================'
+                    );
+                } finally {
+                    this.isLoading = false;
                 }
             },
 
-            // <CHANGE> Added pagination methods
+            normalizeClaims(claims) {
+                console.log('[v0] ========================================');
+                console.log('[v0] Normalisation des créances...');
+
+                if (!Array.isArray(claims)) {
+                    console.error(
+                        "[v0] ❌ Claims n'est pas un tableau:",
+                        claims
+                    );
+                    return [];
+                }
+
+                console.log(
+                    '[v0] Nombre de créances à normaliser:',
+                    claims.length
+                );
+
+                const normalized = claims.map((claim, index) => {
+                    // Vérifier si la créance a debt_amount ou amount
+                    const hasDebtAmount = claim.hasOwnProperty('debt_amount');
+                    const hasAmount = claim.hasOwnProperty('amount');
+
+                    console.log(
+                        `[v0] Créance ${index + 1}/${claims.length} (ID: ${
+                            claim.id
+                        }):`,
+                        {
+                            hasDebtAmount,
+                            hasAmount,
+                            debt_amount: claim.debt_amount,
+                            amount: claim.amount,
+                            client_id: claim.client_id,
+                        }
+                    );
+
+                    const normalizedClaim = {
+                        id: claim.id,
+                        client_id: claim.client_id,
+                        client_name: claim.client_name || '',
+                        client_phone: claim.client_phone || '',
+                        comment: claim.comment || '',
+                        created_at: claim.created_at,
+                        updated_at: claim.updated_at,
+                        // Utiliser debt_amount si disponible, sinon amount, sinon 0
+                        amount: hasDebtAmount
+                            ? parseFloat(claim.debt_amount) || 0
+                            : parseFloat(claim.amount) || 0,
+                    };
+
+                    console.log(`[v0] ✓ Créance ${claim.id} normalisée:`, {
+                        id: normalizedClaim.id,
+                        client_id: normalizedClaim.client_id,
+                        amount: normalizedClaim.amount,
+                    });
+
+                    return normalizedClaim;
+                });
+
+                console.log(
+                    '[v0] ✓ Normalisation terminée:',
+                    normalized.length,
+                    'créances'
+                );
+                console.log('[v0] ========================================');
+
+                return normalized;
+            },
+
+            retryFetch() {
+                console.log('[v0] Retry fetch demandé');
+                this.fetchAllData();
+            },
+
+            // Updated pagination methods with correct names and logic
             nextPage() {
                 if (this.currentPage < this.totalPages) {
                     this.currentPage++;
                 }
             },
 
-            previousPage() {
+            prevPage() {
                 if (this.currentPage > 1) {
                     this.currentPage--;
                 }
             },
 
-            // <CHANGE> Added print methods inspired by ProductsComponent
+            // Added print methods inspired by ProductsComponent
             printAllClients() {
                 const printWindow = window.open('', '_blank');
                 const currentDate = new Date().toLocaleDateString('fr-FR', {
@@ -1400,63 +1620,112 @@
                 printWindow.document.close();
             },
 
-            // Helper methods
-            formatAmount(value) {
-                return Number(value).toLocaleString('fr-FR');
-            },
-
-            formatDateTime(datetime) {
-                if (!datetime) return 'N/A';
-                const date = new Date(datetime);
-                const options = {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                };
-                return date.toLocaleString('fr-FR', options);
-            },
-
-            getClientClaimsCount(clientId) {
-                return this.claims.filter(
-                    (claim) => claim.client_id === clientId
-                ).length;
-            },
-
-            getClientTotalDebt(clientId) {
-                const clientClaims = this.claims.filter(
-                    (claim) => claim.client_id === clientId
-                );
-                return clientClaims.reduce((total, claim) => {
-                    const paid = this.getClaimTotalPaid(claim.id);
-                    const remaining = parseFloat(claim.amount) - paid;
-                    return total + remaining;
-                }, 0);
-            },
-
-            getClaimTotalPaid(claimId) {
-                const claimPayments = this.payments.filter(
-                    (payment) => payment.claim_id === claimId
-                );
-                return claimPayments.reduce(
-                    (total, payment) => total + parseFloat(payment.amount),
-                    0
-                );
-            },
-
-            // Navigation methods
             viewClientClaims(client) {
+                console.log('[v0] ========================================');
+                console.log('[v0] viewClientClaims appelé pour:', client);
+                console.log('[v0] Client ID:', client.id);
+                console.log(
+                    '[v0] Total créances disponibles:',
+                    this.claims.length
+                );
+
                 this.selectedClient = client;
                 this.showClients = false;
                 this.showClaims = true;
-                this.showPayments = false;
+
+                console.log('[v0] État après changement:');
+                console.log('[v0] - selectedClient:', this.selectedClient);
+                console.log('[v0] - showClients:', this.showClients);
+                console.log('[v0] - showClaims:', this.showClaims);
+
+                this.$nextTick(() => {
+                    console.log('[v0] Après $nextTick:');
+                    console.log(
+                        '[v0] - clientClaims computed:',
+                        this.clientClaims
+                    );
+                    console.log(
+                        '[v0] - clientClaims.length:',
+                        this.clientClaims.length
+                    );
+
+                    if (this.clientClaims.length === 0) {
+                        console.warn(
+                            '[v0] ⚠️ ATTENTION: Aucune créance trouvée pour ce client!'
+                        );
+                        console.log(
+                            '[v0] Vérification des créances disponibles:'
+                        );
+                        this.claims.forEach((claim) => {
+                            console.log(
+                                `[v0] - Créance ID ${claim.id}: client_id=${claim.client_id}, amount=${claim.amount}`
+                            );
+                        });
+                    } else {
+                        console.log(
+                            '[v0] ✓ Créances trouvées:',
+                            this.clientClaims.length
+                        );
+                        this.clientClaims.forEach((claim, index) => {
+                            console.log(`[v0] Créance ${index + 1}:`, {
+                                id: claim.id,
+                                amount: claim.amount,
+                                comment: claim.comment,
+                            });
+                        });
+                    }
+
+                    console.log(
+                        '[v0] ========================================'
+                    );
+                });
             },
 
             viewClaimPayments(claim) {
+                console.log('[v0] ========================================');
+                console.log('[v0] viewClaimPayments appelé pour:', claim);
+                console.log('[v0] Claim ID:', claim.id);
+                console.log(
+                    '[v0] Total paiements disponibles:',
+                    this.payments.length
+                );
+
                 this.selectedClaim = claim;
+                this.showClients = false;
                 this.showClaims = false;
                 this.showPayments = true;
+
+                console.log('[v0] État après changement:');
+                console.log('[v0] - selectedClaim:', this.selectedClaim);
+                console.log('[v0] - showPayments:', this.showPayments);
+
+                // Attendre le prochain tick et vérifier les paiements
+                this.$nextTick(() => {
+                    console.log('[v0] Après $nextTick:');
+                    console.log(
+                        '[v0] - claimPayments computed:',
+                        this.claimPayments
+                    );
+                    console.log(
+                        '[v0] - claimPayments.length:',
+                        this.claimPayments.length
+                    );
+
+                    if (this.claimPayments.length === 0) {
+                        console.warn(
+                            '[v0] ⚠️ ATTENTION: Aucun paiement trouvé pour cette créance!'
+                        );
+                    } else {
+                        console.log(
+                            '[v0] ✓ Paiements trouvés:',
+                            this.claimPayments.length
+                        );
+                    }
+
+                    console.log(
+                        '[v0] ========================================'
+                    );
+                });
             },
 
             backToClients() {
@@ -1464,14 +1733,102 @@
                 this.showClaims = false;
                 this.showPayments = false;
                 this.selectedClient = {};
-                // <CHANGE> Reset to first page when returning to clients list
+                // Reset to first page when returning to clients list
                 this.currentPage = 1;
             },
 
             backToClaims() {
+                this.showClients = false;
                 this.showClaims = true;
                 this.showPayments = false;
                 this.selectedClaim = {};
+            },
+
+            // Helper methods
+            formatAmount(value) {
+                if (value === null || value === undefined || isNaN(value)) {
+                    return '0';
+                }
+                return Number(value).toLocaleString('fr-FR');
+            },
+
+            formatDateTime(datetime) {
+                if (!datetime) return 'N/A';
+                try {
+                    const date = new Date(datetime);
+                    if (isNaN(date.getTime())) {
+                        return 'Date invalide';
+                    }
+                    const options = {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    };
+                    return date.toLocaleString('fr-FR', options);
+                } catch (error) {
+                    console.error('[v0] Erreur de formatage de date:', error);
+                    return 'N/A';
+                }
+            },
+
+            getClientClaimsCount(clientId) {
+                if (!Array.isArray(this.claims)) {
+                    console.warn(
+                        '[v0] ⚠️ Claims is not an array in getClientClaimsCount'
+                    );
+                    return 0;
+                }
+                const count = this.claims.filter(
+                    (claim) => claim.client_id === clientId
+                ).length;
+
+                // Log uniquement si count > 0 pour éviter trop de logs
+                if (count > 0) {
+                    console.log(
+                        `[v0] Client ${clientId} a ${count} créance(s)`
+                    );
+                }
+
+                return count;
+            },
+
+            getClientTotalDebt(clientId) {
+                if (!Array.isArray(this.claims)) {
+                    console.warn(
+                        '[v0] ⚠️ Claims is not an array in getClientTotalDebt'
+                    );
+                    return 0;
+                }
+                const clientClaims = this.claims.filter(
+                    (claim) => claim.client_id === clientId
+                );
+
+                return clientClaims.reduce((total, claim) => {
+                    const paid = this.getClaimTotalPaid(claim.id);
+                    const amount = parseFloat(claim.amount) || 0;
+                    const remaining = amount - paid;
+
+                    return total + remaining;
+                }, 0);
+            },
+
+            getClaimTotalPaid(claimId) {
+                if (!Array.isArray(this.payments)) {
+                    console.warn(
+                        '[v0] ⚠️ Payments is not an array in getClaimTotalPaid'
+                    );
+                    return 0;
+                }
+
+                const claimPayments = this.payments.filter(
+                    (payment) => payment.claim_id === claimId
+                );
+
+                return claimPayments.reduce((total, payment) => {
+                    return total + (parseFloat(payment.amount) || 0);
+                }, 0);
             },
 
             // Modal methods - Client
@@ -1485,14 +1842,37 @@
             },
 
             async addClient() {
+                if (!this.newClient.name || !this.newClient.phone) {
+                    alert('Veuillez remplir tous les champs');
+                    return;
+                }
+
+                this.isLoading = true;
+                console.log('[v0] Ajout du client:', this.newClient);
+
                 try {
-                    await axios.post('/clients', this.newClient);
+                    const response = await axios.post(
+                        '/clients',
+                        this.newClient
+                    );
+                    console.log('[v0] Client ajouté:', response.data);
+
                     alert('Client ajouté avec succès');
                     this.closeAddClientModal();
-                    this.fetchAllData();
+                    await this.fetchAllData();
                 } catch (error) {
-                    console.error("Erreur lors de l'ajout du client:", error);
-                    alert("Erreur lors de l'ajout du client");
+                    console.error(
+                        "[v0] Erreur lors de l'ajout du client:",
+                        error
+                    );
+                    console.error('[v0] Détails:', error.response?.data);
+
+                    const errorMsg =
+                        error.response?.data?.message ||
+                        "Erreur lors de l'ajout du client";
+                    alert(errorMsg);
+                } finally {
+                    this.isLoading = false;
                 }
             },
 
@@ -1507,17 +1887,31 @@
             },
 
             async deleteClient() {
+                this.isLoading = true;
+                console.log(
+                    '[v0] Suppression du client:',
+                    this.selectedClient.id
+                );
+
                 try {
-                    await axios.delete(`/clients/${this.selectedClient.id}`);
+                    await axios.post(
+                        `/clients/${this.selectedClient.id}/delete`
+                    );
+                    console.log('[v0] Client supprimé');
+
                     alert('Client supprimé avec succès');
                     this.closeDeleteClientModal();
-                    this.fetchAllData();
+                    await this.fetchAllData();
                 } catch (error) {
-                    console.error(
-                        'Erreur lors de la suppression du client:',
-                        error
-                    );
-                    alert('Erreur lors de la suppression du client');
+                    console.error('[v0] Erreur lors de la suppression:', error);
+                    console.error('[v0] Détails:', error.response?.data);
+
+                    const errorMsg =
+                        error.response?.data?.message ||
+                        'Erreur lors de la suppression du client';
+                    alert(errorMsg);
+                } finally {
+                    this.isLoading = false;
                 }
             },
 
@@ -1533,22 +1927,53 @@
             },
 
             async addClaim() {
+                if (
+                    !this.newClaim.amount ||
+                    parseFloat(this.newClaim.amount) <= 0
+                ) {
+                    alert('Veuillez entrer un montant valide');
+                    return;
+                }
+
+                this.isLoading = true;
+                const claimData = {
+                    client_id: this.selectedClient.id,
+                    amount: this.newClaim.amount,
+                    comment: this.newClaim.comment,
+                };
+
+                console.log('[v0] Ajout de la créance:', claimData);
+
                 try {
-                    const claimData = {
-                        client_id: this.selectedClient.id,
-                        amount: this.newClaim.amount,
-                        comment: this.newClaim.comment,
-                    };
-                    await axios.post('/claims/add', claimData);
-                    alert('Créance ajoutée avec succès');
-                    this.closeAddClaimModal();
-                    this.fetchAllData();
+                    const response = await axios.post('/claims/add', claimData);
+                    console.log('[v0] Créance ajoutée:', response.data);
+
+                    if (response.data.success) {
+                        alert(
+                            response.data.message ||
+                                'Créance ajoutée avec succès'
+                        );
+                        this.closeAddClaimModal();
+                        await this.fetchAllData();
+                    } else {
+                        alert(
+                            response.data.message ||
+                                "Erreur lors de l'ajout de la créance"
+                        );
+                    }
                 } catch (error) {
                     console.error(
-                        "Erreur lors de l'ajout de la créance:",
+                        "[v0] Erreur lors de l'ajout de la créance:",
                         error
                     );
-                    alert("Erreur lors de l'ajout de la créance");
+                    console.error('[v0] Détails:', error.response?.data);
+
+                    const errorMsg =
+                        error.response?.data?.message ||
+                        "Erreur lors de l'ajout de la créance";
+                    alert(errorMsg);
+                } finally {
+                    this.isLoading = false;
                 }
             },
 
@@ -1563,17 +1988,29 @@
             },
 
             async deleteClaim() {
+                this.isLoading = true;
+                console.log(
+                    '[v0] Suppression de la créance:',
+                    this.selectedClaim.id
+                );
+
                 try {
-                    await axios.delete(`/claims/${this.selectedClaim.id}`);
+                    await axios.post(`/claims/${this.selectedClaim.id}/delete`);
+                    console.log('[v0] Créance supprimée');
+
                     alert('Créance supprimée avec succès');
                     this.closeDeleteClaimModal();
-                    this.fetchAllData();
+                    await this.fetchAllData();
                 } catch (error) {
-                    console.error(
-                        'Erreur lors de la suppression de la créance:',
-                        error
-                    );
-                    alert('Erreur lors de la suppression de la créance');
+                    console.error('[v0] Erreur lors de la suppression:', error);
+                    console.error('[v0] Détails:', error.response?.data);
+
+                    const errorMsg =
+                        error.response?.data?.message ||
+                        'Erreur lors de la suppression de la créance';
+                    alert(errorMsg);
+                } finally {
+                    this.isLoading = false;
                 }
             },
 
@@ -1585,7 +2022,7 @@
 
             closeAddPaymentModal() {
                 this.showAddPaymentModal = false;
-                // <CHANGE> Reset to default payment method "espèces"
+                // Reset to default payment method "espèces"
                 this.newPayment = {
                     amount: '',
                     payment_method: 'espèces',
@@ -1594,20 +2031,47 @@
             },
 
             async addPayment() {
+                if (
+                    !this.newPayment.amount ||
+                    parseFloat(this.newPayment.amount) <= 0
+                ) {
+                    alert('Veuillez entrer un montant valide');
+                    return;
+                }
+
+                this.isLoading = true;
+                const paymentData = {
+                    claim_id: this.selectedClaim.id,
+                    amount: this.newPayment.amount,
+                    payment_method: this.newPayment.payment_method,
+                    comment: this.newPayment.comment,
+                };
+
+                console.log('[v0] Ajout du paiement:', paymentData);
+
                 try {
-                    const paymentData = {
-                        claim_id: this.selectedClaim.id,
-                        amount: this.newPayment.amount,
-                        payment_method: this.newPayment.payment_method,
-                        comment: this.newPayment.comment,
-                    };
-                    await axios.post('/claims/pay', paymentData);
+                    const response = await axios.post(
+                        '/claims/pay',
+                        paymentData
+                    );
+                    console.log('[v0] Paiement ajouté:', response.data);
+
                     alert('Paiement enregistré avec succès');
                     this.closeAddPaymentModal();
-                    this.fetchAllData();
+                    await this.fetchAllData();
                 } catch (error) {
-                    console.error("Erreur lors de l'ajout du paiement:", error);
-                    alert("Erreur lors de l'ajout du paiement");
+                    console.error(
+                        "[v0] Erreur lors de l'ajout du paiement:",
+                        error
+                    );
+                    console.error('[v0] Détails:', error.response?.data);
+
+                    const errorMsg =
+                        error.response?.data?.message ||
+                        "Erreur lors de l'ajout du paiement";
+                    alert(errorMsg);
+                } finally {
+                    this.isLoading = false;
                 }
             },
         },
@@ -1665,7 +2129,7 @@
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
-    /* <CHANGE> Added print button styling with #17a2b8 color */
+    /* Added print button styling with #17a2b8 color */
     .btn-print {
         background: #17a2b8;
         color: white;
@@ -1807,7 +2271,7 @@
         background: #f8f9fa;
     }
 
-    /* <CHANGE> Added pagination styling */
+    /* Added pagination styling */
     .pagination {
         display: flex;
         justify-content: center;
@@ -1841,9 +2305,35 @@
         cursor: not-allowed;
     }
 
-    .pagination-info {
+    /* Updated page info span class name */
+    .page-info {
         font-weight: 500;
         color: #495057;
+    }
+
+    /* Renamed btn-pagination to be more generic */
+    .btn-pagination {
+        padding: 0.5rem 1rem;
+        border: 1px solid #dee2e6;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn-pagination:hover:not(:disabled) {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .btn-pagination:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     /* Status badges */
@@ -2102,5 +2592,72 @@
             width: 100%;
             justify-content: center;
         }
+    }
+
+    /* Added loading overlay styles */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+    }
+
+    .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Added error banner styles */
+    .error-banner {
+        background: #f44336;
+        color: white;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .error-banner i {
+        font-size: 1.5rem;
+    }
+
+    .btn-retry {
+        background: white;
+        color: #f44336;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: auto;
+    }
+
+    .btn-retry:hover {
+        background: #f5f5f5;
     }
 </style>

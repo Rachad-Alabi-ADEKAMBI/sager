@@ -7,6 +7,7 @@ import RentabilityComponent from './components/admin/RentabilityComponent.vue';
 import ProformasComponent from './components/admin/ProformasComponent.vue';
 import DepositsComponent from './components/admin/DepositsComponent.vue';
 import ClientsComponent from './components/admin/ClientsComponent.vue';
+import ClaimsComponent from './components/admin/ClaimsComponent.vue';
 
 import SaleComponent from './components/seller/SaleComponent.vue';
 import ProformaComponent from './components/seller/ProformaComponent.vue';
@@ -21,6 +22,7 @@ app.component('rentability-component', RentabilityComponent);
 app.component('proformas-component', ProformasComponent);
 app.component('deposits-component', DepositsComponent);
 app.component('clients-component', ClientsComponent);
+app.component('claims-component', ClaimsComponent);
 
 app.component('sale-component', SaleComponent);
 app.component('proforma-component', ProformaComponent);

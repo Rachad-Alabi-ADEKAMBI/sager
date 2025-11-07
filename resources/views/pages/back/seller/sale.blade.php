@@ -3,13 +3,12 @@
 @include('pages.back.seller.sidebar')
 
 
-@section('title', 'Nouvelle facture proforma - sager')
+@section('title', 'Nouvelle facture - sager')
 
 
 @section('content')
 <main class="content" id="app">
     <script>
-        window.sellerName = @json(auth()-> user()->name);
     </script>
 
     <header class="header">
@@ -25,6 +24,10 @@
                 <i class="fas fa-user"></i>
             </div>
         </div>
+
+        <script>
+            window.sellerName = "{{ auth()->user()->name ?? '' }}";
+        </script>
     </header>
 
     <sale-component>

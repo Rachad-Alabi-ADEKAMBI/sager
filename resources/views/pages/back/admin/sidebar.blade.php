@@ -43,8 +43,8 @@
          </li>
 
          <li>
-             <a href="{{ route('clients') }}" class="{{ request()->routeIs('clients') ? 'active' : '' }}">
-                 <i class="fas fa-briefcase"></i> Clients
+             <a href="{{ route('claims') }}" class="{{ request()->routeIs('claims') ? 'active' : '' }}">
+                 <i class="fas fa-briefcase"></i> Créances
              </a>
          </li>
 

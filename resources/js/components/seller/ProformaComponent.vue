@@ -37,35 +37,66 @@
                                 v-for="(line, index) in productLines"
                                 :key="index"
                             >
-                                <!-- Sélecteur produit -->
+                                <!-- Remplacement du select simple par un combo recherche/select -->
                                 <div class="form-group product-group">
                                     <label>Produit</label>
-                                    <select
-                                        v-model="line.productId"
-                                        @change="onProductChange(index)"
-                                        class="form-control product-select"
-                                    >
-                                        <option disabled value="">
-                                            Sélectionner un produit
-                                        </option>
-                                        <option
-                                            v-for="product in availableProducts(
-                                                index
-                                            )"
-                                            :key="product.id"
-                                            :value="product.id"
+                                    <div class="product-search-container">
+                                        <input
+                                            type="text"
+                                            class="form-control product-search-input"
+                                            v-model="line.searchQuery"
+                                            @input="onProductSearch(index)"
+                                            @focus="line.showDropdown = true"
+                                            placeholder="Rechercher ou sélectionner un produit..."
+                                        />
+                                        <div
+                                            v-if="
+                                                line.showDropdown &&
+                                                filteredProducts(index).length >
+                                                    0
+                                            "
+                                            class="product-dropdown"
                                         >
-                                            {{ product.name }}
-                                        </option>
-                                    </select>
+                                            <div
+                                                v-for="product in filteredProducts(
+                                                    index
+                                                )"
+                                                :key="product.id"
+                                                class="product-dropdown-item"
+                                                @click="
+                                                    selectProduct(
+                                                        index,
+                                                        product
+                                                    )
+                                                "
+                                            >
+                                                {{ product.name }}
+                                                <span
+                                                    v-if="
+                                                        isProductDepositable(
+                                                            product
+                                                        )
+                                                    "
+                                                    class="badge-small-inline"
+                                                >
+                                                    Consignable
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <!-- Info produit avec badge consignable -->
                                     <div
                                         v-if="line.product"
                                         class="product-info-text"
                                     >
+                                        <!-- Utilisation de la méthode isProductDepositable pour vérification stricte -->
                                         <span
-                                            v-if="line.product.is_depositable"
+                                            v-if="
+                                                isProductDepositable(
+                                                    line.product
+                                                )
+                                            "
                                             class="badge-small"
                                         >
                                             Consignable
@@ -88,9 +119,14 @@
                                             Sélectionner le type
                                         </option>
 
+                                        <!-- Vérification stricte avec isProductDepositable -->
                                         <!-- Options pour produits consignables -->
                                         <template
-                                            v-if="line.product.is_depositable"
+                                            v-if="
+                                                isProductDepositable(
+                                                    line.product
+                                                )
+                                            "
                                         >
                                             <option
                                                 :value="
@@ -487,11 +523,12 @@
                 currentPage: 1,
                 showSaleModal: false,
                 selectedSale: null,
-                payment_method: 'cash', // Ajout du moyen de paiement par défaut
+                payment_method: 'cash',
             };
         },
 
         mounted() {
+            console.log('[v0] ProformaComponent mounted - Initialisation');
             this.fetchSalesData();
             this.addProductLine();
         },
@@ -506,40 +543,165 @@
         },
 
         methods: {
+            isProductDepositable(product) {
+                if (!product) {
+                    console.log(
+                        '[v0] isProductDepositable: produit null/undefined'
+                    );
+                    return false;
+                }
+
+                const depositable = product.is_depositable;
+
+                // Vérification stricte : accepte true, 1, "1"
+                const result =
+                    depositable === true ||
+                    depositable === 1 ||
+                    depositable === '1';
+
+                console.log('[v0] isProductDepositable:', {
+                    productName: product.name,
+                    is_depositable: depositable,
+                    type: typeof depositable,
+                    result: result,
+                });
+
+                return result;
+            },
+
+            filteredProducts(currentIndex) {
+                const line = this.productLines[currentIndex];
+                const searchQuery = (line.searchQuery || '')
+                    .toLowerCase()
+                    .trim();
+
+                // Produits déjà sélectionnés dans d'autres lignes
+                const selectedIds = this.productLines
+                    .map((l, i) => (i !== currentIndex ? l.productId : null))
+                    .filter((id) => id);
+
+                // Filtrer par recherche et disponibilité
+                let filtered = this.products.filter((p) => {
+                    if (selectedIds.includes(p.id)) return false;
+                    if (!searchQuery) return true;
+                    return p.name.toLowerCase().includes(searchQuery);
+                });
+
+                console.log('[v0] filteredProducts:', {
+                    searchQuery,
+                    totalProducts: this.products.length,
+                    filteredCount: filtered.length,
+                });
+
+                return filtered;
+            },
+
+            selectProduct(index, product) {
+                console.log('[v0] selectProduct:', {
+                    index,
+                    productId: product.id,
+                    productName: product.name,
+                    is_depositable: product.is_depositable,
+                });
+
+                this.productLines[index].productId = product.id;
+                this.productLines[index].searchQuery = product.name;
+                this.productLines[index].showDropdown = false;
+                this.onProductChange(index);
+            },
+
+            onProductSearch(index) {
+                const line = this.productLines[index];
+                line.showDropdown = true;
+
+                // Si la recherche est vide, réinitialiser la sélection
+                if (!line.searchQuery || line.searchQuery.trim() === '') {
+                    line.productId = '';
+                    line.product = null;
+                    line.selectedPrice = '';
+                    line.unitPrice = 0;
+                    line.priceType = '';
+                    this.updateTotal();
+                }
+            },
+
             fetchSalesData() {
+                console.log(
+                    '[v0] fetchSalesData: Début du chargement des données'
+                );
+
+                // Chargement des produits
                 axios
                     .get('/productsList')
                     .then((response) => {
+                        console.log('[v0] Produits chargés:', {
+                            count: response.data.length,
+                            sample: response.data.slice(0, 2).map((p) => ({
+                                id: p.id,
+                                name: p.name,
+                                is_depositable: p.is_depositable,
+                                type: typeof p.is_depositable,
+                            })),
+                        });
+
                         this.products = response.data.sort((a, b) => {
-                            return a.name.localeCompare(b.name); // Tri alphabétique sur le champ name
+                            return a.name.localeCompare(b.name);
                         });
                     })
                     .catch((error) => {
-                        console.error('Erreur produits :', error);
+                        console.error(
+                            '[v0] Erreur lors du chargement des produits:',
+                            {
+                                message: error.message,
+                                response: error.response?.data,
+                                status: error.response?.status,
+                            }
+                        );
+                        alert(
+                            'Erreur lors du chargement des produits. Veuillez rafraîchir la page.'
+                        );
                     });
+
+                // Chargement des ventes
                 axios
                     .get('/proformaApiBySellerList')
                     .then((response) => {
+                        console.log('[v0] Factures proforma chargées:', {
+                            count: response.data.length,
+                        });
                         this.sales = response.data;
-                        console.log(response.data);
                     })
                     .catch((error) => {
-                        console.error('Erreur ventes :', error);
+                        console.error(
+                            '[v0] Erreur lors du chargement des factures:',
+                            {
+                                message: error.message,
+                                response: error.response?.data,
+                                status: error.response?.status,
+                            }
+                        );
+                        alert(
+                            'Erreur lors du chargement des factures. Veuillez rafraîchir la page.'
+                        );
                     });
             },
 
             addProductLine() {
+                console.log("[v0] addProductLine: Ajout d'une nouvelle ligne");
                 this.productLines.push({
                     productId: '',
                     product: null,
                     selectedPrice: '',
                     unitPrice: 0,
-                    quantity: '',
+                    quantity: 1,
                     priceType: '',
+                    searchQuery: '', // Ajout du champ de recherche
+                    showDropdown: false, // Ajout du contrôle du dropdown
                 });
             },
 
             removeProductLine(index) {
+                console.log('[v0] removeProductLine:', { index });
                 this.productLines.splice(index, 1);
                 this.updateTotal();
             },
@@ -548,9 +710,21 @@
                 const productId = this.productLines[index].productId;
                 if (!productId) return;
 
+                console.log('[v0] onProductChange:', { index, productId });
+
                 axios
                     .get(`/product/${productId}`)
                     .then((response) => {
+                        console.log('[v0] Détails du produit chargés:', {
+                            productId,
+                            name: response.data.name,
+                            is_depositable: response.data.is_depositable,
+                            type: typeof response.data.is_depositable,
+                            deposit_price: response.data.deposit_price,
+                            filling_price: response.data.filling_price,
+                            price_detail: response.data.price_detail,
+                        });
+
                         this.productLines[index].product = response.data;
                         this.productLines[index].selectedPrice = '';
                         this.productLines[index].unitPrice = 0;
@@ -560,19 +734,38 @@
                     })
                     .catch((error) => {
                         console.error(
-                            'Erreur lors de la récupération du produit :',
-                            error
+                            '[v0] Erreur lors de la récupération du produit:',
+                            {
+                                productId,
+                                message: error.message,
+                                response: error.response?.data,
+                                status: error.response?.status,
+                            }
+                        );
+                        alert(
+                            'Erreur lors du chargement du produit. Veuillez réessayer.'
                         );
                     });
             },
 
             updateUnitPrice(index) {
                 const line = this.productLines[index];
+                console.log('[v0] updateUnitPrice:', {
+                    index,
+                    selectedPrice: line.selectedPrice,
+                });
+
                 try {
                     const priceData = JSON.parse(line.selectedPrice);
                     line.unitPrice = parseFloat(priceData.price) || 0;
                     line.priceType = priceData.type || '';
+
+                    console.log('[v0] Prix mis à jour:', {
+                        unitPrice: line.unitPrice,
+                        priceType: line.priceType,
+                    });
                 } catch (e) {
+                    console.error('[v0] Erreur lors du parsing du prix:', e);
                     line.unitPrice = parseFloat(line.selectedPrice) || 0;
                     line.priceType = '';
                 }
@@ -580,6 +773,10 @@
             },
 
             onQuantityChange(index) {
+                console.log('[v0] onQuantityChange:', {
+                    index,
+                    quantity: this.productLines[index].quantity,
+                });
                 this.updateTotal();
             },
 
@@ -596,6 +793,11 @@
                 this.total = this.productLines.reduce((sum, line) => {
                     return sum + line.unitPrice * line.quantity;
                 }, 0);
+
+                console.log('[v0] Total mis à jour:', {
+                    total: this.total,
+                    linesCount: this.productLines.length,
+                });
             },
 
             formatAmount(value) {
@@ -636,11 +838,18 @@
             },
 
             printInvoice(proforma_id) {
+                console.log('[v0] printInvoice:', { proforma_id });
                 window.location.href = `/newProforma/${proforma_id}`;
             },
 
             submitForm() {
-                if (this.isSubmitting) return;
+                if (this.isSubmitting) {
+                    console.log('[v0] submitForm: Soumission déjà en cours');
+                    return;
+                }
+
+                console.log('[v0] submitForm: Validation du formulaire');
+
                 if (!this.customer_name || this.customer_name.trim() === '') {
                     alert('Veuillez entrer le nom du client.');
                     return;
@@ -674,16 +883,25 @@
                     })),
                 };
 
-                console.log('Données envoyées au backend :', proformaData);
+                console.log('[v0] Envoi de la facture proforma:', proformaData);
 
                 axios
                     .post('/proforma', proformaData)
                     .then((response) => {
+                        console.log(
+                            '[v0] Facture proforma enregistrée avec succès:',
+                            response.data
+                        );
                         alert('Facture proforma enregistrée avec succès !');
                         window.location.reload();
                     })
                     .catch((error) => {
-                        console.error(error);
+                        console.error("[v0] Erreur lors de l'enregistrement:", {
+                            message: error.message,
+                            response: error.response?.data,
+                            status: error.response?.status,
+                        });
+
                         let message = 'Une erreur est survenue.';
 
                         if (error.response && error.response.data) {
@@ -691,8 +909,7 @@
                             message = data.error || data.message || message;
                         }
 
-                        alert(error.response.data.message);
-
+                        alert(message);
                         this.isSubmitting = false;
                     });
             },
@@ -701,23 +918,33 @@
                 if (!confirm('Voulez-vous vraiment annuler cette facture ?'))
                     return;
 
+                console.log('[v0] cancelInvoice:', { id });
+
                 axios
                     .post(`/invoices/${id}/cancel`)
                     .then(() => {
+                        console.log('[v0] Facture annulée avec succès');
                         alert('Facture annulée avec succès.');
                         this.fetchSalesData();
                     })
                     .catch((error) => {
+                        console.error("[v0] Erreur lors de l'annulation:", {
+                            message: error.message,
+                            response: error.response?.data,
+                            status: error.response?.status,
+                        });
                         alert("Erreur lors de l'annulation de la facture.");
-                        console.error(error);
                     });
             },
 
             viewInvoice(sale) {
+                console.log('[v0] viewInvoice:', { saleId: sale.id });
                 this.selectedSale = sale;
                 this.showSaleModal = true;
             },
+
             closeSaleModal() {
+                console.log('[v0] closeSaleModal');
                 this.showSaleModal = false;
                 this.selectedSale = null;
             },
@@ -923,5 +1150,62 @@
         border: none;
         font-size: 1.2rem;
         cursor: pointer;
+    }
+
+    /* Ajout des styles pour le système de recherche/select combiné */
+    .product-search-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .product-search-input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.95rem;
+    }
+
+    .product-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 250px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        margin-top: -1px;
+    }
+
+    .product-dropdown-item {
+        padding: 0.75rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s;
+    }
+
+    .product-dropdown-item:hover {
+        background: #f8f9fa;
+    }
+
+    .product-dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .badge-small-inline {
+        background: #28a745;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        margin-left: 8px;
     }
 </style>

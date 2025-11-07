@@ -90,7 +90,7 @@
             opacity: 0.9;
         }
 
-          /* Masquer la section actions lors de l'impression */
+        /* Masquer la section actions lors de l'impression */
         @media print {
             .actions {
                 display: none !important;
@@ -126,12 +126,12 @@
             </thead>
             <tbody>
                 @foreach ($sale->products as $item)
-                    <tr>
-                        <td>{{ $item->pivot->quantity }}</td>
-                        <td>{{ $item->name }}</td>
-                        <td>{{ number_format($item->pivot->price, 0, ',', ' ') }}</td>
-                        <td>{{ number_format($item->pivot->price * $item->pivot->quantity, 0, ',', ' ') }} F CFA</td>
-                    </tr>
+                <tr>
+                    <td>{{ $item->pivot->quantity }}</td>
+                    <td>{{ $item->name }}</td>
+                    <td>{{ number_format($item->pivot->price, 0, ',', ' ') }}</td>
+                    <td>{{ number_format($item->pivot->price * $item->pivot->quantity, 0, ',', ' ') }} F CFA</td>
+                </tr>
                 @endforeach
             </tbody>
         </table>
@@ -181,7 +181,8 @@
 
         <div class="footer">
             <p><strong>Observation :</strong> Facture à régler au plus tard le
-                {{ $sale->created_at->addDays(2)->format('d/m/Y') }}</p>
+                {{ $sale->created_at->addDays(2)->format('d/m/Y') }}
+            </p>
             <p class="footer-note">Les produits vendus ne sont ni repris, ni échangés.</p>
             <p style="text-align:center;">Merci pour votre fidélité</p>
             <p style="text-align:center; font-size: 12px;">

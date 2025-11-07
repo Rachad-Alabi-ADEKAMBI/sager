@@ -323,20 +323,22 @@ class ProductController extends BaseController
     {
         try {
             $product = Product::findOrFail($id);
+
+            // Soft delete : remplit automatiquement la colonne deleted_at
             $product->delete();
 
             Notification::create([
-                'description' => 'Produit ' . $product->name . ' supprimé.',
+                'description' => 'Produit "' . $product->name . '" marqué comme supprimé.',
             ]);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Produit supprimé avec succès.'
+                'message' => 'Produit supprimé avec succès (soft delete).',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Erreur de suppression: ' . $e->getMessage()
+                'message' => 'Erreur de suppression : ' . $e->getMessage(),
             ], 500);
         }
     }

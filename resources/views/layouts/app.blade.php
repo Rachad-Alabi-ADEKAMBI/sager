@@ -23,6 +23,11 @@
         content="distributeur boissons, vente gaz domestique, eau en gros, sodas, bières, livraison boissons, SAGER Bénin">
     <meta name="author" content="SAGER">
     <meta name="robots" content="index, follow">
+    <link rel="shortcut icon" href="https://i.ibb.co/Kjy8JcZF/logo-final.png" type="image/png">
+    <link rel="icon" href="https://i.ibb.co/Kjy8JcZF/logo-final.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/Kjy8JcZF/logo-final.png">
+
+
 
 
     <!-- Open Graph Meta Tags -->
@@ -31,9 +36,7 @@
         content="Votre distributeur de confiance pour boissons et gaz domestique. Vente en gros et détail avec livraison rapide.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.sager-distribution.com">
-    <meta property="og:image" content="https://www.sager-distribution.com/images/sager-logo.jpg">
 
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
 </head>
 
@@ -46,7 +49,6 @@
         @yield('content')
     </div>
 
-    <script src="{{ asset('js/app.js') }}"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

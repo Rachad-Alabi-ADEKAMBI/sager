@@ -79,35 +79,75 @@
                                 v-for="(line, index) in productLines"
                                 :key="index"
                             >
-                                <!-- Produit -->
+                                <!-- Remplacement du select simple par un combo input/select avec recherche -->
                                 <div class="form-group product-group">
                                     <label>Produit</label>
-                                    <select
-                                        v-model="line.productId"
-                                        @change="onProductChange(index)"
-                                        class="form-control product-select"
-                                    >
-                                        <option disabled value="">
-                                            Sélectionner un produit
-                                        </option>
-                                        <option
-                                            v-for="product in filteredProducts(
-                                                index
-                                            )"
-                                            :key="product.id"
-                                            :value="product.id"
+                                    <div class="product-search-container">
+                                        <input
+                                            type="text"
+                                            class="form-control product-search-input"
+                                            v-model="line.searchQuery"
+                                            @input="onProductSearch(index)"
+                                            @focus="line.showDropdown = true"
+                                            placeholder="Rechercher un produit..."
+                                        />
+
+                                        <!-- Dropdown des produits filtrés -->
+                                        <div
+                                            v-if="
+                                                line.showDropdown &&
+                                                getFilteredProductsForLine(
+                                                    index
+                                                ).length > 0
+                                            "
+                                            class="product-dropdown"
                                         >
-                                            {{ product.name }}
-                                        </option>
-                                    </select>
+                                            <div
+                                                v-for="product in getFilteredProductsForLine(
+                                                    index
+                                                )"
+                                                :key="product.id"
+                                                @click="
+                                                    selectProduct(
+                                                        index,
+                                                        product
+                                                    )
+                                                "
+                                                class="product-dropdown-item"
+                                            >
+                                                <div class="product-item-name">
+                                                    {{ product.name }}
+                                                    <span
+                                                        v-if="
+                                                            isProductDepositable(
+                                                                product
+                                                            )
+                                                        "
+                                                        class="badge-inline"
+                                                    >
+                                                        Consignable
+                                                    </span>
+                                                </div>
+                                                <div class="product-item-stock">
+                                                    Stock:
+                                                    {{ product.quantity }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <!-- Info produit en dessous -->
                                     <div
                                         v-if="line.product"
                                         class="product-info-text"
                                     >
+                                        <!-- Vérification stricte avec la méthode helper -->
                                         <span
-                                            v-if="line.product.is_depositable"
+                                            v-if="
+                                                isProductDepositable(
+                                                    line.product
+                                                )
+                                            "
                                             class="badge-small"
                                         >
                                             Consignable
@@ -118,7 +158,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Type de prix -->
+                                <!-- Vérification stricte pour afficher les bons types de prix -->
                                 <div
                                     class="form-group price-type-group"
                                     v-if="line.product"
@@ -133,9 +173,13 @@
                                             Sélectionner le type
                                         </option>
 
-                                        <!-- Options pour produits consignables -->
+                                        <!-- Options pour produits consignables avec vérification stricte -->
                                         <template
-                                            v-if="line.product.is_depositable"
+                                            v-if="
+                                                isProductDepositable(
+                                                    line.product
+                                                )
+                                            "
                                         >
                                             <option
                                                 :value="
@@ -561,8 +605,9 @@
                                 <span class="product-name">
                                     {{ line.product.name }}
                                 </span>
+                                <!-- Vérification stricte pour le badge -->
                                 <span
-                                    v-if="line.product.is_depositable"
+                                    v-if="isProductDepositable(line.product)"
                                     class="badge-depositable"
                                 >
                                     Consignable
@@ -572,7 +617,7 @@
                             <!-- Affichage du type de transaction pour produits consignables -->
                             <div
                                 v-if="
-                                    line.product.is_depositable &&
+                                    isProductDepositable(line.product) &&
                                     line.priceType
                                 "
                                 style="
@@ -760,12 +805,13 @@
                     name: '',
                     phone: '',
                 },
+                isSubmitting: false, // Added for preventing double submission
             };
         },
 
         mounted() {
             this.fetchSalesData();
-            this.fetchCustomers(); // Récupération des clients au chargement
+            this.fetchCustomers();
             this.addProductLine();
             document.addEventListener('click', this.handleClickOutside);
         },
@@ -828,17 +874,37 @@
         },
 
         methods: {
+            isProductDepositable(product) {
+                if (!product) {
+                    // console.log('[v0] Product is null or undefined');
+                    return false;
+                }
+
+                // Vérification stricte qui gère les cas où is_depositable peut être:
+                // - un booléen (true/false)
+                // - un nombre (1/0)
+                // - une chaîne ("1"/"0", "true"/"false")
+                const depositable = product.is_depositable;
+                const result =
+                    depositable === 1 ||
+                    depositable === true ||
+                    depositable === '1' ||
+                    depositable === 'true';
+
+                // console.log('[v0] Product:', product.name, 'is_depositable value:', depositable, 'type:', typeof depositable, 'result:', result);
+                return result;
+            },
+
             fetchCustomers() {
+                // console.log('[v0] Fetching customers...');
                 axios
                     .get('/clientslist')
                     .then((response) => {
                         this.customers = response.data;
+                        // console.log('[v0] Customers loaded:', this.customers.length);
                     })
                     .catch((error) => {
-                        console.error(
-                            'Erreur lors de la récupération des clients:',
-                            error
-                        );
+                        console.error('[v0] Error fetching customers:', error);
                     });
             },
 
@@ -858,10 +924,14 @@
 
             handleClickOutside(event) {
                 const container = event.target.closest(
-                    '.customer-search-container'
+                    '.customer-search-container, .product-search-container'
                 );
                 if (!container) {
                     this.showCustomerDropdown = false;
+                    // Fermer tous les dropdowns de produits
+                    this.productLines.forEach((line) => {
+                        line.showDropdown = false;
+                    });
                 }
             },
 
@@ -882,6 +952,7 @@
                     return;
                 }
 
+                // console.log('[v0] Creating customer:', this.newCustomer);
                 axios
                     .post('/clients', {
                         name: this.newCustomer.name,
@@ -889,17 +960,14 @@
                     })
                     .then((response) => {
                         alert('Client créé avec succès !');
-                        // Ajouter le nouveau client à la liste
                         const client = response.data.client;
                         this.customers.push(client);
                         this.selectCustomer(client);
                         this.closeCreateCustomerModal();
+                        // console.log('[v0] Customer created successfully:', client);
                     })
                     .catch((error) => {
-                        console.error(
-                            'Erreur lors de la création du client:',
-                            error
-                        );
+                        console.error('[v0] Error creating customer:', error);
                         alert(
                             'Erreur lors de la création du client. Veuillez réessayer.'
                         );
@@ -907,24 +975,32 @@
             },
 
             fetchSalesData() {
+                // console.log('[v0] Fetching products and sales...');
                 axios
                     .get('/productsList')
                     .then((response) => {
                         this.products = response.data.sort((a, b) => {
-                            return a.name.localeCompare(b.name); // Tri alphabétique sur le champ name
+                            return a.name.localeCompare(b.name);
                         });
+                        // console.log('[v0] Products loaded:', this.products.length);
+
+                        // Log des produits consignables pour débogage
+                        // this.products.forEach(p => {
+                        //     console.log('[v0] Product:', p.name, 'is_depositable:', p.is_depositable, 'type:', typeof p.is_depositable);
+                        // });
                     })
                     .catch((error) => {
-                        console.error('Erreur produits :', error);
+                        console.error('[v0] Error fetching products:', error);
                     });
 
                 axios
                     .get('/sellerSalesList?seller_name=' + this.seller_name)
                     .then((response) => {
                         this.sales = response.data;
+                        // console.log('[v0] Sales loaded:', this.sales.length);
                     })
                     .catch((error) => {
-                        console.error('Erreur ventes :', error);
+                        console.error('[v0] Error fetching sales:', error);
                     });
             },
 
@@ -937,12 +1013,69 @@
                     quantity: 1,
                     searchQuery: '',
                     priceType: '',
+                    showDropdown: false, // Ajout du flag pour le dropdown
                 });
             },
 
             removeProductLine(index) {
                 this.productLines.splice(index, 1);
                 this.updateTotal();
+            },
+
+            getFilteredProductsForLine(currentIndex) {
+                const line = this.productLines[currentIndex];
+
+                // Produits déjà sélectionnés dans d'autres lignes
+                const selectedIds = this.productLines
+                    .map((l, i) => (i !== currentIndex ? l.productId : null))
+                    .filter((id) => id);
+
+                // Filtrer par recherche et disponibilité
+                let filtered = this.products.filter(
+                    (p) => !selectedIds.includes(p.id)
+                );
+
+                if (line.searchQuery && line.searchQuery.trim() !== '') {
+                    const query = line.searchQuery.toLowerCase();
+                    filtered = filtered.filter((p) =>
+                        p.name.toLowerCase().includes(query)
+                    );
+                }
+
+                return filtered.slice(0, 10); // Limiter à 10 résultats
+            },
+
+            onProductSearch(index) {
+                this.productLines[index].showDropdown = true;
+            },
+
+            selectProduct(index, product) {
+                // console.log('[v0] Selecting product:', product.name, 'for line', index);
+                this.productLines[index].productId = product.id;
+                this.productLines[index].searchQuery = product.name;
+                this.productLines[index].showDropdown = false;
+
+                // Charger les détails du produit
+                axios
+                    .get(`/product/${product.id}`)
+                    .then((response) => {
+                        this.productLines[index].product = response.data;
+                        this.productLines[index].selectedPrice = '';
+                        this.productLines[index].unitPrice = 0;
+                        this.productLines[index].quantity = 1;
+                        this.productLines[index].priceType = '';
+
+                        // console.log('[v0] Product details loaded:', response.data);
+                        // console.log('[v0] Is depositable:', this.isProductDepositable(response.data));
+
+                        this.updateTotal();
+                    })
+                    .catch((error) => {
+                        console.error(
+                            '[v0] Error loading product details:',
+                            error
+                        );
+                    });
             },
 
             filteredProducts(currentIndex) {
@@ -957,6 +1090,7 @@
                 const productId = this.productLines[index].productId;
                 if (!productId) return;
 
+                // console.log('[v0] Product changed for line', index, 'productId:', productId);
                 axios
                     .get(`/product/${productId}`)
                     .then((response) => {
@@ -965,23 +1099,29 @@
                         this.productLines[index].unitPrice = 0;
                         this.productLines[index].quantity = 1;
                         this.productLines[index].priceType = '';
+
+                        // console.log('[v0] Product loaded:', response.data);
+                        // console.log('[v0] Is depositable:', this.isProductDepositable(response.data));
+
                         this.updateTotal();
                     })
                     .catch((error) => {
-                        console.error(
-                            'Erreur lors de la récupération du produit :',
-                            error
-                        );
+                        console.error('[v0] Error loading product:', error);
                     });
             },
 
             updateUnitPrice(index) {
                 const line = this.productLines[index];
+                // console.log('[v0] Updating unit price for line', index, 'selectedPrice:', line.selectedPrice);
+
                 try {
                     const priceData = JSON.parse(line.selectedPrice);
                     line.unitPrice = parseFloat(priceData.price) || 0;
                     line.priceType = priceData.type || '';
+
+                    // console.log('[v0] Price updated - unitPrice:', line.unitPrice, 'priceType:', line.priceType);
                 } catch (e) {
+                    console.error('[v0] Error parsing price data:', e);
                     line.unitPrice = parseFloat(line.selectedPrice) || 0;
                     line.priceType = '';
                 }
@@ -997,6 +1137,7 @@
                     line.quantity = available;
                 }
 
+                // console.log('[v0] Quantity changed for line', index, 'new quantity:', line.quantity);
                 this.updateTotal();
             },
 
@@ -1004,6 +1145,7 @@
                 this.total = this.productLines.reduce((sum, line) => {
                     return sum + line.unitPrice * line.quantity;
                 }, 0);
+                // console.log('[v0] Total updated:', this.total);
             },
 
             formatAmount(value) {
@@ -1027,6 +1169,8 @@
             },
 
             validateOrder() {
+                // console.log('[v0] Validating order...');
+
                 if (
                     !this.customerSearchQuery ||
                     this.customerSearchQuery.trim() === ''
@@ -1048,10 +1192,8 @@
                     }
                 }
 
-                // Mettre à jour le nom du client pour le récapitulatif
                 this.customer_name = this.customerSearchQuery;
-
-                // Afficher le modal de récapitulatif
+                // console.log('[v0] Order validated, showing summary modal');
                 this.showSummaryModal = true;
             },
 
@@ -1079,15 +1221,16 @@
                     })),
                 };
 
-                console.log(saleData);
+                // console.log('[v0] Submitting sale:', saleData);
                 axios
                     .post('/sale', saleData)
                     .then((response) => {
+                        // console.log('[v0] Sale submitted successfully:', response.data);
                         alert('Vente enregistrée avec succès !');
                         window.location.reload();
                     })
                     .catch((error) => {
-                        console.error(error);
+                        console.error('[v0] Error submitting sale:', error);
                         let message = 'Une erreur est survenue.';
 
                         if (error.response && error.response.data) {
@@ -1096,7 +1239,6 @@
                         }
 
                         alert(error.response.data.message);
-
                         this.isSubmitting = false;
                     });
             },
@@ -1105,6 +1247,7 @@
                 if (!confirm('Voulez-vous vraiment annuler cette facture ?'))
                     return;
 
+                // console.log('[v0] Cancelling invoice:', id);
                 axios
                     .post(`/invoices/${id}/cancel`)
                     .then(() => {
@@ -1113,7 +1256,7 @@
                     })
                     .catch((error) => {
                         alert("Erreur lors de l'annulation de la facture.");
-                        console.error(error);
+                        console.error('[v0] Error cancelling invoice:', error);
                     });
             },
 
@@ -1121,6 +1264,7 @@
                 this.selectedSale = sale;
                 this.showSaleModal = true;
             },
+
             closeSaleModal() {
                 this.showSaleModal = false;
                 this.selectedSale = null;
@@ -1130,6 +1274,69 @@
 </script>
 
 <style>
+    /* Nouveaux styles pour le système de recherche de produits */
+    .product-search-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .product-search-input {
+        width: 100%;
+    }
+
+    .product-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 100;
+        margin-top: 0.25rem;
+    }
+
+    .product-dropdown-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s;
+    }
+
+    .product-dropdown-item:hover {
+        background: #f8f9fa;
+    }
+
+    .product-dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .product-item-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .product-item-stock {
+        font-size: 0.85rem;
+        color: #007bff;
+    }
+
+    .badge-inline {
+        background: #28a745;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
     /* Styles pour la recherche de clients */
     .customer-search-container {
         position: relative;

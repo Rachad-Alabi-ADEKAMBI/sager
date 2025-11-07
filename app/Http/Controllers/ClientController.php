@@ -72,6 +72,31 @@ class ClientController extends Controller
     }
 
 
+    public function delete($id)
+    {
+        $client = Client::find($id);
+
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Client non trouvé.'
+            ], 404);
+        }
+
+        // Supprimer les claims associés au client
+        \App\Models\Claim::where('client_id', $client->id)->delete();
+
+        // Supprimer le client
+        $client->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Client et ses créances supprimés avec succès.'
+        ], 200);
+    }
+
+
+
 
 
     /**

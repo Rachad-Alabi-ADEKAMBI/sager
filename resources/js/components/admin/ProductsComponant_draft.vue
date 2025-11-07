@@ -910,6 +910,7 @@
 </template>
 
 <script>
+    
     export default {
         name: 'ProductsComponent',
 

@@ -10,7 +10,6 @@
 @section('content')
 <main class="content" id="app">
     <script>
-        window.sellerName = @json(auth()-> user()->name);
     </script>
 
     <header class="header">
@@ -25,6 +24,10 @@
             <div class="user-avatar">
                 <i class="fas fa-user"></i>
             </div>
+
+            <script>
+                window.sellerName = "{{ auth()->user()->name ?? '' }}";
+            </script>
         </div>
     </header>
 
