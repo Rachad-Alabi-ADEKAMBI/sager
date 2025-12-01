@@ -22,7 +22,7 @@
         </div>
     </header>
 
-    <returnableProducts-component>
+    <returnable-products-component>
 
 </main>
 @endsection

@@ -178,8 +178,11 @@ Route::get('/expensesList', [ExpenseController::class, 'expensesList'])
 
 //route pour les emballages
 Route::get('/returnableProducts', [ReturnableProductController::class, 'index'])->name('returnableProducts');
-
-
+Route::get('/returnableProductsList', [ReturnableProductController::class, 'returnableProductsList'])->name('returnableProductsList');
+Route::post('/expenses/update/{id}', [ExpenseController::class, 'update'])
+    ->name('expenses.update');
+Route::post('/expenses/delete/{id}', [ExpenseController::class, 'destroy'])
+    ->name('expenses.destroy');
 
 //proformas
 Route::get('/proformas', function () {

@@ -26,7 +26,7 @@ app.component('deposits-component', DepositsComponent);
 app.component('clients-component', ClientsComponent);
 app.component('claims-component', ClaimsComponent);
 app.component('expenses-component', ExpensesComponent);
-app.component('returnableProducts-component', ReturnableProductsComponent);
+app.component('returnable-products-component', ReturnableProductsComponent);
 
 app.component('sale-component', SaleComponent);
 app.component('proforma-component', ProformaComponent);

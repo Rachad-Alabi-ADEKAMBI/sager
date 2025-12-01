@@ -1,6 +1,6 @@
 <template>
     <div class="expenses-content">
-        <!-- Improved statistics section with gradient cards and colors -->
+        <!-- Statistics section -->
         <div class="statistics-section">
             <div class="stat-card stat-card-1">
                 <div class="stat-icon"><i class="fas fa-chart-bar"></i></div>
@@ -20,60 +20,23 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card-3">
-                <div class="stat-icon"><i class="fas fa-calculator"></i></div>
-                <div class="stat-info">
-                    <div class="stat-label">Moyenne par dépense</div>
-                    <div class="stat-value">
-                        {{
-                            filteredExpenses.length > 0
-                                ? formatAmount(
-                                      totalAmount / filteredExpenses.length
-                                  )
-                                : 0
-                        }}
-                        FCFA
-                    </div>
-                </div>
-            </div>
-            <div class="stat-card stat-card-4">
-                <div class="stat-icon"><i class="fas fa-pie-chart"></i></div>
-                <div class="stat-info">
-                    <div class="stat-label">Dépenses par type</div>
-                    <div class="type-badge-container">
-                        <span
-                            v-for="type in expenseTypes"
-                            :key="type"
-                            v-if="getTotalByType(type) > 0"
-                            class="type-badge"
-                        >
-                            {{ type }}: {{ formatAmount(getTotalByType(type)) }}
-                        </span>
-                    </div>
-                    <div
-                        v-if="filteredExpenses.length === 0"
-                        class="no-expenses-message"
-                    >
-                        Aucune dépense
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Header Actions -->
         <div class="expenses-header">
             <h2>Gestion des Dépenses</h2>
             <div class="header-actions">
-                <button class="btn btn-primary" @click="openAddExpenseModal">
+                <button
+                    class="btn btn-primary"
+                    @click="showAddExpenseDiv = true"
+                >
                     <i class="fas fa-plus"></i>
                     Ajouter une dépense
                 </button>
-
                 <button @click="printList" class="btn btn-print">
                     <i class="fas fa-print"></i>
                     Imprimer
                 </button>
-
                 <input
                     type="text"
                     class="search-input"
@@ -110,14 +73,12 @@
                     type="date"
                     class="filter-select"
                     v-model="filterDateStart"
-                    placeholder="Date de début"
                 />
                 <span>à</span>
                 <input
                     type="date"
                     class="filter-select"
                     v-model="filterDateEnd"
-                    placeholder="Date de fin"
                 />
             </div>
 
@@ -140,28 +101,54 @@
                         <th>Description</th>
                         <th>Montant (FCFA)</th>
                         <th>Date</th>
+                        <!-- Added Actions column -->
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="expense in paginatedExpenses" :key="expense.id">
-                        <td>
+                        <td data-label="Type">
                             <span
                                 class="type-badge"
-                                :class="'type-' + sanitizeType(expense.type)"
+                                :style="getBadgeStyle(expense.type)"
                             >
                                 {{ expense.type }}
                             </span>
                         </td>
-                        <td>{{ expense.description }}</td>
-                        <td class="amount">
+
+                        <td data-label="Description">
+                            {{ expense.description }}
+                        </td>
+
+                        <td data-label="Montant" class="amount">
                             {{ formatAmount(expense.amount) }} FCFA
                         </td>
-                        <td>
+
+                        <td data-label="Date">
                             {{
                                 new Date(expense.date).toLocaleDateString(
                                     'fr-FR'
                                 )
                             }}
+                        </td>
+
+                        <td data-label="Actions">
+                            <div class="action-buttons">
+                                <button
+                                    class="btn-sm btn-edit"
+                                    title="Modifier"
+                                    @click="openEditExpenseModal(expense)"
+                                >
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button
+                                    class="btn-sm btn-delete"
+                                    title="Supprimer"
+                                    @click="confirmDeleteExpense(expense)"
+                                >
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -197,23 +184,23 @@
             <p>Aucune dépense trouvée</p>
         </div>
 
-        <!-- Fixed modal with proper v-model binding and validation -->
+        <!-- Pop-up Div for Adding Expense -->
         <div
-            class="modal-overlay"
-            v-if="showAddExpenseModal"
-            @click.self="closeAddExpenseModal"
+            v-if="showAddExpenseDiv"
+            class="popup-overlay"
+            @click.self="closeAddExpenseDiv"
         >
-            <div class="modal">
-                <div class="modal-header">
+            <div class="popup-box">
+                <div class="popup-header">
                     <h3>Ajouter une dépense</h3>
-                    <button class="btn-close" @click="closeAddExpenseModal">
-                        <i class="fas fa-times"></i>
+                    <button class="popup-close-btn" @click="closeAddExpenseDiv">
+                        X
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="popup-body">
                     <div class="form-group">
                         <label>Type de dépense *</label>
-                        <select v-model="newExpense.type" class="form-input">
+                        <select v-model="newExpense.type">
                             <option value="">-- Sélectionner un type --</option>
                             <option
                                 v-for="type in expenseTypes"
@@ -228,7 +215,6 @@
                         <label>Description *</label>
                         <textarea
                             v-model="newExpense.description"
-                            class="form-input"
                             rows="4"
                             placeholder="Détails de la dépense"
                         ></textarea>
@@ -238,28 +224,161 @@
                         <input
                             v-model.number="newExpense.amount"
                             type="number"
-                            class="form-input"
-                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
                         />
                     </div>
                     <div class="form-group">
                         <label>Date *</label>
-                        <input
-                            v-model="newExpense.date"
-                            type="date"
-                            class="form-input"
-                        />
+                        <input v-model="newExpense.date" type="date" />
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="popup-footer">
                     <button
                         class="btn btn-secondary"
-                        @click="closeAddExpenseModal"
+                        @click="closeAddExpenseDiv"
                     >
                         Annuler
                     </button>
                     <button class="btn btn-primary" @click="addExpense">
                         Ajouter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Added Edit Expense Modal -->
+        <div
+            v-if="showEditExpenseDiv"
+            class="popup-overlay"
+            @click.self="closeEditExpenseDiv"
+        >
+            <div class="popup-box">
+                <div class="popup-header">
+                    <h3>Modifier la dépense</h3>
+                    <button
+                        class="popup-close-btn"
+                        @click="closeEditExpenseDiv"
+                    >
+                        X
+                    </button>
+                </div>
+                <div class="popup-body">
+                    <div class="form-group">
+                        <label>Type de dépense *</label>
+                        <select v-model="editExpense.type">
+                            <option value="">-- Sélectionner un type --</option>
+                            <option
+                                v-for="type in expenseTypes"
+                                :key="type"
+                                :value="type"
+                            >
+                                {{ type }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Description *</label>
+                        <textarea
+                            v-model="editExpense.description"
+                            rows="4"
+                            placeholder="Détails de la dépense"
+                        ></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Montant (FCFA) *</label>
+                        <input
+                            v-model.number="editExpense.amount"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Date *</label>
+                        <input v-model="editExpense.date" type="date" />
+                    </div>
+                </div>
+                <div class="popup-footer">
+                    <button
+                        class="btn btn-secondary"
+                        @click="closeEditExpenseDiv"
+                    >
+                        Annuler
+                    </button>
+                    <button class="btn btn-primary" @click="updateExpense">
+                        Modifier
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Added Delete Confirmation Modal -->
+        <div
+            v-if="showDeleteConfirmation"
+            class="popup-overlay"
+            @click.self="showDeleteConfirmation = false"
+        >
+            <div class="popup-box" style="max-width: 400px">
+                <div
+                    class="popup-header"
+                    style="
+                        background: linear-gradient(
+                            135deg,
+                            #dc3545 0%,
+                            #c82333 100%
+                        );
+                    "
+                >
+                    <h3>Confirmer la suppression</h3>
+                    <button
+                        class="popup-close-btn"
+                        @click="showDeleteConfirmation = false"
+                    >
+                        X
+                    </button>
+                </div>
+                <div class="popup-body">
+                    <p style="color: #495057; line-height: 1.6">
+                        Êtes-vous sûr de vouloir supprimer cette dépense ? Cette
+                        action est irréversible.
+                    </p>
+                    <div
+                        v-if="expenseToDelete"
+                        style="
+                            margin-top: 1rem;
+                            padding: 1rem;
+                            background: #f8f9fa;
+                            border-radius: 8px;
+                        "
+                    >
+                        <p style="margin: 0.25rem 0">
+                            <strong>Type:</strong>
+                            {{ expenseToDelete.type }}
+                        </p>
+                        <p style="margin: 0.25rem 0">
+                            <strong>Montant:</strong>
+                            {{ formatAmount(expenseToDelete.amount) }} FCFA
+                        </p>
+                        <p style="margin: 0.25rem 0">
+                            <strong>Date:</strong>
+                            {{
+                                new Date(
+                                    expenseToDelete.date
+                                ).toLocaleDateString('fr-FR')
+                            }}
+                        </p>
+                    </div>
+                </div>
+                <div class="popup-footer">
+                    <button
+                        class="btn btn-secondary"
+                        @click="showDeleteConfirmation = false"
+                    >
+                        Annuler
+                    </button>
+                    <button class="btn btn-danger" @click="deleteExpense">
+                        Supprimer
                     </button>
                 </div>
             </div>
@@ -273,8 +392,10 @@
         data() {
             return {
                 expenses: [],
-                showAddExpenseModal: false,
-
+                showAddExpenseDiv: false,
+                showEditExpenseDiv: false,
+                showDeleteConfirmation: false,
+                expenseToDelete: null,
                 searchQuery: '',
                 filterType: '',
                 dateFilterMode: '',
@@ -282,17 +403,21 @@
                 filterDateStart: '',
                 filterDateEnd: '',
                 sortOption: 'Date (récent)',
-
                 currentPage: 1,
                 itemsPerPage: 10,
-
                 newExpense: {
                     type: '',
                     description: '',
                     amount: null,
                     date: new Date().toISOString().split('T')[0],
                 },
-
+                editExpense: {
+                    id: null,
+                    type: '',
+                    description: '',
+                    amount: null,
+                    date: '',
+                },
                 expenseTypes: [
                     'Loyer',
                     'Salaire',
@@ -307,11 +432,9 @@
                 ],
             };
         },
-
         mounted() {
             this.fetchExpenses();
         },
-
         methods: {
             async fetchExpenses() {
                 try {
@@ -328,21 +451,9 @@
                     );
                 }
             },
-
-            openAddExpenseModal() {
-                this.newExpense = {
-                    type: '',
-                    description: '',
-                    amount: null,
-                    date: new Date().toISOString().split('T')[0],
-                };
-                this.showAddExpenseModal = true;
+            closeAddExpenseDiv() {
+                this.showAddExpenseDiv = false;
             },
-
-            closeAddExpenseModal() {
-                this.showAddExpenseModal = false;
-            },
-
             async addExpense() {
                 if (
                     !this.newExpense.type ||
@@ -352,22 +463,25 @@
                     alert('Veuillez remplir tous les champs obligatoires');
                     return;
                 }
-
+                if (this.newExpense.amount <= 0) {
+                    alert('Le montant doit être supérieur à 0');
+                    return;
+                }
                 try {
                     const response = await axios.post(
                         `${window.location.origin}/expenses/add`,
-                        {
-                            type: this.newExpense.type,
-                            description: this.newExpense.description,
-                            amount: this.newExpense.amount,
-                            date: this.newExpense.date,
-                        }
+                        this.newExpense
                     );
-
                     if (response.data.success) {
-                        this.expenses.push(response.data.data);
-                        this.closeAddExpenseModal();
+                        await this.fetchExpenses();
+                        this.closeAddExpenseDiv();
                         alert('Dépense ajoutée avec succès');
+                        this.newExpense = {
+                            type: '',
+                            description: '',
+                            amount: null,
+                            date: new Date().toISOString().split('T')[0],
+                        };
                     }
                 } catch (error) {
                     console.error(
@@ -377,193 +491,365 @@
                     alert("Erreur lors de l'ajout de la dépense");
                 }
             },
-
-            async deleteExpense(id) {
-                if (
-                    !confirm(
-                        'Êtes-vous sûr de vouloir supprimer cette dépense ?'
-                    )
-                )
-                    return;
-
-                try {
-                    const response = await axios.delete(
-                        `${window.location.origin}/expenses/${id}`
-                    );
-                    if (response.data.success) {
-                        this.expenses = this.expenses.filter(
-                            (e) => e.id !== id
-                        );
-                        alert('Dépense supprimée avec succès');
-                    }
-                } catch (error) {
-                    console.error('Erreur lors de la suppression:', error);
-                    alert('Erreur lors de la suppression');
-                }
-            },
-
-            printList() {
-                const printContent = `
-                <html>
-                    <head>
-                        <title>Dépenses - SAger Market</title>
-                        <style>
-                            * { margin: 0; padding: 0; box-sizing: border-box; }
-                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                            .print-header {
-                                text-align: center;
-                                margin-bottom: 2rem;
-                                border-bottom: 2px solid #333;
-                                padding-bottom: 1rem;
-                            }
-                            .company-info { margin-bottom: 0.5rem; font-weight: bold; }
-                            table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-                            th, td { border: 1px solid #ddd; padding: 0.75rem; text-align: left; }
-                            th { background-color: #f8f9fa; font-weight: bold; }
-                            .amount { text-align: right; }
-                            .total-row { background-color: #e9ecef; font-weight: bold; }
-                            @media print { body { margin: 0; } }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="print-header">
-                            <div class="company-info">SAger Market</div>
-                            <div>Tél: +229 0196466625</div>
-                            <div>IFU: 0202586942320</div>
-                            <h2 style="margin-top: 1rem;">Rapport de Dépenses</h2>
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Description</th>
-                                    <th class="amount">Montant (FCFA)</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${this.filteredExpenses
-                                    .map(
-                                        (expense) => `
-                                    <tr>
-                                        <td>${expense.type}</td>
-                                        <td>${expense.description}</td>
-                                        <td class="amount">${this.formatAmount(
-                                            expense.amount
-                                        )}</td>
-                                        <td>${new Date(
-                                            expense.date
-                                        ).toLocaleDateString('fr-FR')}</td>
-                                    </tr>
-                                `
-                                    )
-                                    .join('')}
-                                <tr class="total-row">
-                                    <td colspan="2">Total</td>
-                                    <td class="amount">${this.formatAmount(
-                                        this.totalAmount
-                                    )}</td>
-                                    <td></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </body>
-                </html>
-            `;
-
-                const printWindow = window.open('', '', 'height=600,width=800');
-                printWindow.document.write(printContent);
-                printWindow.document.close();
-                printWindow.print();
-            },
-
             formatAmount(amount) {
                 return parseFloat(amount).toLocaleString('fr-FR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
                 });
             },
-
-            formatDate(date) {
-                return new Date(date).toLocaleDateString('fr-FR', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                });
-            },
-
-            getTypeColor(type) {
-                return this.typeColors[type] || '#95A5A6';
-            },
-
-            nextPage() {
-                if (this.currentPage < this.totalPages) {
-                    this.currentPage++;
-                }
-            },
-
-            previousPage() {
-                if (this.currentPage > 1) {
-                    this.currentPage--;
-                }
-            },
-
             getTotalByType(type) {
                 return this.filteredExpenses
                     .filter((e) => e.type === type)
                     .reduce((sum, e) => sum + parseFloat(e.amount), 0);
             },
-
             sanitizeType(type) {
                 return type
                     .toLowerCase()
                     .replace(/\s+/g, '-')
                     .replace(/[^a-z0-9-]/g, '');
             },
-        },
 
+            getBadgeStyle(type) {
+                const colorMap = {
+                    Loyer: {
+                        bg: '#e3f2fd',
+                        color: '#1976d2',
+                        border: '#90caf9',
+                    },
+                    Salaire: {
+                        bg: '#e8f5e9',
+                        color: '#388e3c',
+                        border: '#a5d6a7',
+                    },
+                    Fournisseurs: {
+                        bg: '#fff3e0',
+                        color: '#f57c00',
+                        border: '#ffcc80',
+                    },
+                    'Électricité / Eau / Internet': {
+                        bg: '#fff9c4',
+                        color: '#f9a825',
+                        border: '#fff59d',
+                    },
+                    'Marketing / Publicité': {
+                        bg: '#f3e5f5',
+                        color: '#7b1fa2',
+                        border: '#ce93d8',
+                    },
+                    'Maintenance / Réparation': {
+                        bg: '#ffebee',
+                        color: '#c62828',
+                        border: '#ef9a9a',
+                    },
+                    'Transport / Livraison': {
+                        bg: '#e0f2f1',
+                        color: '#00796b',
+                        border: '#80cbc4',
+                    },
+                    'Taxes / Impôts': {
+                        bg: '#fce4ec',
+                        color: '#c2185b',
+                        border: '#f48fb1',
+                    },
+                    'Formations / Développement du personnel': {
+                        bg: '#e8eaf6',
+                        color: '#3f51b5',
+                        border: '#9fa8da',
+                    },
+                    Autres: {
+                        bg: '#f5f5f5',
+                        color: '#616161',
+                        border: '#e0e0e0',
+                    },
+                };
+
+                const colors = colorMap[type] || colorMap['Autres'];
+                return {
+                    backgroundColor: colors.bg,
+                    color: colors.color,
+                    border: `1px solid ${colors.border}`,
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '20px',
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    display: 'inline-block',
+                };
+            },
+
+            openEditExpenseModal(expense) {
+                this.editExpense = {
+                    id: expense.id,
+                    type: expense.type,
+                    description: expense.description,
+                    amount: expense.amount,
+                    date: expense.date,
+                };
+                this.showEditExpenseDiv = true;
+            },
+
+            closeEditExpenseDiv() {
+                this.showEditExpenseDiv = false;
+                this.editExpense = {
+                    id: null,
+                    type: '',
+                    description: '',
+                    amount: null,
+                    date: '',
+                };
+            },
+
+            async updateExpense() {
+                if (
+                    !this.editExpense.type ||
+                    !this.editExpense.description ||
+                    !this.editExpense.amount
+                ) {
+                    alert('Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
+
+                if (this.editExpense.amount <= 0) {
+                    alert('Le montant doit être supérieur à 0');
+                    return;
+                }
+
+                try {
+                    const response = await axios.post(
+                        `${window.location.origin}/expenses/update/${this.editExpense.id}`,
+                        this.editExpense
+                    );
+
+                    if (response.data.success) {
+                        await this.fetchExpenses();
+                        this.closeEditExpenseDiv();
+                        alert('Dépense modifiée avec succès');
+                    }
+                } catch (error) {
+                    console.error(
+                        'Erreur lors de la modification de la dépense:',
+                        error
+                    );
+                    alert('Erreur lors de la modification de la dépense');
+                }
+            },
+            confirmDeleteExpense(expense) {
+                this.expenseToDelete = expense;
+                this.showDeleteConfirmation = true;
+            },
+
+            async deleteExpense() {
+                if (!this.expenseToDelete) return;
+
+                try {
+                    const response = await axios.post(
+                        `${window.location.origin}/expenses/delete/${this.expenseToDelete.id}`
+                    );
+
+                    if (response.data.success) {
+                        await this.fetchExpenses();
+                        this.showDeleteConfirmation = false;
+                        this.expenseToDelete = null;
+                        alert('Dépense supprimée avec succès');
+                    }
+                } catch (error) {
+                    console.error(
+                        'Erreur lors de la suppression de la dépense:',
+                        error
+                    );
+                    alert('Erreur lors de la suppression de la dépense');
+                }
+            },
+            printList() {
+                let totalAmount = 0;
+                const tableRows = this.filteredExpenses
+                    .map((expense, index) => {
+                        totalAmount += parseFloat(expense.amount);
+                        return `
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #ddd;">${
+                                    index + 1
+                                }</td>
+                                <td style="padding: 12px; border: 1px solid #ddd;">${new Date(
+                                    expense.date
+                                ).toLocaleDateString('fr-FR')}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd;">${
+                                    expense.type
+                                }</td>
+                                <td style="padding: 12px; border: 1px solid #ddd;">${
+                                    expense.description
+                                }</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                    expense.amount
+                                )} FCFA</td>
+                            </tr>
+                        `;
+                    })
+                    .join('');
+
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Liste des Dépenses</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                margin: 20px;
+                                color: #333;
+                            }
+                            h1 {
+                                color: #667eea;
+                                text-align: center;
+                                margin-bottom: 10px;
+                            }
+                            h2 {
+                                text-align: center;
+                                margin-bottom: 20px;
+                                color: #333;
+                            }
+                            .company-info {
+                                text-align: center;
+                                margin-bottom: 30px;
+                            }
+                            .company-info p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            .info {
+                                background: #f8f9fa;
+                                padding: 15px;
+                                border-radius: 8px;
+                                margin-bottom: 20px;
+                                border-left: 4px solid #667eea;
+                            }
+                            .info p {
+                                margin: 5px 0;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-top: 20px;
+                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                            }
+                            thead {
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                            }
+                            th {
+                                padding: 12px;
+                                text-align: left;
+                                border: 1px solid #667eea;
+                            }
+                            th:last-child {
+                                text-align: right;
+                            }
+                            tbody tr:nth-child(even) {
+                                background: #f8f9fa;
+                            }
+                            tbody tr:hover {
+                                background: #e9ecef;
+                            }
+                            .total-row {
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                                color: white;
+                                font-weight: bold;
+                            }
+                            button {
+                                margin-top: 20px;
+                                padding: 10px 20px;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+                            }
+                            button:hover {
+                                transform: translateY(-2px);
+                                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                            }
+                            @media print {
+                                button { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>SAGER MARKET</h1>
+                        <div class="company-info">
+                            <p><strong>Téléphone:</strong> +229 0196466625</p>
+                            <p><strong>IFU:</strong> 0202586942320</p>
+                        </div>
+                        <h2>Liste des Dépenses</h2>
+                        <div class="info">
+                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                                'fr-FR'
+                            )}</p>
+                            <p><strong>Nombre total de dépenses:</strong> ${
+                                this.filteredExpenses.length
+                            }</p>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th style="text-align: right;">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                                <tr class="total-row">
+                                    <td colspan="4" style="padding: 12px; border: 1px solid #667eea; text-align: right;">TOTAL:</td>
+                                    <td style="padding: 12px; border: 1px solid #667eea; text-align: right;">${this.formatAmount(
+                                        totalAmount
+                                    )} FCFA</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <button onclick="window.print()">Imprimer</button>
+                    </body>
+                    </html>
+                `;
+
+                const printWindow = window.open('', '', 'height=600,width=800');
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            },
+        },
         computed: {
             filteredExpenses() {
                 let filtered = this.expenses;
-
-                // Filter by search query
-                if (this.searchQuery) {
-                    const query = this.searchQuery.toLowerCase();
-                    filtered = filtered.filter(
-                        (e) =>
-                            e.description.toLowerCase().includes(query) ||
-                            e.type.toLowerCase().includes(query)
+                if (this.searchQuery)
+                    filtered = filtered.filter((e) =>
+                        e.description
+                            .toLowerCase()
+                            .includes(this.searchQuery.toLowerCase())
                     );
-                }
-
-                // Filter by type
-                if (this.filterType) {
+                if (this.filterType)
                     filtered = filtered.filter(
                         (e) => e.type === this.filterType
                     );
-                }
-
-                // Filter by date
-                if (this.dateFilterMode === 'specific' && this.filterDate) {
+                if (this.dateFilterMode === 'specific' && this.filterDate)
                     filtered = filtered.filter(
-                        (e) =>
-                            this.formatDate(e.date) ===
-                            this.formatDate(this.filterDate)
+                        (e) => e.date === this.filterDate
                     );
-                } else if (
+                if (
                     this.dateFilterMode === 'range' &&
                     this.filterDateStart &&
                     this.filterDateEnd
                 ) {
-                    const start = new Date(this.filterDateStart);
-                    const end = new Date(this.filterDateEnd);
+                    const start = new Date(this.filterDateStart),
+                        end = new Date(this.filterDateEnd);
                     filtered = filtered.filter((e) => {
-                        const expenseDate = new Date(e.date);
-                        return expenseDate >= start && expenseDate <= end;
+                        const d = new Date(e.date);
+                        return d >= start && d <= end;
                     });
                 }
-
-                // Sort
                 switch (this.sortOption) {
                     case 'Type (A-Z)':
                         filtered.sort((a, b) => a.type.localeCompare(b.type));
@@ -594,79 +880,85 @@
                         );
                         break;
                 }
-
-                this.currentPage = 1;
                 return filtered;
             },
-
-            paginatedExpenses() {
-                const start = (this.currentPage - 1) * this.itemsPerPage;
-                const end = start + this.itemsPerPage;
-                return this.filteredExpenses.slice(start, end);
+            totalAmount() {
+                return this.filteredExpenses.reduce(
+                    (sum, e) => sum + parseFloat(e.amount),
+                    0
+                );
             },
-
             totalPages() {
                 return Math.ceil(
                     this.filteredExpenses.length / this.itemsPerPage
                 );
             },
-
-            totalAmount() {
-                return this.filteredExpenses.reduce(
-                    (sum, expense) => sum + parseFloat(expense.amount),
-                    0
+            paginatedExpenses() {
+                const start = (this.currentPage - 1) * this.itemsPerPage;
+                return this.filteredExpenses.slice(
+                    start,
+                    start + this.itemsPerPage
                 );
+            },
+        },
+        watch: {
+            filteredExpenses() {
+                this.currentPage = 1;
             },
         },
     };
 </script>
 
 <style scoped>
-    .expenses-content {
-        padding: 20px;
-        background: #f8f9fa;
-        min-height: 100vh;
+    /* Applied ClaimsComponent color scheme and design system */
+
+    /* Header */
+    .expenses-header {
+        margin-bottom: 2rem;
     }
 
-    /* Colorful statistics cards with gradients */
+    .expenses-header h2 {
+        color: #333;
+        margin-bottom: 1.5rem;
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    /* Statistics section */
     .statistics-section {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
 
     .stat-card {
-        display: flex;
-        gap: 1rem;
+        background: white;
+        border-radius: 10px;
         padding: 1.5rem;
-        border-radius: 12px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
-    .stat-card-1 {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .stat-card-2 {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    .stat-card-3 {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-
-    .stat-card-4 {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .stat-icon {
         font-size: 2.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0.8;
+        color: #667eea;
     }
 
     .stat-info {
@@ -674,76 +966,16 @@
     }
 
     .stat-label {
+        color: #6c757d;
         font-size: 0.9rem;
-        opacity: 0.9;
+        font-weight: 500;
         margin-bottom: 0.5rem;
     }
 
     .stat-value {
+        color: #667eea;
         font-size: 1.8rem;
-        font-weight: bold;
-    }
-
-    .type-badge-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-    }
-
-    .type-badge {
-        display: inline-block;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        white-space: nowrap;
-        font-weight: 500;
-    }
-
-    .no-expenses-message {
-        font-size: 0.9rem;
-        opacity: 0.8;
-        margin-top: 0.5rem;
-    }
-
-    /* Header */
-    .expenses-header {
-        margin-bottom: 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .expenses-header h2 {
-        color: #333;
-        font-size: 1.8rem;
-        font-weight: 600;
-    }
-
-    .header-actions {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-
-    .search-input,
-    .filter-select {
-        padding: 0.75rem 1rem;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        background: white;
-        flex: 1;
-        min-width: 150px;
-    }
-
-    .search-input {
-        flex: 2;
-        min-width: 250px;
+        font-weight: 700;
     }
 
     /* Buttons */
@@ -790,48 +1022,66 @@
         box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
     }
 
-    .btn-icon {
-        padding: 8px 12px;
-        border: none;
+    .btn-pagination {
+        padding: 0.75rem 1rem;
+        border: 1px solid #667eea;
+        background: white;
+        color: #667eea;
         border-radius: 5px;
         cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
-    .btn-delete {
-        background: #dc3545;
+    .btn-pagination:hover:not(:disabled) {
+        background: #667eea;
         color: white;
     }
 
-    .btn-delete:hover {
-        background: #c82333;
+    .btn-pagination:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
-    /* Filters */
+    /* Inputs */
+    .search-input,
+    .filter-select {
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        min-width: 200px;
+        transition: border-color 0.3s ease;
+    }
+
+    .search-input:focus,
+    .filter-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    /* Filters Section */
     .filters-section {
         display: flex;
-        gap: 1rem;
-        margin-bottom: 2rem;
+        gap: 10px;
         flex-wrap: wrap;
+        margin-bottom: 2rem;
         align-items: center;
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
     .date-range {
         display: flex;
-        gap: 0.5rem;
         align-items: center;
+        gap: 0.5rem;
     }
 
-    .date-range input {
-        padding: 0.75rem 1rem;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 0.95rem;
+    .date-range span {
+        color: #6c757d;
+        font-weight: 500;
     }
 
     /* Table */
@@ -849,70 +1099,44 @@
     }
 
     .table thead {
-        background: #f8f9fa;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
     }
 
     .table th {
         padding: 1rem;
         text-align: left;
         font-weight: 600;
-        color: #495057;
-        border-bottom: 2px solid #dee2e6;
+        border: none;
+    }
+
+    .table tbody tr {
+        border-bottom: 1px solid #dee2e6;
+        transition: background-color 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
     }
 
     .table td {
         padding: 1rem;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .table tbody tr:hover {
-        background: #f8f9fa;
-    }
-
-    .type-badge {
-        display: inline-block;
-        padding: 0.4rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 500;
-        white-space: nowrap;
-        color: white;
-    }
-
-    .type-badge.type-loyer {
-        background: #667eea;
-    }
-    .type-badge.type-salaires {
-        background: #f093fb;
-    }
-    .type-badge.type-fournisseurs {
-        background: #4facfe;
-    }
-    .type-badge.type-electricite-eau-internet {
-        background: #43e97b;
-    }
-    .type-badge.type-marketing-publicite {
-        background: #f5576c;
-    }
-    .type-badge.type-maintenance-reparation {
-        background: #ffa502;
-    }
-    .type-badge.type-transport-livraison {
-        background: #1ea179;
-    }
-    .type-badge.type-taxes-impots {
-        background: #eb3b5a;
-    }
-    .type-badge.type-formations-developpement-du-personnel {
-        background: #5f27cd;
-    }
-    .type-badge.type-autres {
-        background: #a4b0bd;
+        color: #495057;
     }
 
     .amount {
-        text-align: right;
-        font-weight: 500;
+        font-weight: 600;
+        color: #667eea;
+    }
+
+    .type-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: #e9ecef;
+        color: #495057;
+        display: inline-block;
     }
 
     /* Pagination */
@@ -922,130 +1146,146 @@
         align-items: center;
         gap: 1rem;
         margin-top: 2rem;
-    }
-
-    .btn-pagination {
-        padding: 0.5rem 1rem;
-        background: #f0f0f0;
-        border: 1px solid #ddd;
-        color: #333;
-    }
-
-    .btn-pagination:hover:not(:disabled) {
-        background: #e0e0e0;
-    }
-
-    .btn-pagination:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+        padding: 1.5rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .page-info {
-        color: #666;
         font-weight: 500;
+        color: #667eea;
+        min-width: 120px;
+        text-align: center;
     }
 
     /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 60px 20px;
+        padding: 3rem;
         background: white;
         border-radius: 10px;
-        color: #999;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .empty-state i {
-        font-size: 48px;
-        margin-bottom: 15px;
-        display: block;
-        opacity: 0.5;
+        font-size: 3rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
     }
 
-    /* Modal */
-    .modal-overlay {
+    .empty-state p {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    /* Pop-up Overlay */
+    .popup-overlay {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.5);
         display: flex;
         justify-content: center;
         align-items: center;
         z-index: 9999;
     }
 
-    .modal {
+    .popup-box {
         background: white;
         border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        max-width: 500px;
-        width: 90%;
+        padding: 0;
+        width: 500px;
+        max-width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         max-height: 90vh;
         overflow-y: auto;
     }
 
-    .modal-header {
+    .popup-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 1.5rem;
-        border-bottom: 1px solid #e9ecef;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px 12px 0 0;
     }
 
-    .modal-header h3 {
+    .popup-header h3 {
         margin: 0;
-        color: #333;
+        font-size: 1.3rem;
+        font-weight: 600;
     }
 
-    .btn-close {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
+    .popup-close-btn {
         cursor: pointer;
-        color: #666;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.3s ease;
     }
 
-    .btn-close:hover {
-        color: #333;
+    .popup-close-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
     }
 
-    .modal-body {
-        padding: 1.5rem;
+    .popup-body {
+        padding: 2rem;
     }
 
-    .form-group {
+    .popup-body .form-group {
         margin-bottom: 1.5rem;
     }
 
-    .form-group label {
+    .popup-body label {
         display: block;
         margin-bottom: 0.5rem;
+        color: #495057;
         font-weight: 500;
-        color: #333;
+        font-size: 0.95rem;
     }
 
-    .form-input {
+    .popup-body select,
+    .popup-body input,
+    .popup-body textarea {
         width: 100%;
         padding: 0.75rem;
         border: 1px solid #ddd;
         border-radius: 8px;
         font-size: 0.95rem;
-        font-family: inherit;
+        transition: border-color 0.3s ease;
     }
 
-    .form-input:focus {
+    .popup-body select:focus,
+    .popup-body input:focus,
+    .popup-body textarea:focus {
         outline: none;
         border-color: #667eea;
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
-    .modal-footer {
+    .popup-body textarea {
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    .popup-footer {
         display: flex;
         justify-content: flex-end;
         gap: 1rem;
         padding: 1.5rem;
-        border-top: 1px solid #e9ecef;
+        background: #f8f9fa;
+        border-radius: 0 0 12px 12px;
     }
 
     /* Responsive */
@@ -1054,50 +1294,90 @@
             grid-template-columns: 1fr;
         }
 
-        .expenses-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
         .header-actions {
-            width: 100%;
             flex-direction: column;
-        }
-
-        .search-input {
-            min-width: 100%;
-        }
-
-        .filters-section {
-            flex-direction: column;
-        }
-
-        .filter-select,
-        .date-range input {
             width: 100%;
         }
 
-        .date-range {
+        .search-input,
+        .filter-select {
             width: 100%;
-            justify-content: space-between;
         }
 
-        .date-range span {
-            flex: 0 0 auto;
+        .table-container {
+            overflow-x: auto;
         }
 
-        .table {
-            font-size: 0.9rem;
+        .pagination {
+            flex-wrap: wrap;
         }
 
-        .table th,
-        .table td {
-            padding: 0.75rem 0.5rem;
+        .btn-pagination {
+            flex: 1;
+            min-width: 100px;
         }
+    }
 
-        .modal {
-            width: 95%;
-            max-height: 95vh;
-        }
+    /* Added action buttons styles */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-start;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 0.75rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-edit {
+        background-color: #ffc107;
+        color: white;
+    }
+
+    .btn-edit:hover {
+        background-color: #e0a800;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background-color: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+    }
+
+    /* Added danger button style for delete confirmation */
+    .btn-danger {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
     }
 </style>

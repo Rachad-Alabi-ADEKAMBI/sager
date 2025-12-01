@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Expense;
+use App\Models\Notification;
 
 class ExpenseController extends Controller
 {
@@ -69,12 +70,49 @@ class ExpenseController extends Controller
 
         $expense = Expense::create($data);
 
+        // Notification
+        Notification::create([
+            'description' => 'Dépense ajoutée : ' . $data['type'] . '. Montant : ' . $data['amount'] . ' CFA.',
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Dépense enregistrée.',
             'data'    => $expense
         ], 201);
     }
+
+
+    public function update(Request $request, $id)
+    {
+        $expense = Expense::find($id);
+
+        if (!$expense) {
+            return response()->json(['success' => false, 'message' => 'Dépense introuvable.'], 404);
+        }
+
+        $data = $request->validate([
+            'type'        => 'required|string|max:255',
+            'amount'      => 'required|numeric|min:0.01',
+            'description' => 'nullable|string',
+            'date'        => 'required|date',
+        ]);
+
+        $expense->update($data);
+
+        // Notification
+        Notification::create([
+            'description' => 'Dépense modifiée : ' . $data['type'] . '. Nouveau montant : ' . $data['amount'] . ' CFA.',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dépense mise à jour.',
+            'data'    => $expense
+        ]);
+    }
+
+
 
     /**
      * Display the specified resource.
@@ -87,24 +125,34 @@ class ExpenseController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
-    {
-        //
-    }
+
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        //
+        $expense = Expense::find($id);
+
+        if (!$expense) {
+            return response()->json(['success' => false, 'message' => 'Dépense introuvable.'], 404);
+        }
+
+        $expense->delete();
+
+        // Notification
+        Notification::create([
+            'description' => 'Dépense supprimée : ' . $expense->type . '. Montant : ' . $expense->amount . ' CFA.',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dépense supprimée.'
+        ]);
     }
 }
