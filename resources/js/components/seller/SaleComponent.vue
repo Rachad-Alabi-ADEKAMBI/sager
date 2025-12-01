@@ -127,6 +127,16 @@
                                                     >
                                                         Consignable
                                                     </span>
+                                                    <span
+                                                        v-if="
+                                                            isProductReturnable(
+                                                                product
+                                                            )
+                                                        "
+                                                        class="badge-inline"
+                                                    >
+                                                        Emballage
+                                                    </span>
                                                 </div>
                                                 <div class="product-item-stock">
                                                     Stock:
@@ -150,7 +160,18 @@
                                             "
                                             class="badge-small"
                                         >
-                                            Consignable
+                                            Produit consignable
+                                        </span>
+
+                                        <span
+                                            v-if="
+                                                isProductReturnable(
+                                                    line.product
+                                                )
+                                            "
+                                            class="badge-small"
+                                        >
+                                            Produit avec emballage
                                         </span>
                                         <span class="stock-info">
                                             Stock: {{ line.product.quantity }}
@@ -612,6 +633,12 @@
                                 >
                                     Consignable
                                 </span>
+                                <span
+                                    v-if="isProductReturnable(line.product)"
+                                    class="badge-depositable"
+                                >
+                                    Emballage
+                                </span>
                             </div>
 
                             <!-- Affichage du type de transaction pour produits consignables -->
@@ -893,6 +920,20 @@
 
                 // console.log('[v0] Product:', product.name, 'is_depositable value:', depositable, 'type:', typeof depositable, 'result:', result);
                 return result;
+            },
+            isProductReturnable(product) {
+                if (!product) {
+                    return false;
+                }
+
+                const value = product.isReturnable;
+
+                return (
+                    value === 1 ||
+                    value === true ||
+                    value === '1' ||
+                    value === 'true'
+                );
             },
 
             fetchCustomers() {

@@ -2,17 +2,20 @@
  <aside class="sidebar" id="sidebar" style="height: 100vh; overflow-y: auto;">
      <div class="sidebar-header">
          <h2>
-             <a href="{{ route('home') }}" style='color: white; text-decoration: none;'>
+             <a href="{{ route('home') }}" style="color: white; text-decoration: none;">
                  SAGER MARKET
              </a>
          </h2>
      </div>
+
      <ul class="sidebar-menu">
+
          <li>
              <a href="{{ route('dashboardAdmin') }}" class="{{ request()->routeIs('dashboardAdmin') ? 'active' : '' }}">
-                 <i class="fas fa-tachometer-alt"></i> Tableau de bord
+                 <i class="fas fa-chart-line"></i> Tableau de bord
              </a>
          </li>
+
          <li>
              <a href="{{ route('sales') }}" class="{{ request()->routeIs('sales') ? 'active' : '' }}">
                  <i class="fas fa-shopping-cart"></i> Ventes
@@ -21,47 +24,45 @@
 
          <li>
              <a href="{{ route('deposits') }}" class="{{ request()->routeIs('deposits.*') ? 'active' : '' }}">
-                 <i class="fas fa-box"></i> Consignations
+                 <i class="fas fa-warehouse"></i> Consignations
              </a>
          </li>
-
 
          <li>
              <a href="{{ route('returnableProducts') }}" class="{{ request()->routeIs('returnableProducts.*') ? 'active' : '' }}">
-                 <i class="fas fa-box"></i> Emballages
+                 <i class="fas fa-recycle"></i> Emballages
              </a>
          </li>
-
-
 
          <li>
              <a href="{{ url('/proformas') }}" class="{{ request()->is('proformas') ? 'active' : '' }}">
                  <i class="fas fa-file-invoice"></i> Factures Proformas
              </a>
          </li>
+
          <li>
              <a href="{{ route('products') }}" class="{{ request()->routeIs('products') ? 'active' : '' }}">
-                 <i class="fas fa-cubes"></i> Produits
+                 <i class="fas fa-boxes"></i> Produits
              </a>
          </li>
+
          <li>
              <a href="{{ route('rentability') }}" class="{{ request()->routeIs('rentability') ? 'active' : '' }}">
-                 <i class="fas fa-money-bill"></i> Rentabilité
+                 <i class="fas fa-chart-pie"></i> Rentabilité
              </a>
          </li>
 
          <li>
              <a href="{{ route('claims') }}" class="{{ request()->routeIs('claims') ? 'active' : '' }}">
-                 <i class="fas fa-briefcase"></i> Créances
+                 <i class="fas fa-hand-holding-usd"></i> Créances
              </a>
          </li>
 
          <li>
              <a href="{{ route('expenses') }}" class="{{ request()->routeIs('expenses') ? 'active' : '' }}">
-                 <i class="fas fa-briefcase"></i> Dépenses
+                 <i class="fas fa-money-bill-wave"></i> Dépenses
              </a>
          </li>
-
 
          <li>
              <a href="{{ route('sellers') }}" class="{{ request()->routeIs('sellers') ? 'active' : '' }}">
@@ -83,9 +84,10 @@
                  @csrf
              </form>
          </li>
-     </ul>
 
+     </ul>
  </aside>
+
 
  <script>
      function toggleSidebar() {

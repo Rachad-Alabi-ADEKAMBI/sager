@@ -148,7 +148,7 @@
                                     }}
                                 </span>
                             </td>
-                            <td data-label="Dernière MAJ">
+                            <td data-label="MAJ">
                                 {{ formatDateTime(product.updated_at) }}
                             </td>
                             <td data-label="Actions">
@@ -276,24 +276,26 @@
         <!--stocks-->
         <div class="showStock" v-if="showStock">
             <div class="table-container">
-                <div class="table-header">
-                    <h3 style="display: flex; align-items: center; gap: 0.5rem">
-                        <span
+                <!-- Bouton retour toujours visible avec meilleur style -->
+                <div class="table-header" style="flex-wrap: wrap; gap: 10px">
+                    <h3
+                        style="
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            flex: 1;
+                            min-width: 200px;
+                        "
+                    >
+                        <button
                             @click="fetchProducts()"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                cursor: pointer;
-                                color: #007bff;
-                                font-weight: bold;
-                            "
+                            class="btn-back"
+                            title="Retour à la liste des produits"
                         >
-                            <i
-                                class="fas fa-arrow-left"
-                                style="color: white"
-                            ></i>
-                        </span>
-                        |
+                            <i class="fas fa-arrow-left"></i>
+                            <span class="btn-back-text">Retour</span>
+                        </button>
+                        <span style="color: #6c757d">|</span>
                         <strong>{{ stocks[0]?.product_name }}</strong>
                     </h3>
                     <strong>Total: {{ stocks.length }}</strong>
@@ -331,27 +333,30 @@
         <!-- Volet Comptabilité -->
         <div class="showAccounting" v-if="showAccounting">
             <div class="table-container">
-                <div class="table-header">
-                    <h3 style="display: flex; align-items: center; gap: 0.5rem">
-                        <span
+                <!-- Bouton retour toujours visible avec meilleur style -->
+                <div class="table-header" style="flex-wrap: wrap; gap: 10px">
+                    <h3
+                        style="
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            flex: 1;
+                            min-width: 200px;
+                        "
+                    >
+                        <button
                             @click="fetchProducts()"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                cursor: pointer;
-                                color: #007bff;
-                                font-weight: bold;
-                            "
+                            class="btn-back"
+                            title="Retour à la liste des produits"
                         >
-                            <i
-                                class="fas fa-arrow-left"
-                                style="color: white"
-                            ></i>
-                        </span>
-                        | Rentabilité de
+                            <i class="fas fa-arrow-left"></i>
+                            <span class="btn-back-text">Retour</span>
+                        </button>
+                        <span style="color: #6c757d">|</span>
+                        Rentabilité de
                         <strong>{{ selectedProduct.name }}</strong>
                     </h3>
-                    <button @click="showAccounting = false" class="btn-close">
+                    <button @click="fetchProducts()" class="btn-close">
                         Fermer
                     </button>
                 </div>
@@ -566,26 +571,24 @@
             class="modal-add-product"
             @click.self="closeAddProductModal()"
         >
-            <div class="modal-content" style="padding: 2.5rem; max-width: 700px">
-                <div
-                    class="modal-header"
-                    style="
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 2rem;
-                        padding-bottom: 1rem;
-                        border-bottom: 2px solid #e9ecef;
-                    "
-                >
+            <!-- Amélioration du responsive du modal -->
+            <div class="modal-content modal-product-form">
+                <div class="modal-header">
                     <h3 style="margin: 0; color: #2c3e50; font-size: 1.5rem">
-                        <i class="fas fa-box" style="margin-right: 0.5rem; color: #007bff"></i>
+                        <i
+                            class="fas fa-box"
+                            style="margin-right: 0.5rem; color: #007bff"
+                        ></i>
                         Ajouter un nouveau produit
                     </h3>
                     <span
                         class="close"
                         @click="closeAddProductModal"
-                        style="cursor: pointer; font-size: 1.8rem; color: #6c757d"
+                        style="
+                            cursor: pointer;
+                            font-size: 1.8rem;
+                            color: #6c757d;
+                        "
                     >
                         &times;
                     </span>
@@ -597,16 +600,20 @@
                     @submit.prevent="addProductForm"
                 >
                     <!-- Informations de base -->
-                    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem">
-                        <h4 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 600">
-                            <i class="fas fa-info-circle" style="margin-right: 0.5rem"></i>
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i
+                                class="fas fa-info-circle"
+                                style="margin-right: 0.5rem"
+                            ></i>
                             Informations de base
                         </h4>
-                        
+
                         <!-- Nom du produit -->
-                        <div class="form-group" style="margin-bottom: 1rem">
-                            <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                Nom du produit <span style="color: #dc3545">*</span>
+                        <div class="form-group">
+                            <label class="form-label">
+                                Nom du produit
+                                <span style="color: #dc3545">*</span>
                             </label>
                             <input
                                 v-model="name"
@@ -614,15 +621,15 @@
                                 class="form-control"
                                 placeholder="Ex: Eau minérale 1.5L"
                                 required
-                                style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
                             />
                         </div>
 
                         <!-- Prix d'achat et Quantité -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
+                        <div class="form-grid">
                             <div class="form-group">
-                                <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                    Prix d'achat (FCFA) <span style="color: #dc3545">*</span>
+                                <label class="form-label">
+                                    Prix d'achat (FCFA)
+                                    <span style="color: #dc3545">*</span>
                                 </label>
                                 <input
                                     v-model="purchase_price"
@@ -632,13 +639,13 @@
                                     min="0"
                                     placeholder="0"
                                     required
-                                    style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
                                 />
                             </div>
 
                             <div class="form-group">
-                                <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                    Quantité initiale <span style="color: #dc3545">*</span>
+                                <label class="form-label">
+                                    Quantité initiale
+                                    <span style="color: #dc3545">*</span>
                                 </label>
                                 <input
                                     v-model="quantity"
@@ -648,60 +655,58 @@
                                     min="0"
                                     placeholder="0"
                                     required
-                                    style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
                                 />
                             </div>
                         </div>
                     </div>
 
                     <!-- Type de produit avec toggles visuels -->
-                    <div style="background: #fff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; border: 2px solid #e9ecef">
-                        <h4 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 600">
-                            <i class="fas fa-tag" style="margin-right: 0.5rem"></i>
+                    <div class="form-section form-section-white">
+                        <h4 class="section-title">
+                            <i
+                                class="fas fa-tag"
+                                style="margin-right: 0.5rem"
+                            ></i>
                             Type de produit
                         </h4>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
+
+                        <div class="product-type-grid">
                             <!-- Produit consignable -->
-                            <div 
-                                @click="is_depositable = is_depositable ? 0 : 1; if(is_depositable) isReturnable = false"
-                                style="
-                                    padding: 1rem;
-                                    border-radius: 8px;
-                                    cursor: pointer;
-                                    border: 2px solid;
-                                    transition: all 0.3s;
+                            <div
+                                @click="
+                                    is_depositable = is_depositable ? 0 : 1;
+                                    if (is_depositable) isReturnable = false;
                                 "
-                                :style="{
-                                    borderColor: is_depositable ? '#28a745' : '#dee2e6',
-                                    background: is_depositable ? '#d4edda' : '#f8f9fa'
+                                class="product-type-card"
+                                :class="{
+                                    'active-depositable': is_depositable,
                                 }"
                             >
-                                <div style="display: flex; align-items: center; gap: 0.75rem">
-                                    <div 
-                                        style="
-                                            width: 20px;
-                                            height: 20px;
-                                            border-radius: 4px;
-                                            border: 2px solid;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
-                                            flex-shrink: 0;
-                                        "
-                                        :style="{
-                                            borderColor: is_depositable ? '#28a745' : '#ced4da',
-                                            background: is_depositable ? '#28a745' : 'white'
-                                        }"
+                                <div
+                                    style="
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 0.75rem;
+                                    "
+                                >
+                                    <div
+                                        class="checkbox-custom"
+                                        :class="{ checked: is_depositable }"
                                     >
-                                        <i v-if="is_depositable" class="fas fa-check" style="color: white; font-size: 0.75rem"></i>
+                                        <i
+                                            v-if="is_depositable"
+                                            class="fas fa-check"
+                                        ></i>
                                     </div>
                                     <div>
-                                        <div style="font-weight: 600; color: #2c3e50">
-                                            <i class="fas fa-recycle" style="margin-right: 0.5rem"></i>
+                                        <div class="product-type-title">
+                                            <i
+                                                class="fas fa-recycle"
+                                                style="margin-right: 0.5rem"
+                                            ></i>
                                             Produit consignable
                                         </div>
-                                        <div style="font-size: 0.8rem; color: #6c757d; margin-top: 0.25rem">
+                                        <div class="product-type-subtitle">
                                             Bouteille avec consigne
                                         </div>
                                     </div>
@@ -709,45 +714,39 @@
                             </div>
 
                             <!-- Produit avec emballage -->
-                            <div 
-                                @click="isReturnable = !isReturnable; if(isReturnable) is_depositable = 0"
-                                style="
-                                    padding: 1rem;
-                                    border-radius: 8px;
-                                    cursor: pointer;
-                                    border: 2px solid;
-                                    transition: all 0.3s;
+                            <div
+                                @click="
+                                    isReturnable = !isReturnable;
+                                    if (isReturnable) is_depositable = 0;
                                 "
-                                :style="{
-                                    borderColor: isReturnable ? '#17a2b8' : '#dee2e6',
-                                    background: isReturnable ? '#d1ecf1' : '#f8f9fa'
-                                }"
+                                class="product-type-card"
+                                :class="{ 'active-returnable': isReturnable }"
                             >
-                                <div style="display: flex; align-items: center; gap: 0.75rem">
-                                    <div 
-                                        style="
-                                            width: 20px;
-                                            height: 20px;
-                                            border-radius: 4px;
-                                            border: 2px solid;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
-                                            flex-shrink: 0;
-                                        "
-                                        :style="{
-                                            borderColor: isReturnable ? '#17a2b8' : '#ced4da',
-                                            background: isReturnable ? '#17a2b8' : 'white'
-                                        }"
+                                <div
+                                    style="
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 0.75rem;
+                                    "
+                                >
+                                    <div
+                                        class="checkbox-custom returnable"
+                                        :class="{ checked: isReturnable }"
                                     >
-                                        <i v-if="isReturnable" class="fas fa-check" style="color: white; font-size: 0.75rem"></i>
+                                        <i
+                                            v-if="isReturnable"
+                                            class="fas fa-check"
+                                        ></i>
                                     </div>
                                     <div>
-                                        <div style="font-weight: 600; color: #2c3e50">
-                                            <i class="fas fa-box-open" style="margin-right: 0.5rem"></i>
+                                        <div class="product-type-title">
+                                            <i
+                                                class="fas fa-box-open"
+                                                style="margin-right: 0.5rem"
+                                            ></i>
                                             Produit avec emballage
                                         </div>
-                                        <div style="font-size: 0.8rem; color: #6c757d; margin-top: 0.25rem">
+                                        <div class="product-type-subtitle">
                                             Emballage retournable
                                         </div>
                                     </div>
@@ -757,18 +756,22 @@
                     </div>
 
                     <!-- Champs de prix selon le type de produit -->
-                    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem">
+                    <div class="form-section">
                         <!-- Si produit consignable -->
                         <template v-if="is_depositable">
-                            <h4 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 600">
-                                <i class="fas fa-money-bill-wave" style="margin-right: 0.5rem; color: #28a745"></i>
+                            <h4 class="section-title">
+                                <i
+                                    class="fas fa-money-bill-wave"
+                                    style="margin-right: 0.5rem; color: #28a745"
+                                ></i>
                                 Prix de consignation
                             </h4>
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem">
+
+                            <div class="form-grid">
                                 <div class="form-group">
-                                    <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                        Prix de consignation <span style="color: #dc3545">*</span>
+                                    <label class="form-label">
+                                        Prix de consignation
+                                        <span style="color: #dc3545">*</span>
                                     </label>
                                     <input
                                         v-model="deposit_price"
@@ -778,13 +781,13 @@
                                         min="0"
                                         required
                                         placeholder="0"
-                                        style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
                                     />
                                 </div>
 
                                 <div class="form-group">
-                                    <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                        Prix de rechargement <span style="color: #dc3545">*</span>
+                                    <label class="form-label">
+                                        Prix de rechargement
+                                        <span style="color: #dc3545">*</span>
                                     </label>
                                     <input
                                         v-model="filling_price"
@@ -794,79 +797,87 @@
                                         min="0"
                                         required
                                         placeholder="0"
-                                        style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
                                     />
                                 </div>
                             </div>
 
                             <!-- Nouveaux champs de bénéfices pour produits consignables -->
-                            <h4 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 600">
-                                <i class="fas fa-chart-line" style="margin-right: 0.5rem; color: #ffc107"></i>
+                            <h4
+                                class="section-title"
+                                style="margin-top: 1.5rem"
+                            >
+                                <i
+                                    class="fas fa-chart-line"
+                                    style="margin-right: 0.5rem; color: #ffc107"
+                                ></i>
                                 Bénéfices
                             </h4>
-                            
-                            <div style="display: grid; grid-template-columns: 1fr; gap: 1rem">
-                                <div class="form-group">
-                                    <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                        Bénéfice lors d'une consignation <span style="color: #dc3545">*</span>
-                                    </label>
-                                    <input
-                                        v-model="benefit_deposit"
-                                        type="number"
-                                        class="form-control"
-                                        step="0.01"
-                                        min="0"
-                                        required
-                                        placeholder="0"
-                                        style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
-                                    />
-                                </div>
 
-                                <div class="form-group">
-                                    <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                        Bénéfice lors d'un rechargement <span style="color: #dc3545">*</span>
-                                    </label>
-                                    <input
-                                        v-model="benefit_refill"
-                                        type="number"
-                                        class="form-control"
-                                        step="0.01"
-                                        min="0"
-                                        required
-                                        placeholder="0"
-                                        style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
-                                    />
-                                </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Bénéfice lors d'une consignation
+                                    <span style="color: #dc3545">*</span>
+                                </label>
+                                <input
+                                    v-model="benefit_deposit"
+                                    type="number"
+                                    class="form-control"
+                                    step="0.01"
+                                    min="0"
+                                    required
+                                    placeholder="0"
+                                />
+                            </div>
 
-                                <div class="form-group">
-                                    <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                        Bénéfice lors d'une consignation + rechargement <span style="color: #dc3545">*</span>
-                                    </label>
-                                    <input
-                                        v-model="benefit_deposit_refill"
-                                        type="number"
-                                        class="form-control"
-                                        step="0.01"
-                                        min="0"
-                                        required
-                                        placeholder="0"
-                                        style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
-                                    />
-                                </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Bénéfice lors d'un rechargement
+                                    <span style="color: #dc3545">*</span>
+                                </label>
+                                <input
+                                    v-model="benefit_refill"
+                                    type="number"
+                                    class="form-control"
+                                    step="0.01"
+                                    min="0"
+                                    required
+                                    placeholder="0"
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Bénéfice lors d'une consignation +
+                                    rechargement
+                                    <span style="color: #dc3545">*</span>
+                                </label>
+                                <input
+                                    v-model="benefit_deposit_refill"
+                                    type="number"
+                                    class="form-control"
+                                    step="0.01"
+                                    min="0"
+                                    required
+                                    placeholder="0"
+                                />
                             </div>
                         </template>
 
                         <!-- Si produit non consignable -->
                         <template v-else>
-                            <h4 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 600">
-                                <i class="fas fa-money-bill-wave" style="margin-right: 0.5rem; color: #007bff"></i>
+                            <h4 class="section-title">
+                                <i
+                                    class="fas fa-money-bill-wave"
+                                    style="margin-right: 0.5rem; color: #007bff"
+                                ></i>
                                 Prix de vente
                             </h4>
-                            
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem">
+
+                            <div class="form-grid-three">
                                 <div class="form-group">
-                                    <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                        Prix détail <span style="color: #dc3545">*</span>
+                                    <label class="form-label">
+                                        Prix détail
+                                        <span style="color: #dc3545">*</span>
                                     </label>
                                     <input
                                         v-model="price_detail"
@@ -876,13 +887,13 @@
                                         min="0"
                                         required
                                         placeholder="0"
-                                        style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
                                     />
                                 </div>
 
                                 <div class="form-group">
-                                    <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                        Prix semi-gros <span style="color: #dc3545">*</span>
+                                    <label class="form-label">
+                                        Prix semi-gros
+                                        <span style="color: #dc3545">*</span>
                                     </label>
                                     <input
                                         v-model="price_semi_bulk"
@@ -892,13 +903,13 @@
                                         min="0"
                                         required
                                         placeholder="0"
-                                        style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
                                     />
                                 </div>
 
                                 <div class="form-group">
-                                    <label style="font-weight: 600; color: #495057; margin-bottom: 0.5rem; display: block">
-                                        Prix gros <span style="color: #dc3545">*</span>
+                                    <label class="form-label">
+                                        Prix gros
+                                        <span style="color: #dc3545">*</span>
                                     </label>
                                     <input
                                         v-model="price_bulk"
@@ -908,7 +919,6 @@
                                         min="0"
                                         required
                                         placeholder="0"
-                                        style="padding: 0.75rem; border-radius: 8px; border: 1px solid #ced4da"
                                     />
                                 </div>
                             </div>
@@ -916,47 +926,29 @@
                     </div>
 
                     <!-- Boutons -->
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem">
+                    <div class="form-actions">
                         <button
                             type="submit"
-                            class="btn-primary"
-                            style="
-                                flex: 1;
-                                padding: 0.875rem;
-                                font-size: 1rem;
-                                font-weight: 600;
-                                border-radius: 8px;
-                                background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-                                border: none;
-                                color: white;
-                                cursor: pointer;
-                                transition: transform 0.2s;
-                            "
-                            onmouseover="this.style.transform='translateY(-2px)'"
-                            onmouseout="this.style.transform='translateY(0)'"
+                            class="btn-submit"
+                            style="margin: 5px"
                         >
-                            <i class="fas fa-save" style="margin-right: 0.5rem"></i>
-                            Enregistrer le produit
+                            <i
+                                class="fas fa-save"
+                                style="margin-right: 5px"
+                            ></i>
+                            Enregistrer
                         </button>
+
                         <button
+                            style="margin: 5px"
                             type="button"
                             @click="closeAddProductModal()"
-                            style="
-                                flex: 0 0 140px;
-                                padding: 0.875rem;
-                                font-size: 1rem;
-                                font-weight: 600;
-                                border-radius: 8px;
-                                background: #6c757d;
-                                color: white;
-                                border: none;
-                                cursor: pointer;
-                                transition: all 0.2s;
-                            "
-                            onmouseover="this.style.background='#5a6268'"
-                            onmouseout="this.style.background='#6c757d'"
+                            class="btn-cancel"
                         >
-                            <i class="fas fa-times" style="margin-right: 0.5rem"></i>
+                            <i
+                                class="fas fa-times"
+                                style="margin-right: 5px"
+                            ></i>
                             Annuler
                         </button>
                     </div>
@@ -1242,7 +1234,6 @@
 </template>
 
 <script>
-    
     export default {
         name: 'ProductsComponent',
 
@@ -1272,9 +1263,9 @@
                 is_depositable: 0, // Produit non consignable par défaut
                 deposit_price: '',
                 filling_price: '', // Nouveau : prix de rechargement
-                
+
                 isReturnable: false, // Produit sans emballage par défaut (0)
-                
+
                 benefit_deposit: '', // Bénéfice lors d'une consignation
                 benefit_refill: '', // Bénéfice lors d'un rechargement
                 benefit_deposit_refill: '', // Bénéfice lors d'une consignation + rechargement
@@ -2031,13 +2022,16 @@
 
                 formData.append('is_depositable', this.is_depositable ? 1 : 0);
                 formData.append('isReturnable', this.isReturnable ? 1 : 0);
-                
+
                 if (this.is_depositable) {
                     formData.append('deposit_price', this.deposit_price);
                     formData.append('filling_price', this.filling_price);
                     formData.append('benefit_deposit', this.benefit_deposit);
                     formData.append('benefit_refill', this.benefit_refill);
-                    formData.append('benefit_deposit_refill', this.benefit_deposit_refill);
+                    formData.append(
+                        'benefit_deposit_refill',
+                        this.benefit_deposit_refill
+                    );
                 }
 
                 // 🔍 Displaying the sent content
@@ -2072,11 +2066,14 @@
                         this.benefit_deposit_refill = '';
                     })
                     .catch((error) => {
-                        console.error('Erreur lors de l\'ajout du produit:', error);
-                        alert('Erreur lors de l\'ajout du produit.');
+                        console.error(
+                            "Erreur lors de l'ajout du produit:",
+                            error
+                        );
+                        alert("Erreur lors de l'ajout du produit.");
                     });
             },
-            
+
             handleReturnableChange() {
                 // If "with packaging" is checked, ensure "depositable" is set to No
                 if (this.isReturnable) {
@@ -2628,6 +2625,239 @@
 
         .pagination-container {
             justify-content: center;
+        }
+    }
+
+    /* Nueaux Styles pour le modal d'ajout de produit */
+    .modal-product-form {
+        max-width: 700px;
+        padding: 2.5rem;
+    }
+
+    /* Ajout de media queries pour responsive mobile */
+    @media (max-width: 768px) {
+        .modal-product-form {
+            padding: 1.5rem;
+            max-width: 95%;
+            margin: 1rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.2rem !important;
+        }
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Padding réduit pour mobile */
+    @media (max-width: 768px) {
+        .form-section {
+            padding: 1rem;
+        }
+    }
+
+    .form-section-white {
+        background: #fff;
+        border: 2px solid #e9ecef;
+    }
+
+    .section-title {
+        margin: 0 0 1rem 0;
+        color: #495057;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    /* Titre réduit pour mobile */
+    @media (max-width: 768px) {
+        .section-title {
+            font-size: 1rem;
+        }
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    /* Une colonne sur mobile */
+    @media (max-width: 640px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+    }
+
+    .form-grid-three {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    /* Une colonne sur mobile pour les 3 prix */
+    @media (max-width: 640px) {
+        .form-grid-three {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+    }
+
+    .product-type-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    /* Une colonne sur mobile pour les types de produit */
+    @media (max-width: 640px) {
+        .product-type-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+    }
+
+    .product-type-card {
+        padding: 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 2px solid #dee2e6;
+        transition: all 0.3s;
+        background-color: #f8f9fa;
+    }
+
+    /* Padding réduit sur mobile */
+    @media (max-width: 640px) {
+        .product-type-card {
+            padding: 0.75rem;
+        }
+
+        .product-type-title {
+            font-size: 0.9rem;
+        }
+
+        .product-type-subtitle {
+            font-size: 0.75rem;
+        }
+    }
+
+    .product-type-card.active-depositable {
+        border-color: #28a745;
+        background: #d4edda;
+    }
+
+    .product-type-card.active-returnable {
+        border-color: #17a2b8;
+        background: #d1ecf1;
+    }
+
+    .checkbox-custom {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        border: 2px solid #ced4da;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background-color: white;
+    }
+
+    .checkbox-custom.checked {
+        border-color: #28a745 !important;
+        background: #28a745;
+    }
+
+    .checkbox-custom.returnable.checked {
+        border-color: #17a2b8 !important;
+        background: #17a2b8;
+    }
+
+    .product-type-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .product-type-subtitle {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .btn-submit {
+        flex: 1;
+        padding: 0.875rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+        color: white;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .btn-submit:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-cancel {
+        flex: 0 0 140px;
+        padding: 0.875rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+
+    /* Styles pour le bouton de retour */
+    .btn-back {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid #007bff;
+        background-color: white;
+        color: #007bff;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .btn-back:hover {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-back-text {
+        display: block;
+    }
+
+    @media (max-width: 576px) {
+        .btn-back-text {
+            display: none; /* Hide text on very small screens */
+        }
+        .btn-back {
+            padding: 0.5rem 0.75rem;
         }
     }
 </style>

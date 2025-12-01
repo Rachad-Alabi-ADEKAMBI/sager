@@ -81,6 +81,16 @@
                                                 >
                                                     Consignable
                                                 </span>
+                                                <span
+                                                    v-if="
+                                                        isProductReturnable(
+                                                            product
+                                                        )
+                                                    "
+                                                    class="badge-small-inline"
+                                                >
+                                                    Emballage
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -100,6 +110,16 @@
                                             class="badge-small"
                                         >
                                             Consignable
+                                        </span>
+                                        <span
+                                            v-if="
+                                                isProductReturnable(
+                                                    line.product
+                                                )
+                                            "
+                                            class="badge-small"
+                                        >
+                                            Emballage
                                         </span>
                                     </div>
                                 </div>
@@ -567,6 +587,17 @@
                 });
 
                 return result;
+            },
+            isProductReturnable(product) {
+                if (!product) return false;
+
+                const returnable = product.isReturnable;
+                return (
+                    returnable === 1 ||
+                    returnable === true ||
+                    returnable === '1' ||
+                    returnable === 'true'
+                );
             },
 
             filteredProducts(currentIndex) {

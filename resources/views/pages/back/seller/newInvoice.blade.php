@@ -181,7 +181,7 @@
 
         <div class="footer">
             <p><strong>Observation :</strong> Facture à régler au plus tard le
-                {{ $sale->created_at->addDays(2)->format('d/m/Y') }}
+                {{ $sale->created_at->format('d/m/Y') }}
             </p>
             <p class="footer-note">Les produits vendus ne sont ni repris, ni échangés.</p>
             <p style="text-align:center;">Merci pour votre fidélité</p>
