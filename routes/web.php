@@ -18,6 +18,8 @@ use App\Http\Controllers\{
     ClientController,
     ClaimController,
     ClaimsPaymentController,
+    ExpenseController,
+    ReturnableProductController
 };
 
 use App\Models\{
@@ -167,7 +169,19 @@ Route::get('/claims', [ClaimController::class, 'index'])->name('claims');
 Route::post('/claims/pay', [ClaimsPaymentController::class, 'addPayment'])->name('claims.pay');
 Route::get('/claims/payments', [ClaimsPaymentController::class, 'list'])->name('claims.payments.list');
 
+//route pour les depenses
+Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses');
+Route::post('/expenses', [ExpenseController::class, 'store'])
+    ->name('expenses.store');
+Route::get('/expensesList', [ExpenseController::class, 'expensesList'])
+    ->name('expenses.list');
 
+//route pour les emballages
+Route::get('/returnableProducts', [ReturnableProductController::class, 'index'])->name('returnableProducts');
+
+
+
+//proformas
 Route::get('/proformas', function () {
     if (!Auth::check() || Auth::user()->role !== 'admin') {
         return redirect()->route('login');
@@ -658,6 +672,9 @@ Route::get('/deposits/{product_id}/history', [StockDepositController::class, 'hi
 
 //ajouter du stock pour les consignations
 Route::post('/deposits/add', [DepositController::class, 'addDeposit']);
+
+// retirer du stock pour les consignations
+Route::post('/deposits/remove', [DepositController::class, 'removeDeposit']);
 
 //liste des consignations
 Route::get('/depositsList', [DepositController::class, 'depositsList']);

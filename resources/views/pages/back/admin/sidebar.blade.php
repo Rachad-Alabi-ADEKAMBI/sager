@@ -27,6 +27,14 @@
 
 
          <li>
+             <a href="{{ route('returnableProducts') }}" class="{{ request()->routeIs('returnableProducts.*') ? 'active' : '' }}">
+                 <i class="fas fa-box"></i> Emballages
+             </a>
+         </li>
+
+
+
+         <li>
              <a href="{{ url('/proformas') }}" class="{{ request()->is('proformas') ? 'active' : '' }}">
                  <i class="fas fa-file-invoice"></i> Factures Proformas
              </a>
@@ -45,6 +53,12 @@
          <li>
              <a href="{{ route('claims') }}" class="{{ request()->routeIs('claims') ? 'active' : '' }}">
                  <i class="fas fa-briefcase"></i> Créances
+             </a>
+         </li>
+
+         <li>
+             <a href="{{ route('expenses') }}" class="{{ request()->routeIs('expenses') ? 'active' : '' }}">
+                 <i class="fas fa-briefcase"></i> Dépenses
              </a>
          </li>
 

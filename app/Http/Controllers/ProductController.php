@@ -10,6 +10,7 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\SaleController;
 use App\Models\Stock;
 use App\Models\StockDeposit;
+use App\Models\Deposit;
 use App\Models\Sale;
 use App\Models\SaleProduct;
 use Illuminate\Support\Facades\DB;
@@ -32,38 +33,55 @@ class ProductController extends BaseController
 
     public function store(Request $request)
     {
-        // Valeur par défaut à 0 si non envoyée
+        // Valeurs par défaut
         $request->merge([
             'is_depositable' => $request->input('is_depositable', 0),
+            'isReturnable'   => $request->input('isReturnable', 0),
         ]);
 
         $data = $request->validate([
             'name' => 'required|string',
+
             'purchase_price' => 'required|numeric',
             'price_detail' => 'nullable|numeric',
             'price_semi_bulk' => 'nullable|numeric',
             'price_bulk' => 'nullable|numeric',
+
             'quantity' => 'required|numeric',
+
             'is_depositable' => 'required|integer',
+            'isReturnable'   => 'required|integer',
+
             'deposit_price' => 'nullable|numeric',
             'filling_price' => 'nullable|numeric',
+
+            // Nouveaux champs
+            'benefit_deposit' => 'nullable|numeric',
+            'benefit_refill' => 'nullable|numeric',
+            'benefit_deposit_refill' => 'nullable|numeric',
         ]);
 
         try {
-            // Gestion des champs selon le type
+
+            // Gestion automatique selon consignable ou non
             if ($data['is_depositable']) {
+                // Produit consignable → prix classiques inutiles
                 $data['price_detail'] = null;
                 $data['price_semi_bulk'] = null;
                 $data['price_bulk'] = null;
             } else {
+                // Produit normal → prix consignation inutiles
                 $data['deposit_price'] = null;
                 $data['filling_price'] = null;
+                $data['benefit_deposit'] = null;
+                $data['benefit_refill'] = null;
+                $data['benefit_deposit_refill'] = null;
             }
 
             // Création du produit
             $product = Product::create($data);
 
-            // Création du mouvement de stock
+            // Mouvement de stock initial
             Stock::create([
                 'date' => now()->toDateString(),
                 'initial_stock' => 0,
@@ -79,15 +97,16 @@ class ProductController extends BaseController
                 'seller_name' => null,
             ]);
 
-            // 🔹 Si le produit est consignable → création du dépôt et de l’historique
+            // Dépôt si consignable
             if ($data['is_depositable']) {
-                $deposit = \App\Models\Deposit::create([
+
+                Deposit::create([
                     'product_id' => $product->id,
                     'product_name' => $product->name,
                     'quantity' => 0,
                 ]);
 
-                \App\Models\StockDeposit::create([
+                StockDeposit::create([
                     'product_id' => $product->id,
                     'initial_stock' => 0,
                     'quantity' => 0,
@@ -96,13 +115,15 @@ class ProductController extends BaseController
                 ]);
             }
 
-            // Création d’une notification
+            // Notification
             Notification::create([
-                'description' => 'Produit ' . $data['name'] . ' ajouté avec succès. Quantité : ' . $data['quantity'] . '.',
+                'description' =>
+                'Produit ' . $data['name'] . ' ajouté avec succès. Quantité : ' . $data['quantity'] . '.',
             ]);
 
             return response()->json(['message' => 'Produit ajouté avec succès.'], 201);
         } catch (\Exception $e) {
+
             return response()->json([
                 'error' => 'Erreur lors de la création du produit.',
                 'details' => $e->getMessage()

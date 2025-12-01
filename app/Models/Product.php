@@ -21,6 +21,10 @@ class Product extends Model
         'is_depositable',
         'deposit_price',
         'filling_price',
+        'isReturnable',
+        'benefit_deposit',
+        'benefit_refill',
+        'benefit_deposit_refill',
     ];
 
     // Indique à Eloquent de gérer automatiquement la colonne deleted_at

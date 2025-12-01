@@ -49,6 +49,7 @@ class SaleController extends Controller
         try {
             $total = collect($validated['products'])->sum(fn($item) => $item['quantity'] * $item['price']);
 
+            // Création de la vente
             $sale = Sale::create([
                 'seller_name' => $validated['seller_name'],
                 'buyer_name' => $validated['buyer_name'],
@@ -58,6 +59,7 @@ class SaleController extends Controller
                 'status' => 'done',
             ]);
 
+            // Gestion du crédit
             if (strtolower($validated['payment_method']) === 'credit') {
                 $client = Client::where('name', $validated['buyer_name'])->first();
                 if ($client) {
@@ -75,13 +77,15 @@ class SaleController extends Controller
                 $product = Product::findOrFail($item['product_id']);
                 $initial_quantity = $product->quantity;
 
+                // Vérification du stock
                 if ($product->quantity < $item['quantity']) {
                     throw new \Exception("Stock insuffisant pour le produit : {$product->name}");
                 }
 
                 $unitPrice = $item['price'];
-                $priceType = $item['price_type'] ?? null; // Utilise directement le price_type envoyé par le front
+                $priceType = $item['price_type'] ?? null;
 
+                // Enregistrement du produit vendu
                 SaleProduct::create([
                     'sale_id' => $sale->id,
                     'product_id' => $product->id,
@@ -90,9 +94,11 @@ class SaleController extends Controller
                     'price_type' => $priceType,
                 ]);
 
+                // Décrémentation du stock produit
                 $product->decrement('quantity', $item['quantity']);
                 $final_quantity = $initial_quantity - $item['quantity'];
 
+                // Historique de stock
                 Stock::create([
                     'date' => now()->toDateString(),
                     'initial_stock' => $initial_quantity,
@@ -105,6 +111,7 @@ class SaleController extends Controller
                     'seller_name' => $sale->seller_name,
                 ]);
 
+                // Gestion du stock déposable (optionnel)
                 if ($product->is_depositable && $priceType === 'refill') {
                     $comment = 'Facture ' . $sale->id . ' à ' . $sale->buyer_name;
 
@@ -123,6 +130,17 @@ class SaleController extends Controller
                     ]);
                 }
 
+                // **Gestion des emballages consignés**
+                if ($product->isReturnable) {
+                    // On enregistre uniquement les emballages remis au client
+                    \App\Models\ReturnableProduct::create([
+                        'product_id' => $product->id,
+                        'sale_id' => $sale->id,
+                        'quantity_purchased' => $item['quantity'], // nb d'emballages remis
+                        'quantity_returned' => 0,                  // nb d'emballages retournés
+                    ]);
+                }
+
                 $details[] = [
                     'product' => $product->name,
                     'quantity_sold' => $item['quantity'],
@@ -131,6 +149,7 @@ class SaleController extends Controller
                 ];
             }
 
+            // Notification de la vente
             Notification::create([
                 'description' => 'Facture N°' . $sale->id . '/' . now()->format('m') . '/' . now()->format('y')
                     . '/FR-N pour ' . $sale->buyer_name . ' par ' . $sale->seller_name
@@ -153,7 +172,6 @@ class SaleController extends Controller
             ], 500);
         }
     }
-
 
 
 

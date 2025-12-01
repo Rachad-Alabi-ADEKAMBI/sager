@@ -2,33 +2,6 @@
     <div class="claims-content">
         <div class="claims-header">
             <h2>Gestion des Créances</h2>
-
-            <!-- Added statistics section at the top -->
-            <div class="statistics-section">
-                <div class="stat-card">
-                    <div class="stat-label">Total des Créances</div>
-                    <div class="stat-value">
-                        {{ formatAmount(totalDebtAmount) }} FCFA
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Total Payé</div>
-                    <div class="stat-value" style="color: #28a745">
-                        {{ formatAmount(totalPaidAmount) }} FCFA
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Total Restant</div>
-                    <div class="stat-value" style="color: #dc3545">
-                        {{ formatAmount(totalRemainingAmount) }} FCFA
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Nombre de Créances</div>
-                    <div class="stat-value">{{ filteredClaims.length }}</div>
-                </div>
-            </div>
-
             <div class="header-actions">
                 <button class="btn btn-primary" @click="openAddClaimModal()">
                     <i class="fas fa-plus"></i>
@@ -72,7 +45,7 @@
         <div class="showClaims" v-if="showClaims && groupByClient">
             <div
                 class="table-container"
-                v-for="client in paginatedGroupedClaims"
+                v-for="client in groupedClaims"
                 :key="client.client_id"
             >
                 <div class="table-header">
@@ -211,31 +184,8 @@
                 </table>
             </div>
 
-            <div v-if="paginatedGroupedClaims.length === 0" class="no-data">
+            <div v-if="groupedClaims.length === 0" class="no-data">
                 <strong>Aucune créance disponible</strong>
-            </div>
-
-            <!-- Added pagination controls for grouped view -->
-            <div v-if="groupedClaims.length > 0" class="pagination">
-                <button
-                    @click="previousPage"
-                    :disabled="currentPage === 1"
-                    class="btn-pagination"
-                >
-                    <i class="fas fa-chevron-left"></i>
-                    Précédent
-                </button>
-                <span class="pagination-info">
-                    Page {{ currentPage }} sur {{ totalPages }}
-                </span>
-                <button
-                    @click="nextPage"
-                    :disabled="currentPage === totalPages"
-                    class="btn-pagination"
-                >
-                    Suivant
-                    <i class="fas fa-chevron-right"></i>
-                </button>
             </div>
         </div>
 
@@ -247,7 +197,7 @@
                     <strong>Total: {{ filteredClaims.length }}</strong>
                 </div>
 
-                <table class="table" v-if="paginatedClaims.length > 0">
+                <table class="table" v-if="filteredClaims.length > 0">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -262,7 +212,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="claim in paginatedClaims" :key="claim.id">
+                        <tr v-for="claim in filteredClaims" :key="claim.id">
                             <td data-label="Date">
                                 {{ formatDateTime(claim.created_at) }}
                             </td>
@@ -373,34 +323,11 @@
                 </table>
 
                 <strong
-                    v-if="paginatedClaims.length === 0"
+                    v-if="filteredClaims.length === 0"
                     class="mx-auto text-center"
                 >
                     Aucune créance disponible
                 </strong>
-            </div>
-
-            <!-- Added pagination controls for list view -->
-            <div v-if="filteredClaims.length > 0" class="pagination">
-                <button
-                    @click="previousPage"
-                    :disabled="currentPage === 1"
-                    class="btn-pagination"
-                >
-                    <i class="fas fa-chevron-left"></i>
-                    Précédent
-                </button>
-                <span class="pagination-info">
-                    Page {{ currentPage }} sur {{ totalPages }}
-                </span>
-                <button
-                    @click="nextPage"
-                    :disabled="currentPage === totalPages"
-                    class="btn-pagination"
-                >
-                    Suivant
-                    <i class="fas fa-chevron-right"></i>
-                </button>
             </div>
         </div>
 
@@ -498,18 +425,17 @@
                 <h3>Ajouter un nouveau client</h3>
                 <span
                     class="close"
-                    @click="closeAddClientModal()"
-                    style="cursor: pointer; font-size: 1.5rem; color: #999"
+                    @click="closeAddClientModal"
+                    style="cursor: pointer; font-size: 1.5rem"
                 >
                     &times;
                 </span>
             </div>
 
-            <form @submit.prevent="addClientForm" class="form">
-                <div class="form-group">
-                    <label for="clientName">Nom du client</label>
+            <form @submit.prevent="addClientForm">
+                <div class="form-group" style="margin-bottom: 1rem">
+                    <label>Nom du client</label>
                     <input
-                        id="clientName"
                         v-model="newClient.name"
                         type="text"
                         class="form-control"
@@ -517,10 +443,9 @@
                     />
                 </div>
 
-                <div class="form-group">
-                    <label for="clientPhone">Téléphone</label>
+                <div class="form-group" style="margin-bottom: 1rem">
+                    <label>Téléphone</label>
                     <input
-                        id="clientPhone"
                         v-model="newClient.phone"
                         type="text"
                         class="form-control"
@@ -532,20 +457,33 @@
                     style="
                         display: flex;
                         gap: 1rem;
-                        justify-content: flex-end;
                         margin-top: 2rem;
+                        flex-wrap: wrap;
                     "
                 >
                     <button
+                        type="submit"
+                        class="btn-primary"
+                        style="flex: 1 1 45%; min-width: 120px"
+                    >
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                    <button
                         type="button"
-                        class="btn"
                         @click="closeAddClientModal()"
-                        style="background: #6c757d; color: white"
+                        style="
+                            flex: 1 1 45%;
+                            min-width: 120px;
+                            background: #6c757d;
+                            color: white;
+                            border: none;
+                            padding: 0.75rem;
+                            border-radius: 10px;
+                            cursor: pointer;
+                        "
                     >
                         Annuler
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        Ajouter
                     </button>
                 </div>
             </form>
@@ -567,26 +505,25 @@
                     align-items: center;
                 "
             >
-                <h3>Ajouter une créance</h3>
+                <h3>Ajouter une nouvelle créance</h3>
                 <span
                     class="close"
-                    @click="closeAddClaimModal()"
-                    style="cursor: pointer; font-size: 1.5rem; color: #999"
+                    @click="closeAddClaimModal"
+                    style="cursor: pointer; font-size: 1.5rem"
                 >
                     &times;
                 </span>
             </div>
 
-            <form @submit.prevent="addClaimForm" class="form">
-                <div class="form-group">
-                    <label for="clientSelect">Client</label>
+            <form @submit.prevent="addClaimForm">
+                <div class="form-group" style="margin-bottom: 1rem">
+                    <label>Client</label>
                     <select
-                        id="clientSelect"
                         v-model="newClaim.client_id"
                         class="form-control"
                         required
                     >
-                        <option value="">-- Sélectionner un client --</option>
+                        <option value="">Sélectionner un client</option>
                         <option
                             v-for="client in clients"
                             :key="client.id"
@@ -597,24 +534,25 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="debtAmount">Montant de la créance</label>
+                <div class="form-group" style="margin-bottom: 1rem">
+                    <label>Montant de la dette</label>
                     <input
-                        id="debtAmount"
                         v-model="newClaim.debt_amount"
                         type="number"
                         class="form-control"
+                        step="0.01"
+                        min="0"
                         required
                     />
                 </div>
 
-                <div class="form-group">
-                    <label for="claimComment">Commentaire</label>
+                <div class="form-group" style="margin-bottom: 1rem">
+                    <label>Commentaire</label>
                     <textarea
-                        id="claimComment"
                         v-model="newClaim.comment"
                         class="form-control"
                         rows="3"
+                        placeholder="Ex: Facture N°123..."
                     ></textarea>
                 </div>
 
@@ -622,20 +560,33 @@
                     style="
                         display: flex;
                         gap: 1rem;
-                        justify-content: flex-end;
                         margin-top: 2rem;
+                        flex-wrap: wrap;
                     "
                 >
                     <button
+                        type="submit"
+                        class="btn-primary"
+                        style="flex: 1 1 45%; min-width: 120px"
+                    >
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                    <button
                         type="button"
-                        class="btn"
                         @click="closeAddClaimModal()"
-                        style="background: #6c757d; color: white"
+                        style="
+                            flex: 1 1 45%;
+                            min-width: 120px;
+                            background: #6c757d;
+                            color: white;
+                            border: none;
+                            padding: 0.75rem;
+                            border-radius: 10px;
+                            cursor: pointer;
+                        "
                     >
                         Annuler
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        Ajouter
                     </button>
                 </div>
             </form>
@@ -649,84 +600,108 @@
         @click.self="closeAddPaymentModal()"
     >
         <div class="modal-content" style="padding: 2rem">
-            <div
-                class="modal-header"
-                style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                "
-            >
-                <h3>Ajouter un paiement</h3>
+            <div class="modal-header">
+                <h3>
+                    Ajouter un paiement pour
+                    <strong>{{ selectedClaim.client_name }}</strong>
+                </h3>
                 <span
                     class="close"
-                    @click="closeAddPaymentModal()"
-                    style="cursor: pointer; font-size: 1.5rem; color: #999"
+                    @click="closeAddPaymentModal"
+                    style="cursor: pointer; font-size: 1.5rem"
                 >
                     &times;
                 </span>
             </div>
 
-            <form @submit.prevent="addPaymentForm" class="form">
-                <div style="margin-bottom: 1.5rem">
-                    <strong>Créance:</strong>
-                    {{ selectedClaim.client_name }} -
+            <div
+                style="
+                    background: #f8f9fa;
+                    padding: 1rem;
+                    border-radius: 8px;
+                    margin: 1rem 0;
+                "
+            >
+                <p>
+                    <strong>Montant dû:</strong>
                     {{ formatAmount(selectedClaim.debt_amount) }} FCFA
-                </div>
+                </p>
+                <p>
+                    <strong>Déjà payé:</strong>
+                    {{ formatAmount(getClaimPaidAmount(selectedClaim.id)) }}
+                    FCFA
+                </p>
+                <p>
+                    <strong>Reste à payer:</strong>
+                    <span style="color: #dc3545; font-weight: bold">
+                        {{
+                            formatAmount(
+                                selectedClaim.debt_amount -
+                                    getClaimPaidAmount(selectedClaim.id)
+                            )
+                        }}
+                        FCFA
+                    </span>
+                </p>
+            </div>
 
-                <div class="form-group">
-                    <label for="paymentAmount">Montant du paiement</label>
+            <form @submit.prevent="addPaymentForm">
+                <div class="form-group" style="margin-bottom: 1rem">
+                    <label>Montant du paiement</label>
                     <input
-                        id="paymentAmount"
                         v-model="newPayment.amount"
                         type="number"
                         class="form-control"
+                        step="0.01"
+                        min="0"
                         required
                     />
                 </div>
 
-                <div class="form-group">
-                    <label for="paymentMethod">Méthode de paiement</label>
+                <div class="form-group" style="margin-bottom: 1rem">
+                    <label>Méthode de paiement</label>
                     <select
-                        id="paymentMethod"
                         v-model="newPayment.payment_method"
                         class="form-control"
+                        required
                     >
                         <option value="espèces">Espèces</option>
-                        <option value="chèque">Chèque</option>
+                        <option value="carte bancaire">Carte bancaire</option>
                         <option value="virement">Virement</option>
-                        <option value="autre">Autre</option>
+                        <option value="mobile money">Mobile Money</option>
+                        <option value="chèque">Chèque</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="paymentComment">Commentaire</label>
+                <div class="form-group" style="margin-bottom: 1rem">
+                    <label>Commentaire (optionnel)</label>
                     <textarea
-                        id="paymentComment"
                         v-model="newPayment.comment"
                         class="form-control"
-                        rows="3"
+                        rows="2"
+                        placeholder="Ex: Acompte sur facture..."
                     ></textarea>
                 </div>
 
-                <div
-                    style="
-                        display: flex;
-                        gap: 1rem;
-                        justify-content: flex-end;
-                        margin-top: 2rem;
-                    "
-                >
+                <div style="display: flex; gap: 1rem; margin-top: 2rem">
+                    <button type="submit" class="btn-primary" style="flex: 1">
+                        <i class="fas fa-save"></i>
+                        Enregistrer le paiement
+                    </button>
                     <button
                         type="button"
-                        class="btn"
                         @click="closeAddPaymentModal()"
-                        style="background: #6c757d; color: white"
+                        style="
+                            flex: 1;
+                            background: #6c757d;
+                            color: white;
+                            border: none;
+                            padding: 0.75rem;
+                            border-radius: 10px;
+                            cursor: pointer;
+                        "
                     >
                         Annuler
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        Ajouter le paiement
                     </button>
                 </div>
             </form>
@@ -737,58 +712,63 @@
     <div
         v-if="showDeleteClaimModal"
         class="modal-delete-claim"
-        @click.self="closeDeleteClaimModal()"
+        @click.self="closeDeleteClaimModal"
     >
-        <div class="modal-content" style="padding: 2rem">
-            <div
-                class="modal-header"
-                style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                "
-            >
-                <h3>Confirmation de suppression</h3>
+        <div class="modal-content" style="padding: 2rem; max-width: 400px">
+            <div class="modal-header">
+                <h3>Confirmer la suppression</h3>
                 <span
                     class="close"
-                    @click="closeDeleteClaimModal()"
-                    style="cursor: pointer; font-size: 1.5rem; color: #999"
+                    @click="closeDeleteClaimModal"
+                    style="cursor: pointer"
                 >
                     &times;
                 </span>
             </div>
-
-            <p style="margin-bottom: 1.5rem">
-                Êtes-vous sûr de vouloir supprimer cette créance de
-                <strong>{{ currentClaim.client_name }}</strong>
-                pour un montant de
-                <strong>
-                    {{ formatAmount(currentClaim.debt_amount) }} FCFA
-                </strong>
-                ?
-            </p>
-
+            <div class="modal-body">
+                <p>
+                    Voulez-vous vraiment supprimer cette créance de
+                    <strong>{{ currentClaim.client_name }}</strong>
+                    d'un montant de
+                    <strong>
+                        {{ formatAmount(currentClaim.debt_amount) }} FCFA
+                    </strong>
+                    ?
+                </p>
+            </div>
             <div
                 style="
+                    margin-top: 1rem;
                     display: flex;
                     gap: 1rem;
                     justify-content: flex-end;
-                    margin-top: 2rem;
                 "
             >
                 <button
-                    class="btn"
-                    @click="closeDeleteClaimModal()"
-                    style="background: #6c757d; color: white"
-                >
-                    Annuler
-                </button>
-                <button
-                    class="btn"
                     @click="deleteClaim"
-                    style="background: #dc3545; color: white"
+                    style="
+                        background: #dc3545;
+                        color: #fff;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    "
                 >
                     Supprimer
+                </button>
+                <button
+                    @click="closeDeleteClaimModal"
+                    style="
+                        background: #6c757d;
+                        color: #fff;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    "
+                >
+                    Annuler
                 </button>
             </div>
         </div>
@@ -817,9 +797,6 @@
 
                 selectedClaim: {},
                 currentClaim: null,
-
-                currentPage: 1,
-                itemsPerPage: 10,
 
                 newClient: {
                     name: '',
@@ -983,18 +960,6 @@
                 );
 
                 return payments;
-            },
-
-            previousPage() {
-                if (this.currentPage > 1) {
-                    this.currentPage--;
-                }
-            },
-
-            nextPage() {
-                if (this.currentPage < this.totalPages) {
-                    this.currentPage++;
-                }
             },
 
             openAddClaimModal() {
@@ -1370,52 +1335,6 @@
         },
 
         computed: {
-            totalDebtAmount() {
-                return this.filteredClaims.reduce(
-                    (sum, claim) => sum + parseFloat(claim.debt_amount),
-                    0
-                );
-            },
-
-            totalPaidAmount() {
-                return this.filteredClaims.reduce(
-                    (sum, claim) => sum + this.getClaimPaidAmount(claim.id),
-                    0
-                );
-            },
-
-            totalRemainingAmount() {
-                return this.totalDebtAmount - this.totalPaidAmount;
-            },
-
-            totalPages() {
-                if (this.groupByClient) {
-                    return (
-                        Math.ceil(
-                            this.groupedClaims.length / this.itemsPerPage
-                        ) || 1
-                    );
-                } else {
-                    return (
-                        Math.ceil(
-                            this.filteredClaims.length / this.itemsPerPage
-                        ) || 1
-                    );
-                }
-            },
-
-            paginatedClaims() {
-                const start = (this.currentPage - 1) * this.itemsPerPage;
-                const end = start + this.itemsPerPage;
-                return this.filteredClaims.slice(start, end);
-            },
-
-            paginatedGroupedClaims() {
-                const start = (this.currentPage - 1) * this.itemsPerPage;
-                const end = start + this.itemsPerPage;
-                return this.groupedClaims.slice(start, end);
-            },
-
             filteredClaims() {
                 let filtered = this.claims;
 
@@ -1468,7 +1387,6 @@
                         break;
                 }
 
-                this.currentPage = 1;
                 return filtered;
             },
 
@@ -1513,35 +1431,6 @@
     /* Header */
     .claims-header {
         margin-bottom: 2rem;
-    }
-
-    /* Added statistics section styles */
-    .statistics-section {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .stat-card {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #667eea;
-    }
-
-    .stat-label {
-        color: #6c757d;
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-    }
-
-    .stat-value {
-        color: #667eea;
-        font-size: 1.8rem;
-        font-weight: 700;
     }
 
     .table-header {
@@ -1612,50 +1501,6 @@
         background: #138496;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
-    }
-
-    /* Added pagination button styles */
-    .btn-pagination {
-        padding: 0.75rem 1rem;
-        border: 1px solid #667eea;
-        background: white;
-        color: #667eea;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .btn-pagination:hover:not(:disabled) {
-        background: #667eea;
-        color: white;
-    }
-
-    .btn-pagination:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 1rem;
-        margin-top: 2rem;
-        padding: 1.5rem;
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .pagination-info {
-        font-weight: 500;
-        color: #667eea;
-        min-width: 120px;
-        text-align: center;
     }
 
     .btn-sm {
@@ -1817,10 +1662,6 @@
 
     /* Responsive */
     @media (max-width: 768px) {
-        .statistics-section {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
         .header-actions {
             flex-direction: column;
             width: 100%;
@@ -1838,15 +1679,6 @@
 
         .action-buttons {
             flex-direction: column;
-        }
-
-        .pagination {
-            flex-wrap: wrap;
-        }
-
-        .btn-pagination {
-            flex: 1;
-            min-width: 100px;
         }
     }
 </style>

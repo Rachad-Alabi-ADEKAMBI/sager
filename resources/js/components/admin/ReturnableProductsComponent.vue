@@ -5,7 +5,7 @@
             <div class="sales-history" v-if="!showHistoryView">
                 <!-- Added header with buttons at the top -->
                 <div class="page-header">
-                    <h2>Historique des Consignations</h2>
+                    <h2>Historique des emballages</h2>
                     <div class="header-actions">
                         <!-- Added remove stock button next to add stock button -->
                         <button
@@ -344,7 +344,7 @@
 
 <script>
     export default {
-        name: 'DepositsComponent',
+        name: 'ReturnableProductsComponent',
 
         data() {
             return {

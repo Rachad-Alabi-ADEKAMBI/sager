@@ -16,6 +16,7 @@
                                 <option>Ce mois</option>
                                 <option>Toutes les ventes</option>
                                 <option>À une date précise</option>
+                                <option>Entre deux dates</option>
                             </select>
 
                             <select
@@ -34,6 +35,33 @@
                                 <input
                                     type="date"
                                     v-model="selectedDate"
+                                    class="date-picker"
+                                />
+                            </div>
+
+                            <!-- Added date range inputs for filtering between two dates -->
+                            <div
+                                v-if="filterPeriod === 'Entre deux dates'"
+                                style="
+                                    display: inline-flex;
+                                    gap: 10px;
+                                    align-items: center;
+                                "
+                            >
+                                <label style="font-weight: 600; color: #333">
+                                    Du
+                                </label>
+                                <input
+                                    type="date"
+                                    v-model="startDate"
+                                    class="date-picker"
+                                />
+                                <label style="font-weight: 600; color: #333">
+                                    Au
+                                </label>
+                                <input
+                                    type="date"
+                                    v-model="endDate"
                                     class="date-picker"
                                 />
                             </div>
@@ -146,6 +174,7 @@
                     </strong>
                 </div>
 
+                <!-- Updated pagination to be responsive with ellipsis for mobile -->
                 <div class="pagination-container" v-if="totalPages > 1">
                     <ul class="pagination">
                         <li
@@ -160,8 +189,10 @@
                                 Précédent
                             </a>
                         </li>
+
+                        <!-- Desktop: Show all pages -->
                         <li
-                            class="page-item"
+                            class="page-item desktop-only"
                             v-for="page in totalPages"
                             :key="page"
                             :class="{ active: currentPage === page }"
@@ -174,6 +205,14 @@
                                 {{ page }}
                             </a>
                         </li>
+
+                        <!-- Mobile: Show current page and range with ellipsis -->
+                        <li class="page-item mobile-only">
+                            <span class="page-link" style="cursor: default">
+                                {{ currentPage }} / {{ totalPages }}
+                            </span>
+                        </li>
+
                         <li
                             class="page-item"
                             :class="{ disabled: currentPage === totalPages }"
@@ -282,6 +321,8 @@
 </template>
 
 <script>
+    // Declare axios here
+    const axios = window.axios;
     export default {
         name: 'SalesComponent',
 
@@ -291,6 +332,8 @@
                 sales: [],
                 selectedSale: null,
                 selectedDate: null,
+                startDate: null,
+                endDate: null,
                 saleModalInstance: null,
                 showSaleModal: false,
                 filterPeriod: 'Toutes les ventes',
@@ -373,7 +416,6 @@
                 window.location.href = `/newInvoice/${saleId}`;
             },
 
-            // AJOUTÉ POUR LA PAGINATION: Méthode pour changer de page
             goToPage(page) {
                 if (page >= 1 && page <= this.totalPages) {
                     this.currentPage = page;
@@ -405,10 +447,26 @@
                                 font-family: Arial, sans-serif;
                                 padding: 20px;
                             }
+                            .company-header {
+                                text-align: center;
+                                margin-bottom: 30px;
+                                border-bottom: 2px solid #333;
+                                padding-bottom: 15px;
+                            }
+                            .company-header h2 {
+                                margin: 0;
+                                color: #333;
+                                font-size: 24px;
+                            }
+                            .company-header p {
+                                margin: 5px 0;
+                                color: #666;
+                                font-size: 14px;
+                            }
                             h1 {
                                 text-align: center;
                                 color: #333;
-                                margin-bottom: 20px;
+                                margin: 20px 0;
                             }
                             .filter-info {
                                 text-align: center;
@@ -458,11 +516,14 @@
                         </style>
                     </head>
                     <body>
+                        <div class="company-header">
+                            <h2>SAGER MARKET</h2>
+                            <p><strong>Téléphone:</strong> +229 0196466625</p>
+                            <p><strong>IFU:</strong> 0202586942320</p>
+                        </div>
                         <h1>Liste des Ventes</h1>
                         <div class="filter-info">
-                            <p><strong>Période:</strong> ${
-                                this.filterPeriod
-                            }</p>
+                            <p><strong>Période:</strong> ${this.getPeriodLabel()}</p>
                             ${
                                 this.filterStatus
                                     ? `<p><strong>Statut:</strong> ${
@@ -528,6 +589,13 @@
                 return html;
             },
 
+            getPeriodLabel() {
+                if (this.filterPeriod === 'Entre deux dates') {
+                    return `Du ${this.startDate} au ${this.endDate}`;
+                }
+                return this.filterPeriod;
+            },
+
             getStatusClass(status) {
                 if (status === 'done') {
                     return 'status-completed';
@@ -540,7 +608,7 @@
         computed: {
             filteredSales() {
                 const now = new Date();
-                this.currentPage = 1; // Réinitialise la pagination à la page 1 à chaque changement de filtre
+                this.currentPage = 1;
 
                 return this.sales.filter((sale) => {
                     const saleDate = new Date(sale.created_at);
@@ -602,6 +670,18 @@
                             return saleDay.getTime() === selected.getTime();
                         }
 
+                        case 'Entre deux dates': {
+                            if (!this.startDate || !this.endDate) return true;
+
+                            const start = new Date(this.startDate);
+                            start.setHours(0, 0, 0, 0);
+
+                            const end = new Date(this.endDate);
+                            end.setHours(23, 59, 59, 999);
+
+                            return saleDate >= start && saleDate <= end;
+                        }
+
                         case 'Toutes les ventes':
                         default:
                             return true;
@@ -609,12 +689,10 @@
                 });
             },
 
-            // AJOUTÉ: Propriété calculée pour le nombre total de pages
             totalPages() {
                 return Math.ceil(this.filteredSales.length / this.perPage);
             },
 
-            // AJOUTÉ: Propriété calculée pour les ventes de la page actuelle
             paginatedSales() {
                 const start = (this.currentPage - 1) * this.perPage;
                 const end = start + this.perPage;
@@ -1639,5 +1717,40 @@
         text-transform: uppercase;
         font-size: 0.85rem;
         letter-spacing: 0.5px;
+    }
+</style>
+
+<style scoped>
+    /* Added responsive pagination styles */
+    .desktop-only {
+        display: inline-block;
+    }
+
+    .mobile-only {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .desktop-only {
+            display: none;
+        }
+
+        .mobile-only {
+            display: inline-block;
+        }
+
+        .header-filters {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .date-picker {
+            min-width: 150px;
+        }
     }
 </style>

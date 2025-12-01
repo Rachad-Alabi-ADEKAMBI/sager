@@ -8,6 +8,8 @@ import ProformasComponent from './components/admin/ProformasComponent.vue';
 import DepositsComponent from './components/admin/DepositsComponent.vue';
 import ClientsComponent from './components/admin/ClientsComponent.vue';
 import ClaimsComponent from './components/admin/ClaimsComponent.vue';
+import ExpensesComponent from './components/admin/ExpensesComponent.vue';
+import ReturnableProductsComponent from './components/admin/ReturnableProductsComponent.vue';
 
 import SaleComponent from './components/seller/SaleComponent.vue';
 import ProformaComponent from './components/seller/ProformaComponent.vue';
@@ -23,6 +25,8 @@ app.component('proformas-component', ProformasComponent);
 app.component('deposits-component', DepositsComponent);
 app.component('clients-component', ClientsComponent);
 app.component('claims-component', ClaimsComponent);
+app.component('expenses-component', ExpensesComponent);
+app.component('returnableProducts-component', ReturnableProductsComponent);
 
 app.component('sale-component', SaleComponent);
 app.component('proforma-component', ProformaComponent);
