@@ -140,73 +140,56 @@ class ProductController extends BaseController
             'price_bulk' => 'nullable|numeric|min:0',
             'deposit_price' => 'nullable|numeric|min:0',
             'filling_price' => 'nullable|numeric|min:0',
+            'benefit_deposit' => 'nullable|numeric|min:0',
+            'benefit_refill' => 'nullable|numeric|min:0',
+            'benefit_deposit_refill' => 'nullable|numeric|min:0',
         ]);
 
         // Trouver le produit
         $product = Product::findOrFail($id);
 
-        // Récupération des anciens prix
-        $oldDetail = $product->price_detail;
-        $oldSemiBulk = $product->price_semi_bulk;
-        $oldBulk = $product->price_bulk;
-        $oldDeposit = $product->deposit_price;
-        $oldFilling = $product->filling_price;
+        // Récupération des anciens prix et bénéfices
+        $old = [
+            'price_detail' => $product->price_detail,
+            'price_semi_bulk' => $product->price_semi_bulk,
+            'price_bulk' => $product->price_bulk,
+            'deposit_price' => $product->deposit_price,
+            'filling_price' => $product->filling_price,
+            'benefit_deposit' => $product->benefit_deposit,
+            'benefit_refill' => $product->benefit_refill,
+            'benefit_deposit_refill' => $product->benefit_deposit_refill,
+        ];
 
-        // Mise à jour des prix classiques si fournis
-        if (isset($validated['price_detail'])) {
-            $product->price_detail = $validated['price_detail'];
-        }
-        if (isset($validated['price_semi_bulk'])) {
-            $product->price_semi_bulk = $validated['price_semi_bulk'];
-        }
-        if (isset($validated['price_bulk'])) {
-            $product->price_bulk = $validated['price_bulk'];
-        }
-
-        // Mise à jour du prix de consignation si le produit est consignable
-        if ($product->is_depositable && isset($validated['deposit_price'])) {
-            $product->deposit_price = $validated['deposit_price'];
-        }
-
-        // Mise à jour du prix de recharge si fourni
-        if (isset($validated['filling_price'])) {
-            $product->filling_price = $validated['filling_price'];
-        }
-
-        // Construction du message de notification
-        $messages = [];
-
-        if ($oldDetail != $product->price_detail) {
-            $messages[] = 'détail: ' . $oldDetail . ' → ' . $product->price_detail;
-        }
-        if ($oldSemiBulk != $product->price_semi_bulk) {
-            $messages[] = 'semi-gros: ' . $oldSemiBulk . ' → ' . $product->price_semi_bulk;
-        }
-        if ($oldBulk != $product->price_bulk) {
-            $messages[] = 'gros: ' . $oldBulk . ' → ' . $product->price_bulk;
-        }
-        if ($product->is_depositable && $oldDeposit != $product->deposit_price) {
-            $messages[] = 'consignation: ' . $oldDeposit . ' → ' . $product->deposit_price;
-        }
-        if ($oldFilling != $product->filling_price) {
-            $messages[] = 'recharge: ' . $oldFilling . ' → ' . $product->filling_price;
+        // Mise à jour des prix classiques
+        foreach (['price_detail', 'price_semi_bulk', 'price_bulk', 'deposit_price', 'filling_price', 'benefit_deposit', 'benefit_refill', 'benefit_deposit_refill'] as $field) {
+            if (isset($validated[$field])) {
+                $product->$field = $validated[$field];
+            }
         }
 
         $product->save();
 
-        // Créer une notification seulement si au moins un prix a changé
+        // Construire le message de notification
+        $messages = [];
+        foreach ($old as $key => $oldValue) {
+            if ($oldValue != $product->$key) {
+                $messages[] = "$key: $oldValue → {$product->$key}";
+            }
+        }
+
         if (!empty($messages)) {
-            $label = 'Mise à jour des prix pour le produit "' . $product->name . '": ' . implode('; ', $messages);
+            $label = 'Mise à jour des prix/bénéfices pour le produit "' . $product->name . '": ' . implode('; ', $messages);
             Notification::create([
                 'description' => $label,
             ]);
         }
 
         return response()->json([
-            'message' => 'Prix mis à jour avec succès',
+            'message' => 'Prix et bénéfices mis à jour avec succès',
             'product' => $product
         ], 200);
     }
+
 
     public function updateStock(Request $request, $id)
     {
@@ -308,25 +291,50 @@ class ProductController extends BaseController
             ->whereIn('sale_id', $doneSaleIds)
             ->get();
 
-        $totalQuantity = $sales->sum('quantity');
+        $totalQuantity = 0;
+        $totalRevenue = 0;
+        $totalCost = 0;
+        $totalProfit = 0;
 
-        $totalRevenue = $sales->sum(function ($sale) {
-            return $sale->quantity * $sale->price;
-        });
+        $salesDetails = $sales->map(function ($sale) use ($product, &$totalQuantity, &$totalRevenue, &$totalCost, &$totalProfit) {
 
-        $totalCost = $product->purchase_price * $totalQuantity;
+            $quantity = (float) $sale->quantity;
+            $salePrice = (float) $sale->price;
+            $purchasePrice = (float) $product->purchase_price;
 
-        $profit = $totalRevenue - $totalCost;
+            // Calcul du profit selon consignable ou non
+            if ((int) $product->is_depositable === 1) {
+                $priceType = $sale->price_type ?? 'refill';
 
-        $salesDetails = $sales->map(function ($sale) use ($product) {
+                $profitUnit = match ($priceType) {
+                    'refill' => (float) ($product->benefit_refill ?? 4000),
+                    'deposit' => (float) ($product->benefit_deposit ?? 5000),
+                    'both' => (float) ($product->benefit_deposit_refill ?? 6000),
+                    default => (float) ($product->benefit_refill ?? 4000),
+                };
+
+                $profit = $profitUnit * $quantity;
+            } else {
+                $profit = ($salePrice - $purchasePrice) * $quantity;
+            }
+
+            $revenue = $salePrice * $quantity;
+            $cost = $purchasePrice * $quantity;
+
+            // Ajouter aux totaux
+            $totalQuantity += $quantity;
+            $totalRevenue += $revenue;
+            $totalCost += $cost;
+            $totalProfit += $profit;
+
             return [
                 'id' => $sale->id,
-                'quantity' => $sale->quantity,
-                'price' => $sale->price,
+                'quantity' => number_format($quantity, 2, '.', ''),
+                'price' => number_format($salePrice, 2, '.', ''),
                 'created_at' => $sale->created_at->toDateTimeString(),
-                'total_sale' => $sale->quantity * $sale->price,
-                'total_cost' => $product->purchase_price * $sale->quantity,
-                'profit' => $sale->quantity * $sale->price - $product->purchase_price * $sale->quantity,
+                'total_sale' => $revenue,
+                'total_cost' => $cost,
+                'profit' => $profit,
             ];
         });
 
@@ -334,7 +342,7 @@ class ProductController extends BaseController
             'total_quantity_sold' => $totalQuantity,
             'total_revenue' => $totalRevenue,
             'total_cost' => $totalCost,
-            'profit' => $profit,
+            'profit' => $totalProfit,
             'sales_details' => $salesDetails,
         ]);
     }

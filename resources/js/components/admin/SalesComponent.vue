@@ -1,8 +1,37 @@
 <template>
     <div>
+        <!-- Added statistics section like ReturnableProductsComponent -->
+        <div class="statistics-section">
+            <div class="stat-card stat-card-1">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">Total des ventes</div>
+                    <div class="stat-value">
+                        {{ formatAmount(totalSalesAmount) }} FCFA
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card stat-card-2">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">Ventes terminées</div>
+                    <div class="stat-value">{{ completedSalesCount }}</div>
+                </div>
+            </div>
+            <div class="stat-card stat-card-3">
+                <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">Ventes annulées</div>
+                    <div class="stat-value">{{ cancelledSalesCount }}</div>
+                </div>
+            </div>
+        </div>
+
         <div class="sales-content">
             <div class="sales-history">
-                <!-- Ajout d'un header stylisé en haut avec les filtres et bouton d'impression -->
+                <!-- Improved header with filters and print button -->
                 <div class="page-header">
                     <div class="header-content">
                         <div class="header-filters">
@@ -39,7 +68,6 @@
                                 />
                             </div>
 
-                            <!-- Added date range inputs for filtering between two dates -->
                             <div
                                 v-if="filterPeriod === 'Entre deux dates'"
                                 style="
@@ -77,7 +105,7 @@
                     </div>
                 </div>
 
-                <!-- Ajout d'un joli header de table avec gradient bleu -->
+                <!-- Added styled table header with gradient -->
                 <div class="table-header-styled">
                     <h3>Historique des ventes</h3>
                     <span class="table-count">
@@ -136,45 +164,58 @@
                                 </span>
                             </td>
                             <td data-label="Actions">
+                                <!-- Added individual print button -->
                                 <button
-                                    class="invoice-btn"
+                                    class="action-btn btn-details"
                                     @click="showSaleDetails(sale.id)"
+                                    title="Voir les détails"
                                 >
-                                    <i
-                                        class="fas fa-eye"
-                                        style="margin: 2px"
-                                    ></i>
-                                    Voir
+                                    <i class="fas fa-eye"></i>
+                                </button>
+
+                                <button
+                                    class="action-btn btn-print-individual"
+                                    @click="printSaleDetails(sale)"
+                                    title="Imprimer Détails"
+                                >
+                                    <i class="fas fa-print"></i>
+                                </button>
+
+                                <button
+                                    class="action-btn btn-invoice"
+                                    @click="printInvoice(sale.id)"
+                                    title="Imprimer Facture"
+                                >
+                                    <i class="fas fa-file-invoice"></i>
                                 </button>
 
                                 <button
                                     v-if="sale.status === 'done'"
-                                    class="cancel-btn"
+                                    class="action-btn btn-cancel"
                                     @click="cancelInvoice(sale.id)"
-                                    style="
-                                        background: #dc3545;
-                                        color: white;
-                                        border: none;
-                                        padding: 0.5rem 1rem;
-                                        border-radius: 5px;
-                                        cursor: pointer;
-                                        margin: 5px;
-                                    "
+                                    title="Annuler"
                                 >
                                     <i class="fas fa-times"></i>
-                                    Annuler
                                 </button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
                 <div v-else class="no-sales-message">
+                    <i
+                        class="fas fa-inbox"
+                        style="
+                            font-size: 3rem;
+                            color: #ccc;
+                            margin-bottom: 1rem;
+                        "
+                    ></i>
                     <strong>
                         Aucune vente disponible pour la période sélectionnée
                     </strong>
                 </div>
 
-                <!-- Updated pagination to be responsive with ellipsis for mobile -->
+                <!-- Improved pagination -->
                 <div class="pagination-container" v-if="totalPages > 1">
                     <ul class="pagination">
                         <li
@@ -190,7 +231,6 @@
                             </a>
                         </li>
 
-                        <!-- Desktop: Show all pages -->
                         <li
                             class="page-item desktop-only"
                             v-for="page in totalPages"
@@ -206,7 +246,6 @@
                             </a>
                         </li>
 
-                        <!-- Mobile: Show current page and range with ellipsis -->
                         <li class="page-item mobile-only">
                             <span class="page-link" style="cursor: default">
                                 {{ currentPage }} / {{ totalPages }}
@@ -306,10 +345,18 @@
                         </div>
                         <div class="modal-footer">
                             <button
-                                @click="printInvoice(selectedSale.id)"
+                                @click="printSaleDetails(selectedSale)"
                                 class="btn-download"
                             >
                                 <i class="fas fa-print"></i>
+                                Imprimer Détails
+                            </button>
+                            <button
+                                @click="printInvoice(selectedSale.id)"
+                                class="btn-download"
+                                style="background: #28a745"
+                            >
+                                <i class="fas fa-file-invoice"></i>
                                 Imprimer Facture
                             </button>
                         </div>
@@ -412,8 +459,206 @@
                 this.showSaleModal = false;
                 this.selectedSale = null;
             },
+
             printInvoice(saleId) {
                 window.location.href = `/newInvoice/${saleId}`;
+            },
+
+            printSaleDetails(sale) {
+                const printWindow = window.open('', '_blank');
+                const printContent = this.generateSaleDetailsPrint(sale);
+
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+                printWindow.focus();
+
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            },
+
+            generateSaleDetailsPrint(sale) {
+                let productsRows = '';
+                let subtotal = 0;
+
+                if (sale.products && sale.products.length > 0) {
+                    sale.products.forEach((product, index) => {
+                        const price = Number(product.pivot.price);
+                        const quantity = product.pivot.quantity;
+                        const total = price * quantity;
+                        subtotal += total;
+
+                        productsRows += `
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${
+                                    index + 1
+                                }</td>
+                                <td style="padding: 12px; border: 1px solid #ddd;">${
+                                    product.name
+                                }</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${quantity}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                    price
+                                )} FCFA</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                    total
+                                )} FCFA</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                const statusText =
+                    sale.status === 'done'
+                        ? 'Terminée'
+                        : sale.status === 'cancelled'
+                        ? 'Annulée'
+                        : sale.status;
+                const statusColor =
+                    sale.status === 'done'
+                        ? '#28a745'
+                        : sale.status === 'cancelled'
+                        ? '#dc3545'
+                        : '#6c757d';
+
+                return `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Détails Vente N° ${sale.id}</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                margin: 20px;
+                                color: #333;
+                            }
+                            .company-header {
+                                text-align: center;
+                                margin-bottom: 30px;
+                                border-bottom: 3px solid #667eea;
+                                padding-bottom: 20px;
+                            }
+                            .company-header h1 {
+                                color: #667eea;
+                                margin: 0;
+                                font-size: 2rem;
+                            }
+                            .company-header p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            h2 {
+                                text-align: center;
+                                color: #764ba2;
+                                margin-bottom: 30px;
+                            }
+                            .sale-info {
+                                background: #f8f9fa;
+                                padding: 15px;
+                                border-radius: 8px;
+                                margin-bottom: 20px;
+                                border-left: 4px solid #667eea;
+                            }
+                            .sale-info p {
+                                margin: 8px 0;
+                            }
+                            .status-badge {
+                                display: inline-block;
+                                padding: 5px 15px;
+                                border-radius: 20px;
+                                color: white;
+                                font-weight: 600;
+                                background: ${statusColor};
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-top: 20px;
+                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                            }
+                            thead {
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                            }
+                            th {
+                                padding: 12px;
+                                text-align: left;
+                                border: 1px solid #667eea;
+                            }
+                            td {
+                                padding: 12px;
+                                border: 1px solid #ddd;
+                            }
+                            tfoot {
+                                background: #f8f9fa;
+                                font-weight: bold;
+                            }
+                            .footer {
+                                margin-top: 40px;
+                                text-align: center;
+                                color: #666;
+                                font-size: 0.9rem;
+                            }
+                            @media print {
+                                body { margin: 10mm; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="company-header">
+                            <h1>SAGER</h1>
+                              <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique
+     <br> Distribution professionnelle • Vente en gros et détail </p>
+                            <p><strong>Téléphone:</strong> +229 0196466625</p>
+                            <p><strong>IFU:</strong> 0202586942320</p>
+                        </div>
+
+                        <h2>DÉTAILS DE LA VENTE</h2>
+
+                        <div class="sale-info">
+                            <p><strong>N° Facture:</strong> ${sale.id} /FR-N</p>
+                            <p><strong>Client:</strong> ${sale.buyer_name}</p>
+                            <p><strong>Vendeur:</strong> ${sale.seller_name}</p>
+                            <p><strong>Date:</strong> ${this.formatDateTime(
+                                sale.created_at
+                            )}</p>
+                            <p><strong>Statut:</strong> <span class="status-badge">${statusText}</span></p>
+                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                                'fr-FR'
+                            )}</p>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="text-align: center;">N°</th>
+                                    <th>Produit</th>
+                                    <th style="text-align: center;">Quantité</th>
+                                    <th style="text-align: right;">Prix unitaire</th>
+                                    <th style="text-align: right;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${productsRows}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" style="text-align: right; padding: 12px; border: 1px solid #ddd;">TOTAL GÉNÉRAL:</td>
+                                    <td style="text-align: right; padding: 12px; border: 1px solid #ddd; color: #667eea; font-size: 1.2rem;">${this.formatAmount(
+                                        sale.total
+                                    )} FCFA</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div class="footer">
+                            <p>Merci de votre confiance</p>
+                             <p>Rapport généré avec l'application SagerMarket</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
             },
 
             goToPage(page) {
@@ -450,22 +695,21 @@
                             .company-header {
                                 text-align: center;
                                 margin-bottom: 30px;
-                                border-bottom: 2px solid #333;
-                                padding-bottom: 15px;
+                                border-bottom: 3px solid #667eea;
+                                padding-bottom: 20px;
                             }
-                            .company-header h2 {
+                            .company-header h1 {
+                                color: #667eea;
                                 margin: 0;
-                                color: #333;
-                                font-size: 24px;
+                                font-size: 2rem;
                             }
                             .company-header p {
                                 margin: 5px 0;
                                 color: #666;
-                                font-size: 14px;
                             }
-                            h1 {
+                            h2 {
                                 text-align: center;
-                                color: #333;
+                                color: #764ba2;
                                 margin: 20px 0;
                             }
                             .filter-info {
@@ -484,7 +728,7 @@
                                 text-align: left;
                             }
                             th {
-                                background-color: #667eea;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                                 color: white;
                                 font-weight: bold;
                             }
@@ -517,11 +761,14 @@
                     </head>
                     <body>
                         <div class="company-header">
-                            <h2>SAGER MARKET</h2>
+                            <h1>SAGER</h1>
+                              <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique
+     <br> Distribution professionnelle • Vente en gros et détail </p>
+                            
                             <p><strong>Téléphone:</strong> +229 0196466625</p>
                             <p><strong>IFU:</strong> 0202586942320</p>
                         </div>
-                        <h1>Liste des Ventes</h1>
+                        <h2>Liste des Ventes</h2>
                         <div class="filter-info">
                             <p><strong>Période:</strong> ${this.getPeriodLabel()}</p>
                             ${
@@ -698,6 +945,21 @@
                 const end = start + this.perPage;
                 return this.filteredSales.slice(start, end);
             },
+
+            totalSalesAmount() {
+                return this.sales
+                    .filter((s) => s.status === 'done')
+                    .reduce((sum, sale) => sum + parseFloat(sale.total), 0);
+            },
+
+            completedSalesCount() {
+                return this.sales.filter((s) => s.status === 'done').length;
+            },
+
+            cancelledSalesCount() {
+                return this.sales.filter((s) => s.status === 'cancelled')
+                    .length;
+            },
         },
     };
 </script>
@@ -713,6 +975,72 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         background: #f5f6fa;
         color: #333;
+    }
+
+    /* Added statistics section styles like ReturnableProductsComponent */
+    .statistics-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-card-1 {
+        border-left: 4px solid #667eea;
+    }
+
+    .stat-card-2 {
+        border-left: 4px solid #28a745;
+    }
+
+    .stat-card-3 {
+        border-left: 4px solid #dc3545;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .stat-info {
+        flex: 1;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
     /* Sidebar (same as previous pages) */
@@ -809,7 +1137,7 @@
 
     /* Sales Content */
     .sales-content {
-        padding: 2rem;
+        padding: 0; /* Changed from 2rem to 0 */
     }
 
     .sales-header {
@@ -1751,6 +2079,378 @@
 
         .date-picker {
             min-width: 150px;
+        }
+    }
+</style>
+
+<style>
+    /* Improved action buttons styling */
+    .action-btn {
+        border: none;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        margin-right: 0.5rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-details {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .btn-details:hover {
+        background: #138496;
+        transform: translateY(-2px);
+    }
+
+    .btn-print-individual {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-print-individual:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+    }
+
+    .btn-invoice {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-invoice:hover {
+        background: #218838;
+        transform: translateY(-2px);
+    }
+
+    .btn-cancel {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+    }
+
+    .status-completed {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-cancelled {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .no-sales-message {
+        padding: 3rem;
+        text-align: center;
+        color: #666;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        padding: 1.5rem;
+        background: white;
+    }
+
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        background-color: #fff;
+    }
+
+    .page-item {
+        display: inline;
+    }
+
+    .page-link {
+        color: #495057;
+        padding: 10px 15px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+        border: 1px solid #dee2e6;
+    }
+
+    .page-item:first-child .page-link {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+
+    .page-item:last-child .page-link {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+        font-weight: bold;
+    }
+
+    .page-item.disabled .page-link {
+        color: #6c757d;
+        cursor: not-allowed;
+        background-color: #e9ecef;
+    }
+
+    .page-item:not(.active) .page-link:hover {
+        background-color: #f8f9fa;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal-container {
+        background: white;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .modal-header h5 {
+        margin: 0;
+        font-size: 1.3rem;
+        color: #333;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #999;
+        transition: color 0.3s ease;
+    }
+
+    .modal-close:hover {
+        color: #333;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-body p {
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .modal-body strong {
+        color: #333;
+        font-weight: 600;
+    }
+
+    .modal-body ul {
+        list-style-type: disc;
+        margin-left: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .modal-body li {
+        margin-bottom: 0.5rem;
+        color: #555;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #eee;
+    }
+
+    .btn-download {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .desktop-only {
+        display: inline-block;
+    }
+
+    .mobile-only {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .statistics-section {
+            grid-template-columns: 1fr;
+        }
+
+        .desktop-only {
+            display: none;
+        }
+
+        .mobile-only {
+            display: inline-block;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .header-filters {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .filter-select,
+        .date-picker {
+            width: 100%;
+        }
+
+        .btn-print-header {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .table-header-styled {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        table.table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+            display: block !important;
+            width: 100% !important;
+        }
+
+        thead tr {
+            display: none !important;
+        }
+
+        tbody tr {
+            margin-bottom: 1.5rem;
+            border: 1px solid #ccc;
+            padding: 15px 10px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
+
+        tbody td {
+            position: relative;
+            padding-left: 50% !important;
+            text-align: left !important;
+            border: none !important;
+            border-bottom: 1px solid #eee !important;
+            box-sizing: border-box;
+            min-height: 40px;
+            vertical-align: top;
+        }
+
+        tbody td:last-child {
+            border-bottom: 0 !important;
+        }
+
+        tbody td::before {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            width: 45%;
+            white-space: nowrap;
+            font-weight: 600;
+            content: attr(data-label);
+            color: #333;
+        }
+
+        tbody td .action-btn {
+            display: inline-flex;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+    }
+
+    @media print {
+        .statistics-section,
+        .page-header,
+        .table-header-styled,
+        .pagination-container {
+            display: none !important;
         }
     }
 </style>

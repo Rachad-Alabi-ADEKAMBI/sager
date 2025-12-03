@@ -185,9 +185,15 @@ Route::post('/expenses/update/{id}', [ExpenseController::class, 'update'])
 Route::post('/expenses/delete/{id}', [ExpenseController::class, 'destroy'])
     ->name('expenses.destroy');
 
+
 //route pour l'historique des retours
 Route::get('/stocksReturnableProductsList', [StocksReturnableProductController::class, 'stocksReturnableProductsList'])
     ->name('stocksReturnableProductsList');
+Route::post('/returnableProducts/{id}/return', [ReturnableProductController::class, 'handleReturn'])
+    ->name('handleReturn');
+// Suppression d'un produit retournable via POST
+Route::post('/returnableProducts/{id}/delete', [ReturnableProductController::class, 'destroy']);
+
 
 
 //proformas

@@ -80,6 +80,17 @@
                                             style="color: white"
                                         ></i>
                                     </button>
+                                    <!-- Added print button for individual product -->
+                                    <button
+                                        @click="printSingleDeposit(deposit)"
+                                        class="action-btn print-btn"
+                                        title="Imprimer"
+                                    >
+                                        <i
+                                            class="fas fa-print"
+                                            style="color: white"
+                                        ></i>
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -378,6 +389,8 @@
 
         methods: {
             fetchDepositsData() {
+                // Added axios declaration
+                const axios = window.axios;
                 axios
                     .get('/depositsList')
                     .then((response) => {
@@ -421,6 +434,8 @@
                 this.showHistoryView = true;
 
                 // Fetch history from the API
+                // Added axios declaration
+                const axios = window.axios;
                 axios
                     .get(`/deposits/${productId}/history`)
                     .then((response) => {
@@ -445,6 +460,110 @@
                 this.productHistory = [];
                 this.selectedProductName = '';
                 this.selectedProductId = null;
+            },
+
+            printSingleDeposit(deposit) {
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Consignation - ${deposit.product_name}</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                margin: 20px;
+                                color: #333;
+                            }
+                            .company-header {
+                                text-align: center;
+                                margin-bottom: 30px;
+                                border-bottom: 3px solid #667eea;
+                                padding-bottom: 20px;
+                            }
+                            .company-header h1 {
+                                color: #667eea;
+                                margin: 0;
+                                font-size: 2rem;
+                            }
+                            .company-header p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            h2 {
+                                text-align: center;
+                                color: #764ba2;
+                                margin-bottom: 30px;
+                            }
+                            .product-info {
+                                background: #f8f9fa;
+                                padding: 20px;
+                                border-radius: 8px;
+                                margin-bottom: 20px;
+                                border-left: 4px solid #667eea;
+                            }
+                            .product-info p {
+                                margin: 10px 0;
+                                font-size: 1.1rem;
+                            }
+                            .product-info strong {
+                                color: #667eea;
+                            }
+                            .footer {
+                                margin-top: 40px;
+                                text-align: center;
+                                color: #666;
+                                font-size: 0.9rem;
+                                border-top: 2px solid #e9ecef;
+                                padding-top: 20px;
+                            }
+                            @media print {
+                                body { margin: 10mm; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="company-header">
+                            <h1>SAGER</h1>
+                            <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique</p>
+                            <p>Distribution professionnelle • Vente en gros et détail</p>
+                            <p><strong>Téléphone:</strong> +229 0196466625</p>
+                            <p><strong>IFU:</strong> 0202586942320</p>
+                        </div>
+
+                        <h2>FICHE DE CONSIGNATION</h2>
+
+                        <div class="product-info">
+                            <p><strong>Produit:</strong> ${
+                                deposit.product_name
+                            }</p>
+                            <p><strong>Quantité en stock:</strong> ${this.formatQuantity(
+                                deposit.quantity
+                            )}</p>
+                            <p><strong>Dernière mise à jour:</strong> ${this.formatDateTime(
+                                deposit.updated_at
+                            )}</p>
+                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleDateString(
+                                'fr-FR'
+                            )} à ${new Date().toLocaleTimeString('fr-FR')}</p>
+                        </div>
+
+                        <div class="footer">
+                            <p>Merci de votre confiance</p>
+                            <p>Rapport généré avec l'application SagerMarket</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
+
+                const printWindow = window.open('', '', 'width=800,height=600');
+                printWindow.document.open();
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
             },
 
             printProductHistory() {
@@ -479,19 +598,32 @@
                             color: #333;
                             line-height: 1.6;
                         }
+                        .company-header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 3px solid #667eea;
+                            padding-bottom: 20px;
+                        }
+                        .company-header h1 {
+                            color: #667eea;
+                            margin: 0;
+                            font-size: 2rem;
+                        }
+                        .company-header p {
+                            margin: 5px 0;
+                            color: #666;
+                        }
                         .header {
                             text-align: center;
-                            margin-bottom: 40px;
-                            padding-bottom: 20px;
-                            border-bottom: 3px solid #667eea;
+                            margin-bottom: 30px;
                         }
-                        .header h1 {
-                            color: #667eea;
-                            font-size: 2rem;
+                        .header h2 {
+                            color: #764ba2;
+                            font-size: 1.5rem;
                             margin-bottom: 10px;
                         }
                         .header .product-name {
-                            font-size: 1.5rem;
+                            font-size: 1.2rem;
                             color: #555;
                             font-weight: 600;
                         }
@@ -510,6 +642,7 @@
                             width: 100%;
                             border-collapse: collapse;
                             margin-bottom: 20px;
+                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                         }
                         th {
                             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -517,10 +650,11 @@
                             padding: 12px;
                             text-align: left;
                             font-weight: 600;
+                            border: 1px solid #667eea;
                         }
                         td {
                             padding: 12px;
-                            border-bottom: 1px solid #e9ecef;
+                            border: 1px solid #ddd;
                         }
                         tr:nth-child(even) {
                             background-color: #f8f9fa;
@@ -538,19 +672,25 @@
                     </style>
                 </head>
                 <body>
+                    <div class="company-header">
+                        <h1>SAGER</h1>
+                        <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique</p>
+                        <p>Distribution professionnelle • Vente en gros et détail</p>
+                        <p><strong>Téléphone:</strong> +229 0196466625</p>
+                        <p><strong>IFU:</strong> 0202586942320</p>
+                    </div>
+                    
                     <div class="header">
-                        <h1>SAGER MARKET</h1>
-                            <p><strong>Téléphone:</strong> +229 0196466625</p>
-                            <p><strong>IFU:</strong> 0202586942320</p>
-                         <h2>Historique des Opérations de consignations sur</h2>
+                        <h2>Historique des Opérations de consignations sur</h2>
                         <div class="product-name">${
                             this.selectedProductName
                         }</div>
                     </div>
+                    
                     <div class="print-info">
-                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleDateString(
                             'fr-FR'
-                        )}</p>
+                        )} à ${new Date().toLocaleTimeString('fr-FR')}</p>
                         <p><strong>Nombre d'opérations:</strong> ${
                             this.productHistory.length
                         }</p>
@@ -590,9 +730,8 @@
                         </tbody>
                     </table>
                     <div class="footer">
-                        <p>Rapport généré le ${new Date().toLocaleString(
-                            'fr-FR'
-                        )}</p>
+                        <p>Merci de votre confiance</p>
+                        <p>Rapport généré avec l'application SagerMarket</p>
                     </div>
                 </body>
                 </html>
@@ -633,16 +772,28 @@
                             color: #333;
                             line-height: 1.6;
                         }
+                        .company-header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 3px solid #667eea;
+                            padding-bottom: 20px;
+                        }
+                        .company-header h1 {
+                            color: #667eea;
+                            margin: 0;
+                            font-size: 2rem;
+                        }
+                        .company-header p {
+                            margin: 5px 0;
+                            color: #666;
+                        }
                         .header {
                             text-align: center;
-                            margin-bottom: 40px;
-                            padding-bottom: 20px;
-                            border-bottom: 3px solid #667eea;
+                            margin-bottom: 30px;
                         }
-                        .header h1 {
-                            color: #667eea;
-                            font-size: 2rem;
-                            margin-bottom: 10px;
+                        .header h2 {
+                            color: #764ba2;
+                            font-size: 1.5rem;
                         }
                         .print-info {
                             text-align: center;
@@ -659,6 +810,7 @@
                             width: 100%;
                             border-collapse: collapse;
                             margin-bottom: 20px;
+                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                         }
                         th {
                             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -666,10 +818,11 @@
                             padding: 12px;
                             text-align: left;
                             font-weight: 600;
+                            border: 1px solid #667eea;
                         }
                         td {
                             padding: 12px;
-                            border-bottom: 1px solid #e9ecef;
+                            border: 1px solid #ddd;
                         }
                         tr:nth-child(even) {
                             background-color: #f8f9fa;
@@ -687,16 +840,22 @@
                     </style>
                 </head>
                 <body>
-                    <div class="header">
-                       <h1>SAGER MARKET</h1>
-                            <p><strong>Téléphone:</strong> +229 0196466625</p>
-                            <p><strong>IFU:</strong> 0202586942320</p>
-                            <h2>Historique des consignations</h2>
+                    <div class="company-header">
+                        <h1>SAGER</h1>
+                        <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique</p>
+                        <p>Distribution professionnelle • Vente en gros et détail</p>
+                        <p><strong>Téléphone:</strong> +229 0196466625</p>
+                        <p><strong>IFU:</strong> 0202586942320</p>
                     </div>
+                    
+                    <div class="header">
+                        <h2>Historique des consignations</h2>
+                    </div>
+                    
                     <div class="print-info">
-                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleDateString(
                             'fr-FR'
-                        )}</p>
+                        )} à ${new Date().toLocaleTimeString('fr-FR')}</p>
                         <p><strong>Nombre de produits:</strong> ${
                             this.deposits.length
                         }</p>
@@ -728,9 +887,8 @@
                         </tbody>
                     </table>
                     <div class="footer">
-                        <p>Generated on ${new Date().toLocaleString(
-                            'fr-FR'
-                        )}</p>
+                        <p>Merci de votre confiance</p>
+                        <p>Rapport généré avec l'application SagerMarket</p>
                     </div>
                 </body>
                 </html>
@@ -749,6 +907,8 @@
                     return;
                 }
 
+                // Added axios declaration
+                const axios = window.axios;
                 axios
                     .post('/deposits/add', {
                         product_id: this.newStock.product_id,
@@ -776,6 +936,8 @@
                     return;
                 }
 
+                // Added axios declaration
+                const axios = window.axios;
                 axios
                     .post('/deposits/remove', {
                         product_id: this.removeStock.product_id,
@@ -1003,6 +1165,19 @@
         box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
     }
 
+    /* Added styling for individual print button */
+    .print-btn {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .print-btn:hover {
+        background: #138496;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+    }
+
     .empty-state {
         text-align: center;
         padding: 60px 20px;
@@ -1149,7 +1324,7 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         font-size: 1rem;
-        transition: border-color 0.3s ease;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     .form-control:focus {

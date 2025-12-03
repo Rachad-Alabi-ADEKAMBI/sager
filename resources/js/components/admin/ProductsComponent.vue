@@ -1,5 +1,39 @@
 <template>
     <div class="stock-content">
+        <!-- Added statistics section like SalesComponent -->
+        <div class="statistics-section" v-if="showProducts">
+            <div class="stat-card stat-card-1">
+                <div class="stat-icon"><i class="fas fa-box"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">Total Produits</div>
+                    <div class="stat-value">{{ products.length }}</div>
+                </div>
+            </div>
+            <div class="stat-card stat-card-2">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">En stock</div>
+                    <div class="stat-value">{{ inStockCount }}</div>
+                </div>
+            </div>
+            <div class="stat-card stat-card-3">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">Stock faible</div>
+                    <div class="stat-value">{{ lowStockCount }}</div>
+                </div>
+            </div>
+            <div class="stat-card stat-card-4">
+                <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">Rupture de stock</div>
+                    <div class="stat-value">{{ outOfStockCount }}</div>
+                </div>
+            </div>
+        </div>
+
         <div class="products-header">
             <h2>Inventaire des Produits</h2>
             <div class="header-actions">
@@ -40,9 +74,12 @@
         <div class="showProducts" v-if="showProducts">
             <!-- Tableau -->
             <div class="table-container">
-                <div class="table-header">
+                <!-- Added styled table header with gradient -->
+                <div class="table-header-styled">
                     <h3>Liste des Produits</h3>
-                    <strong>Total: {{ filteredProducts.length }}</strong>
+                    <span class="table-count">
+                        {{ filteredProducts.length }} produit(s)
+                    </span>
                 </div>
 
                 <table class="table" v-if="filteredProducts.length > 0">
@@ -166,7 +203,20 @@
                                         <i class="fas fa-clock"></i>
                                     </button>
 
-                                    <!-- Nouveau bouton pour imprimer l'historique -->
+                                    <!-- Added individual print button -->
+                                    <button
+                                        class="btn-sm"
+                                        style="
+                                            background-color: #667eea;
+                                            color: white;
+                                            border: none;
+                                        "
+                                        title="Imprimer les détails"
+                                        @click="printProductDetails(product)"
+                                    >
+                                        <i class="fas fa-print"></i>
+                                    </button>
+
                                     <button
                                         class="btn-sm"
                                         style="
@@ -177,7 +227,7 @@
                                         title="Imprimer l'historique"
                                         @click="printProductHistory(product.id)"
                                     >
-                                        <i class="fas fa-print"></i>
+                                        <i class="fas fa-file-invoice"></i>
                                     </button>
 
                                     <button
@@ -245,7 +295,7 @@
                     Aucun produit disponible
                 </strong>
 
-                <!-- Ajout de la pagination en bas du tableau -->
+                <!-- Improved pagination -->
                 <div
                     v-if="filteredProducts.length > 0"
                     class="pagination-container"
@@ -256,7 +306,7 @@
                         class="pagination-btn"
                     >
                         <i class="fas fa-chevron-left"></i>
-                        Précédent
+                        <span class="desktop-only">Précédent</span>
                     </button>
                     <span class="pagination-info">
                         Page {{ currentPage }} / {{ totalPages }}
@@ -266,7 +316,7 @@
                         :disabled="currentPage === totalPages"
                         class="pagination-btn"
                     >
-                        Suivant
+                        <span class="desktop-only">Suivant</span>
                         <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
@@ -1141,6 +1191,51 @@
                                 step="0.01"
                             />
                         </div>
+
+                        <!-- Added benefit fields for depositable products -->
+                        <div class="form-group">
+                            <label>
+                                Bénéfice lors d'une consignation (FCFA)
+                            </label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                v-model.number="editedBenefitDeposit"
+                                :placeholder="currentProduct.benefit_deposit"
+                                min="0"
+                                step="0.01"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Bénéfice lors d'un rechargement (FCFA)
+                            </label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                v-model.number="editedBenefitRefill"
+                                :placeholder="currentProduct.benefit_refill"
+                                min="0"
+                                step="0.01"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Bénéfice consignation + rechargement (FCFA)
+                            </label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                v-model.number="editedBenefitDepositRefill"
+                                :placeholder="
+                                    currentProduct.benefit_deposit_refill
+                                "
+                                min="0"
+                                step="0.01"
+                            />
+                        </div>
                     </template>
                 </div>
 
@@ -1283,6 +1378,9 @@
                 editedPriceBulk: null,
                 editedDepositPrice: null,
                 editedFillingPrice: null, // pour modification éventuelle du prix de rechargement
+                editedBenefitDeposit: null,
+                editedBenefitRefill: null,
+                editedBenefitDepositRefill: null,
 
                 // Modales diverses
                 showDeleteProductModal: false,
@@ -1321,6 +1419,18 @@
         },
 
         computed: {
+            inStockCount() {
+                return this.products.filter((p) => p.quantity >= 5).length;
+            },
+            lowStockCount() {
+                return this.products.filter(
+                    (p) => p.quantity > 0 && p.quantity < 5
+                ).length;
+            },
+            outOfStockCount() {
+                return this.products.filter((p) => p.quantity == 0).length;
+            },
+
             filteredProducts() {
                 let filtered = this.products;
 
@@ -1406,42 +1516,205 @@
         },
 
         methods: {
-            fetchProducts() {
-                this.showProducts = true;
-                this.showStock = false;
-                this.showAccounting = false;
-                axios
-                    .get('/productsList')
-                    .then((response) => {
-                        console.log(response.data);
-                        this.products = response.data;
-                    })
-                    .catch((error) => {
-                        console.error(
-                            'Erreur lors de la récupération des données :',
-                            error
-                        );
-                    });
+            printProductDetails(product) {
+                const printWindow = window.open('', '_blank');
+                const printContent = this.generateProductPrintContent(product);
+
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+                printWindow.focus();
+
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
             },
 
-            formatDateTime(datetime) {
-                const date = new Date(datetime);
-                const options = {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                };
-                return date.toLocaleString('fr-FR', options);
-            },
+            generateProductPrintContent(product) {
+                let priceDetails = '';
 
-            formatAmount(value) {
-                return Number(value).toLocaleString('fr-FR');
-            },
+                if (product.is_depositable == 0) {
+                    priceDetails = `
+                                <tr>
+                                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Prix Détail</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        product.price_detail
+                                    )} FCFA</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Prix Semi-gros</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        product.price_semi_bulk
+                                    )} FCFA</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Prix Gros</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        product.price_bulk
+                                    )} FCFA</td>
+                                </tr>
+                            `;
+                } else {
+                    priceDetails = `
+                                <tr>
+                                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Prix Consignation</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        product.deposit_price
+                                    )} FCFA</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Prix Rechargement</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        product.filling_price
+                                    )} FCFA</td>
+                                </tr>
+                            `;
+                }
 
-            openPrintOptionsModal() {
-                this.showPrintOptionsModal = true;
+                const statusColor =
+                    product.quantity >= 5
+                        ? '#28a745'
+                        : product.quantity > 0
+                        ? '#ffc107'
+                        : '#dc3545';
+                const statusLabel =
+                    product.quantity >= 5
+                        ? 'En stock'
+                        : product.quantity > 0
+                        ? 'Stock faible'
+                        : 'Rupture de stock';
+
+                return `
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>Détails Produit - ${product.name}</title>
+                                <style>
+                                    body {
+                                        font-family: Arial, sans-serif;
+                                        padding: 20px;
+                                        background: #f8f9fa;
+                                        color: #333;
+                                    }
+                                    .company-header {
+                                        text-align: center;
+                                        margin-bottom: 30px;
+                                        border-bottom: 3px solid #667eea;
+                                        padding-bottom: 20px;
+                                    }
+                                    .company-header h1 {
+                                        color: #667eea;
+                                        margin: 0;
+                                        font-size: 2rem;
+                                    }
+                                    .company-header p {
+                                        margin: 5px 0;
+                                        color: #666;
+                                    }
+                                    .product-card {
+                                        background: white;
+                                        border-radius: 12px;
+                                        padding: 30px;
+                                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                                        max-width: 800px;
+                                        margin: 0 auto;
+                                    }
+                                    h2 {
+                                        color: #764ba2;
+                                        margin-bottom: 20px;
+                                        text-align: center;
+                                    }
+                                    table {
+                                        width: 100%;
+                                        border-collapse: collapse;
+                                        margin: 20px 0;
+                                    }
+                                    td {
+                                        border: 1px solid #ddd;
+                                        padding: 12px;
+                                    }
+                                    .status-badge {
+                                        display: inline-block;
+                                        padding: 8px 16px;
+                                        border-radius: 20px;
+                                        color: white;
+                                        background: ${statusColor};
+                                        font-weight: bold;
+                                    }
+                                    .print-date {
+                                        text-align: center;
+                                        color: #666;
+                                        margin-top: 30px;
+                                        font-size: 0.9rem;
+                                    }
+                                    .footer {
+                                        margin-top: 40px;
+                                        text-align: center;
+                                        color: #666;
+                                        font-size: 0.9rem;
+                                    }
+                                    @media print {
+                                        body { padding: 10mm; background: white; }
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="company-header">
+                                    <h1>SAGER</h1>
+                                    <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                                    Distribution professionnelle • Vente en gros et détail</p>
+                                    <p><strong>Téléphone:</strong> +229 0196466625</p>
+                                    <p><strong>IFU:</strong> 0202586942320</p>
+                                </div>
+
+                                <div class="product-card">
+                                    <h2>FICHE PRODUIT</h2>
+                                    <table>
+                                        <tr>
+                                            <td style="font-weight: bold; width: 40%;">Nom du produit</td>
+                                            <td style="font-size: 1.2rem; font-weight: bold;">${
+                                                product.name
+                                            }</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="font-weight: bold;">Quantité en stock</td>
+                                            <td style="font-size: 1.2rem; font-weight: bold; color: ${statusColor};">${
+                    product.quantity
+                }</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="font-weight: bold;">Statut</td>
+                                            <td><span class="status-badge">${statusLabel}</span></td>
+                                        </tr>
+                                        ${priceDetails}
+                                        <tr>
+                                            <td style="font-weight: bold;">Prix d'achat</td>
+                                            <td style="text-align: right;">${this.formatAmount(
+                                                product.purchase_price
+                                            )} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="font-weight: bold;">Dernière mise à jour</td>
+                                            <td>${this.formatDateTime(
+                                                product.updated_at
+                                            )}</td>
+                                        </tr>
+                                    </table>
+
+                                    <div class="print-date">
+                                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                                            'fr-FR'
+                                        )}</p>
+                                    </div>
+                                </div>
+
+                                <div class="footer">
+                                    <p>Merci de votre confiance</p>
+                                    <p>Rapport généré avec l'application SagerMarket</p>
+                                </div>
+                            </body>
+                            </html>
+                        `;
             },
 
             printListWithOptions() {
@@ -1456,50 +1729,45 @@
                 const totalValue = this.filteredProducts.reduce(
                     (sum, product) => {
                         let productValue = 0;
-
-                        // If the product is depositary
                         if (product.is_depositable == 1) {
-                            // We use the deposit price
                             productValue =
                                 parseFloat(product.deposit_price || 0) *
                                 parseFloat(product.quantity || 0);
                         } else {
-                            // Otherwise, we use the detail price
                             productValue =
                                 parseFloat(product.price_detail || 0) *
                                 parseFloat(product.quantity || 0);
                         }
-
                         return sum + productValue;
                     },
                     0
                 );
 
                 let tableHeaders =
-                    '<tr><th style="padding: 12px; border: 1px solid #ddd;">#</th><th style="padding: 12px; border: 1px solid #ddd;">Nom du produit</th>';
+                    '<tr><th style="padding: 12px; border: 1px solid #667eea;">#</th><th style="padding: 12px; border: 1px solid #667eea;">Nom du produit</th>';
 
                 if (this.printOptions.showPriceDetail) {
                     tableHeaders +=
-                        '<th style="padding: 12px; border: 1px solid #ddd; text-align: right;">Prix détail</th>';
+                        '<th style="padding: 12px; border: 1px solid #667eea; text-align: right;">Prix détail</th>';
                 }
                 if (this.printOptions.showPriceSemiBulk) {
                     tableHeaders +=
-                        '<th style="padding: 12px; border: 1px solid #ddd; text-align: right;">Prix semi-gros</th>';
+                        '<th style="padding: 12px; border: 1px solid #667eea; text-align: right;">Prix semi-gros</th>';
                 }
                 if (this.printOptions.showPriceBulk) {
                     tableHeaders +=
-                        '<th style="padding: 12px; border: 1px solid #ddd; text-align: right;">Prix gros</th>';
+                        '<th style="padding: 12px; border: 1px solid #667eea; text-align: right;">Prix gros</th>';
                 }
                 if (this.printOptions.showPurchasePrice) {
                     tableHeaders +=
-                        '<th style="padding: 12px; border: 1px solid #ddd; text-align: right;">Prix d\'achat</th>';
+                        '<th style="padding: 12px; border: 1px solid #667eea; text-align: right;">Prix d\'achat</th>';
                 }
 
                 tableHeaders +=
-                    '<th style="padding: 12px; border: 1px solid #ddd; text-align: center;">Quantité</th><th style="padding: 12px; border: 1px solid #ddd; text-align: center;">Statut</th>';
+                    '<th style="padding: 12px; border: 1px solid #667eea; text-align: center;">Quantité</th><th style="padding: 12px; border: 1px solid #667eea; text-align: center;">Statut</th>';
                 if (anyPriceSelected) {
                     tableHeaders +=
-                        '<th style="padding: 12px; border: 1px solid #ddd; text-align: right;">Valeur totale</th>';
+                        '<th style="padding: 12px; border: 1px solid #667eea; text-align: right;">Valeur totale</th>';
                 }
                 tableHeaders += '</tr>';
 
@@ -1571,11 +1839,11 @@
                     }
 
                     row += `<td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${product.quantity}</td>
-                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
-                            <span style="padding: 4px 12px; border-radius: 12px; background: ${statusColor}; font-size: 0.85rem; font-weight: 600;">
-                                ${statusText}
-                            </span>
-                        </td>`;
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                                    <span style="padding: 4px 12px; border-radius: 12px; background: ${statusColor}; font-size: 0.85rem; font-weight: 600;">
+                                        ${statusText}
+                                    </span>
+                                </td>`;
 
                     if (anyPriceSelected) {
                         row += `<td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
@@ -1588,64 +1856,126 @@
                 });
 
                 const htmlContent = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Inventaire des Produits</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; padding: 20px; }
-                            h1 { text-align: center; color: #333; margin-bottom: 10px; }
-                            .info { text-align: center; margin-bottom: 30px; color: #666; }
-                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                            th { background-color: #667eea; color: white; padding: 12px; text-align: left; border: 1px solid #ddd; }
-                            .total-row { background-color: #f0f4ff; font-weight: bold; }
-                            @media print {
-                                button { display: none; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                         <h1>SAGER MARKET</h1>
-                            <p style="margin: auto; text-align: center;"><strong>Téléphone:</strong> +229 0196466625</p>
-                            <p style="margin: auto; text-align: center;"><strong>IFU:</strong> 0202586942320</p>
-                            <h2 style="margin: auto; text-align: center;">Inventaire des produits</h2>
-                        <div class="info">
-                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
-                                'fr-FR'
-                            )}</p>
-                            <p><strong>Nombre total de produits:</strong> ${
-                                this.filteredProducts.length
-                            }</p>
-                            <p><strong>Filtre de statut:</strong> ${
-                                this.statusFilter
-                            }</p>
-                        </div>
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>Inventaire des Produits</title>
+                                <style>
+                                    body {
+                                        font-family: Arial, sans-serif;
+                                        padding: 20px;
+                                        color: #333;
+                                    }
+                                    .company-header {
+                                        text-align: center;
+                                        margin-bottom: 30px;
+                                        border-bottom: 3px solid #667eea;
+                                        padding-bottom: 20px;
+                                    }
+                                    .company-header h1 {
+                                        color: #667eea;
+                                        margin: 0;
+                                        font-size: 2rem;
+                                    }
+                                    .company-header p {
+                                        margin: 5px 0;
+                                        color: #666;
+                                    }
+                                    h2 {
+                                        text-align: center;
+                                        color: #764ba2;
+                                        margin-bottom: 30px;
+                                    }
+                                    .info {
+                                        background: #f8f9fa;
+                                        padding: 15px;
+                                        border-radius: 8px;
+                                        margin-bottom: 20px;
+                                        border-left: 4px solid #667eea;
+                                    }
+                                    .info p {
+                                        margin: 5px 0;
+                                    }
+                                    table {
+                                        width: 100%;
+                                        border-collapse: collapse;
+                                        margin-bottom: 20px;
+                                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                                    }
+                                    thead {
+                                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                        color: white;
+                                    }
+                                    th {
+                                        padding: 12px;
+                                        text-align: left;
+                                        border: 1px solid #667eea;
+                                    }
+                                    .total-row {
+                                        background-color: #f8f9fa;
+                                        font-weight: bold;
+                                    }
+                                    .footer {
+                                        margin-top: 40px;
+                                        text-align: center;
+                                        color: #666;
+                                        font-size: 0.9rem;
+                                    }
+                                    @media print {
+                                        button { display: none; }
+                                        body { margin: 10mm; }
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="company-header">
+                                    <h1>SAGER</h1>
+                                    <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                                    Distribution professionnelle • Vente en gros et détail</p>
+                                    <p><strong>Téléphone:</strong> +229 0196466625</p>
+                                    <p><strong>IFU:</strong> 0202586942320</p>
+                                </div>
 
-                        <table>
-                            <thead>
-                                ${tableHeaders}
-                            </thead>
-                            <tbody>
-                                ${tableRows}
-                                ${
-                                    anyPriceSelected
-                                        ? `<tr class="total-row">
-                                    <td colspan="${this.getColspanForTotal()}" style="padding: 12px; border: 1px solid #ddd; text-align: right;">VALEUR TOTALE DE L'INVENTAIRE:</td>
-                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                        totalValue
-                                    )} FCFA</td>
-                                </tr>`
-                                        : ''
-                                }
-                            </tbody>
-                        </table>
+                                <h2>INVENTAIRE DES PRODUITS</h2>
 
-                        <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
-                            Imprimer
-                        </button>
-                    </body>
-                    </html>
-                `;
+                                <div class="info">
+                                    <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                                        'fr-FR'
+                                    )}</p>
+                                    <p><strong>Nombre total de produits:</strong> ${
+                                        this.filteredProducts.length
+                                    }</p>
+                                    <p><strong>Filtre de statut:</strong> ${
+                                        this.statusFilter
+                                    }</p>
+                                </div>
+
+                                <table>
+                                    <thead>
+                                        ${tableHeaders}
+                                    </thead>
+                                    <tbody>
+                                        ${tableRows}
+                                        ${
+                                            anyPriceSelected
+                                                ? `<tr class="total-row">
+                                            <td colspan="${this.getColspanForTotal()}" style="padding: 12px; border: 1px solid #ddd; text-align: right;">VALEUR TOTALE DE L'INVENTAIRE:</td>
+                                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                                totalValue
+                                            )} FCFA</td>
+                                        </tr>`
+                                                : ''
+                                        }
+                                    </tbody>
+                                </table>
+
+                                <div class="footer">
+                                    <p>Merci de votre confiance</p>
+                                    <p>Rapport généré avec l'application SagerMarket</p>
+                                </div>
+                            </body>
+                            </html>
+                        `;
 
                 printWindow.document.write(htmlContent);
                 printWindow.document.close();
@@ -1653,154 +1983,51 @@
             },
 
             getColspanForTotal() {
-                let colspan = 2; // Numéro + Nom
+                let colspan = 2;
                 if (this.printOptions.showPriceDetail) colspan++;
                 if (this.printOptions.showPriceSemiBulk) colspan++;
                 if (this.printOptions.showPriceBulk) colspan++;
                 if (this.printOptions.showPurchasePrice) colspan++;
-                colspan += 2; // Quantité + Statut
+                colspan += 2;
                 return colspan;
             },
 
-            printList() {
-                // This method is now less used and the behavior is handled by printListWithOptions
-                const printWindow = window.open('', '_blank');
+            fetchProducts() {
+                this.showProducts = true;
+                this.showStock = false;
+                this.showAccounting = false;
+                axios
+                    .get('/productsList')
+                    .then((response) => {
+                        console.log(response.data);
+                        this.products = response.data;
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Erreur lors de la récupération des données :',
+                            error
+                        );
+                    });
+            },
 
-                const totalValue = this.filteredProducts.reduce(
-                    (sum, product) => {
-                        let productValue = 0;
+            formatDateTime(datetime) {
+                const date = new Date(datetime);
+                const options = {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                };
+                return date.toLocaleString('fr-FR', options);
+            },
 
-                        // If the product is depositary
-                        if (product.is_depositable == 1) {
-                            // We use the deposit price
-                            productValue =
-                                parseFloat(product.deposit_price || 0) *
-                                parseFloat(product.quantity || 0);
-                        } else {
-                            // Otherwise, we use the detail price
-                            productValue =
-                                parseFloat(product.price_detail || 0) *
-                                parseFloat(product.quantity || 0);
-                        }
+            formatAmount(value) {
+                return Number(value).toLocaleString('fr-FR');
+            },
 
-                        return sum + productValue;
-                    },
-                    0
-                );
-
-                let tableRows = '';
-                this.filteredProducts.forEach((product, index) => {
-                    const statusText =
-                        product.quantity >= 5
-                            ? 'En stock'
-                            : product.quantity > 0
-                            ? 'Stock faible'
-                            : 'Rupture de stock';
-                    const statusColor =
-                        product.quantity >= 5
-                            ? '#d4edda'
-                            : product.quantity > 0
-                            ? '#fff3cd'
-                            : '#f8d7da';
-
-                    let priceToUse =
-                        product.is_depositable == 1
-                            ? parseFloat(product.deposit_price || 0)
-                            : parseFloat(product.price_detail || 0);
-                    let productTotalValue =
-                        priceToUse * parseFloat(product.quantity || 0);
-
-                    tableRows += `
-                        <tr>
-                            <td style="padding: 12px; border: 1px solid #ddd;">${
-                                index + 1
-                            }</td>
-                            <td style="padding: 12px; border: 1px solid #ddd;"><strong>${
-                                product.name
-                            }</strong></td>
-                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                priceToUse
-                            )} FCFA</td>
-                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${
-                                product.quantity
-                            }</td>
-                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
-                                <span style="padding: 4px 12px; border-radius: 12px; background: ${statusColor}; font-size: 0.85rem; font-weight: 600;">
-                                    ${statusText}
-                                </span>
-                            </td>
-                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                productTotalValue
-                            )} FCFA</td>
-                        </tr>
-                    `;
-                });
-
-                const htmlContent = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Inventaire des Produits</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; padding: 20px; }
-                            h1 { text-align: center; color: #333; margin-bottom: 10px; }
-                            .info { text-align: center; margin-bottom: 30px; color: #666; }
-                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                            th { background-color: #667eea; color: white; padding: 12px; text-align: left; border: 1px solid #ddd; }
-                            .total-row { background-color: #f0f4ff; font-weight: bold; }
-                            @media print {
-                                button { display: none; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                         <h1>SAGER MARKET</h1>
-                            <p><strong>Téléphone:</strong> +229 0196466625</p>
-                            <p><strong>IFU:</strong> 0202586942320</p>
-                            <h2>Inventaire des produits</h2>
-                        <div class="info">
-                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
-                                'fr-FR'
-                            )}</p>
-                            <p><strong>Nombre total de produits:</strong> ${
-                                this.filteredProducts.length
-                            }</p>
-                            <p><strong>Filtre de statut:</strong> ${
-                                this.statusFilter
-                            }</p>
-                        </div>
-
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Nom du produit</th>
-                                    <th style="text-align: right;">Prix détail</th>
-                                    <th style="text-align: center;">Quantité</th>
-                                    <th style="text-align: center;">Statut</th>
-                                    <th style="text-align: right;">Valeur totale</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRows}
-                                <tr class="total-row">
-                                    <td colspan="5" style="padding: 12px; border: 1px solid #ddd; text-align: right;">VALEUR TOTALE DE L'INVENTAIRE:</td>
-                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                        totalValue
-                                    )} FCFA</td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
-                            Imprimer
-                        </button>
-                    </body>
-                    </html>
-                `;
-
-                printWindow.document.write(htmlContent);
-                printWindow.document.close();
+            openPrintOptionsModal() {
+                this.showPrintOptionsModal = true;
             },
 
             openAddProductModal() {
@@ -1827,14 +2054,15 @@
             submitForm() {
                 let productData = {};
 
-                // If the product is depositary → update only the two fields
                 if (this.currentProduct.is_depositable == 1) {
                     productData = {
                         deposit_price: this.editedDepositPrice,
                         filling_price: this.editedFillingPrice,
+                        benefit_deposit: this.editedBenefitDeposit,
+                        benefit_refill: this.editedBenefitRefill,
+                        benefit_deposit_refill: this.editedBenefitDepositRefill,
                     };
                 } else {
-                    // Otherwise, update the classic prices
                     productData = {
                         price_detail: this.editedPriceDetail,
                         price_semi_bulk: this.editedPriceSemiBulk,
@@ -1845,7 +2073,10 @@
                 console.log('Data to send:', productData);
 
                 axios
-                    .put(`/products/${this.currentProduct.id}`, productData)
+                    .post(
+                        `/products/${this.currentProduct.id}/update-prices`,
+                        productData
+                    )
                     .then((response) => {
                         console.log('Price updated', response.data);
                         this.closeEditPricesModal();
@@ -1865,6 +2096,10 @@
                 this.editedPriceBulk = product.price_bulk;
                 this.editedDepositPrice = product.deposit_price;
                 this.editedFillingPrice = product.filling_price;
+                this.editedBenefitDeposit = product.benefit_deposit;
+                this.editedBenefitRefill = product.benefit_refill;
+                this.editedBenefitDepositRefill =
+                    product.benefit_deposit_refill;
                 this.showEditPricesModal = true;
             },
             closeEditPricesModal() {
@@ -1875,6 +2110,9 @@
                 this.editedPriceBulk = null;
                 this.editedDepositPrice = null;
                 this.editedFillingPrice = null;
+                this.editedBenefitDeposit = null;
+                this.editedBenefitRefill = null;
+                this.editedBenefitDepositRefill = null;
             },
             savePrice() {
                 if (this.currentProduct) {
@@ -1884,10 +2122,13 @@
                     let payload = {};
 
                     if (this.currentProduct.is_depositable == 1) {
-                        // If the product is depositary → only deposit_price and filling_price
                         payload = {
                             deposit_price: this.editedDepositPrice,
                             filling_price: this.editedFillingPrice,
+                            benefit_deposit: this.editedBenefitDeposit,
+                            benefit_refill: this.editedBenefitRefill,
+                            benefit_deposit_refill:
+                                this.editedBenefitDepositRefill,
                         };
                     } else {
                         // Otherwise → classic prices + filling_price
@@ -1910,6 +2151,12 @@
                                     this.editedDepositPrice;
                                 this.currentProduct.filling_price =
                                     this.editedFillingPrice;
+                                this.currentProduct.benefit_deposit =
+                                    this.editedBenefitDeposit;
+                                this.currentProduct.benefit_refill =
+                                    this.editedBenefitRefill;
+                                this.currentProduct.benefit_deposit_refill =
+                                    this.editedBenefitDepositRefill;
                             } else {
                                 this.currentProduct.price_detail =
                                     this.editedPriceDetail;
@@ -1929,6 +2176,9 @@
                             this.editedPriceBulk = null;
                             this.editedDepositPrice = null;
                             this.editedFillingPrice = null;
+                            this.editedBenefitDeposit = null;
+                            this.editedBenefitRefill = null;
+                            this.editedBenefitDepositRefill = null;
                         })
                         .catch((error) => {
                             console.error(
@@ -2105,7 +2355,7 @@
                 });
 
                 axios
-                    .post(`/products/${this.selectedProductId}/add-stock`, {
+                    .post(`/products/${this.selectedProductId}/stock`, {
                         quantity: this.stockQuantity,
                         note: this.stockNote,
                     })
@@ -2137,7 +2387,7 @@
 
             submitRemoveStockForm() {
                 axios
-                    .post(`/products/${this.selectedProductId}/remove-stock`, {
+                    .post(`/products/${this.selectedProductId}/stock/remove`, {
                         quantity: this.stockQuantity,
                         note: this.stockNote,
                     })
@@ -2155,12 +2405,12 @@
             // Method to print product history (added)
             printProductHistory(productId) {
                 axios
-                    .get(`/stock/${productId}`) // Ensure this route returns stock history data
+                    .get(`/stock/${productId}`)
                     .then((response) => {
                         const stocks = response.data;
                         const product = this.products.find(
                             (p) => p.id === productId
-                        ); // Find the corresponding product
+                        );
 
                         if (!stocks || stocks.length === 0 || !product) {
                             alert(
@@ -2171,83 +2421,324 @@
 
                         const printWindow = window.open('', '_blank');
                         const htmlContent = `
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <title>Historique du Stock - ${
-                                    product.name
-                                }</title>
-                                <style>
-                                    body { font-family: Arial, sans-serif; margin: 20px; }
-                                    h1 { text-align: center; color: #333; margin-bottom: 20px; }
-                                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                                    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-                                    th { background-color: #f2f2f2; }
-                                    .product-info { margin-bottom: 20px; }
-                                    @media print {
-                                        button { display: none; }
-                                    }
-                                </style>
-                            </head>
-                            <body>
-                                <h1>Historique du Stock pour : ${
-                                    product.name
-                                }</h1>
-                                <div class="product-info">
-                                    <p><strong>Date d'impression :</strong> ${new Date().toLocaleString(
-                                        'fr-FR'
-                                    )}</p>
-                                </div>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Stock initial</th>
-                                            <th>Libellé</th>
-                                            <th>Quantité</th>
-                                            <th>Stock final</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${stocks
-                                            .map(
-                                                (stock) => `
-                                            <tr>
-                                                <td>${this.formatDateTime(
-                                                    stock.created_at
-                                                )}</td>
-                                                <td>${stock.initial_stock}</td>
-                                                <td>${stock.label}</td>
-                                                <td>${stock.quantity}</td>
-                                                <td>${stock.final_stock}</td>
-                                            </tr>
-                                        `
-                                            )
-                                            .join('')}
-                                    </tbody>
-                                </table>
-                                <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
-                                    Imprimer
-                                </button>
-                            </body>
-                            </html>
-                        `;
+                                    <!DOCTYPE html>
+                                    <html>
+                                    <head>
+                                        <title>Historique du Stock - ${
+                                            product.name
+                                        }</title>
+                                        <style>
+                                            body {
+                                                font-family: Arial, sans-serif;
+                                                padding: 20px;
+                                                color: #333;
+                                            }
+                                            .company-header {
+                                                text-align: center;
+                                                margin-bottom: 30px;
+                                                border-bottom: 3px solid #667eea;
+                                                padding-bottom: 20px;
+                                            }
+                                            .company-header h1 {
+                                                color: #667eea;
+                                                margin: 0;
+                                                font-size: 2rem;
+                                            }
+                                            .company-header p {
+                                                margin: 5px 0;
+                                                color: #666;
+                                            }
+                                            h2 {
+                                                text-align: center;
+                                                color: #764ba2;
+                                                margin-bottom: 30px;
+                                            }
+                                            .product-info {
+                                                background: #f8f9fa;
+                                                padding: 15px;
+                                                border-radius: 8px;
+                                                margin-bottom: 20px;
+                                                border-left: 4px solid #667eea;
+                                            }
+                                            .product-info p {
+                                                margin: 5px 0;
+                                            }
+                                            table {
+                                                width: 100%;
+                                                border-collapse: collapse;
+                                                margin-top: 20px;
+                                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                                            }
+                                            thead {
+                                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                                color: white;
+                                            }
+                                            th, td {
+                                                border: 1px solid #ddd;
+                                                padding: 12px;
+                                                text-align: left;
+                                            }
+                                            th {
+                                                border: 1px solid #667eea;
+                                            }
+                                            tbody tr:nth-child(even) {
+                                                background-color: #f8f9fa;
+                                            }
+                                            .footer {
+                                                margin-top: 40px;
+                                                text-align: center;
+                                                color: #666;
+                                                font-size: 0.9rem;
+                                            }
+                                            @media print {
+                                                button { display: none; }
+                                                body { margin: 10mm; }
+                                            }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div class="company-header">
+                                            <h1>SAGER</h1>
+                                            <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                                            Distribution professionnelle • Vente en gros et détail</p>
+                                            <p><strong>Téléphone:</strong> +229 0196466625</p>
+                                            <p><strong>IFU:</strong> 0202586942320</p>
+                                        </div>
+
+                                        <h2>HISTORIQUE DU STOCK</h2>
+
+                                        <div class="product-info">
+                                            <p><strong>Produit:</strong> ${
+                                                product.name
+                                            }</p>
+                                            <p><strong>Stock actuel:</strong> ${
+                                                product.quantity
+                                            }</p>
+                                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                                                'fr-FR'
+                                            )}</p>
+                                            <p><strong>Nombre d'entrées:</strong> ${
+                                                stocks.length
+                                            }</p>
+                                        </div>
+
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Stock initial</th>
+                                                    <th>Libellé</th>
+                                                    <th>Quantité</th>
+                                                    <th>Stock final</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${stocks
+                                                    .map(
+                                                        (stock) => `
+                                                    <tr>
+                                                        <td>${this.formatDateTime(
+                                                            stock.created_at
+                                                        )}</td>
+                                                        <td>${
+                                                            stock.initial_stock
+                                                        }</td>
+                                                        <td>${stock.label}</td>
+                                                        <td>${
+                                                            stock.quantity
+                                                        }</td>
+                                                        <td><strong>${
+                                                            stock.final_stock
+                                                        }</strong></td>
+                                                    </tr>
+                                                `
+                                                    )
+                                                    .join('')}
+                                            </tbody>
+                                        </table>
+
+                                        <div class="footer">
+                                            <p>Merci de votre confiance</p>
+                                            <p>Rapport généré avec l'application SagerMarket</p>
+                                        </div>
+                                    </body>
+                                    </html>
+                                `;
+
                         printWindow.document.write(htmlContent);
                         printWindow.document.close();
+                        printWindow.focus();
+
+                        setTimeout(() => {
+                            printWindow.print();
+                        }, 250);
                     })
                     .catch((error) => {
                         console.error(
                             "Erreur lors de la récupération de l'historique:",
                             error
                         );
-                        alert("Impossible de charger l'historique du stock.");
+                        alert(
+                            "Une erreur s'est produite lors de la récupération de l'historique."
+                        );
                     });
             },
         },
     };
 </script>
 
-<style scoped>
+<style>
+    /* Added statistics section styles */
+    .statistics-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-card-1 {
+        border-left: 4px solid #667eea;
+    }
+
+    .stat-card-2 {
+        border-left: 4px solid #28a745;
+    }
+
+    .stat-card-3 {
+        border-left: 4px solid #ffc107;
+    }
+
+    .stat-card-4 {
+        border-left: 4px solid #dc3545;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .stat-info {
+        flex: 1;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Added styled table header */
+    .table-header-styled {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-header-styled h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .table-count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    /* Improved pagination styles */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: white;
+    }
+
+    .pagination-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .pagination-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .pagination-info {
+        font-weight: 600;
+        color: #495057;
+        font-size: 1rem;
+    }
+
+    .desktop-only {
+        display: inline-block;
+    }
+
+    @media (max-width: 768px) {
+        .desktop-only {
+            display: none;
+        }
+
+        .statistics-section {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Existing styles remain */
     .stock-content {
         padding: 20px;
     }
@@ -2417,38 +2908,7 @@
         background-color: #218838;
     }
 
-    .pagination-container {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        margin-top: 20px;
-        gap: 10px;
-    }
-
-    .pagination-btn {
-        padding: 8px 15px;
-        border: 1px solid #007bff;
-        background-color: white;
-        color: #007bff;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.2s ease, color 0.2s ease;
-    }
-
-    .pagination-btn:hover:not(:disabled) {
-        background-color: #007bff;
-        color: white;
-    }
-
-    .pagination-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .pagination-info {
-        font-weight: 600;
-        color: #555;
-    }
+    /* Removed unused pagination-container styles as it's now styled by the new global one */
 
     /* Modales */
     .modal-add-product,

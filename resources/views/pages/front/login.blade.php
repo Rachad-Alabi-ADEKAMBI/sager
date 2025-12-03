@@ -253,12 +253,6 @@
 
                 <div class="forgot-password">
                     <a href="{{ route('reset_password') }}">Mot de passe oublié ?</a>
-                    <p style="color: #666;">
-                        Pas de compte ?
-                        <a style="text-decoration: none; color: #667eea;" href="{{ route('register') }}">
-                            Inscrivez-vous ici
-                        </a>
-                    </p>
                 </div>
             </form>
         </div>

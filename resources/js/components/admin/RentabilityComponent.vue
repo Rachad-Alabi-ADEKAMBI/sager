@@ -1,6 +1,39 @@
 <template>
     <div>
         <div class="sales-content">
+            <!-- Added statistics section like ReturnableProductsComponent -->
+            <div class="statistics-section">
+                <div class="stat-card stat-card-1">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Total jours enregistrés</div>
+                        <div class="stat-value">{{ rentability.length }}</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-2">
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="stat-info">
+                        <div class="stat-label">Bénéfice total</div>
+                        <div class="stat-value">
+                            {{ formatAmount(totalProfit) }} FCFA
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-3">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Bénéfice moyen/jour</div>
+                        <div class="stat-value">
+                            {{ formatAmount(averageProfit) }} FCFA
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="sales-history">
                 <div class="history-header">
                     <h3>Rentabilité</h3>
@@ -12,6 +45,7 @@
                             flex-wrap: wrap;
                         "
                     >
+                        <!-- Ajout d'un bouton pour imprimer la liste globale -->
                         <button
                             @click="printList"
                             class="btn-primary"
@@ -20,6 +54,63 @@
                             <i class="fas fa-print"></i>
                             Imprimer la liste
                         </button>
+
+                        <!-- Ajout d'options de tri entre deux dates -->
+                        <select
+                            v-model="dateFilterMode"
+                            style="
+                                padding: 0.5rem;
+                                border: 1px solid #ddd;
+                                border-radius: 5px;
+                            "
+                        >
+                            <option value="">Toutes les dates</option>
+                            <option value="specific">Date précise</option>
+                            <option value="range">Entre deux dates</option>
+                        </select>
+
+                        <!-- Date précise -->
+                        <input
+                            v-if="dateFilterMode === 'specific'"
+                            type="date"
+                            v-model="selectedDate"
+                            style="
+                                padding: 0.5rem;
+                                border: 1px solid #ddd;
+                                border-radius: 5px;
+                            "
+                        />
+
+                        <!-- Entre deux dates -->
+                        <div
+                            v-if="dateFilterMode === 'range'"
+                            style="
+                                display: flex;
+                                gap: 0.5rem;
+                                align-items: center;
+                            "
+                        >
+                            <input
+                                type="date"
+                                v-model="filterDateStart"
+                                style="
+                                    padding: 0.5rem;
+                                    border: 1px solid #ddd;
+                                    border-radius: 5px;
+                                "
+                            />
+                            <span>à</span>
+                            <input
+                                type="date"
+                                v-model="filterDateEnd"
+                                style="
+                                    padding: 0.5rem;
+                                    border: 1px solid #ddd;
+                                    border-radius: 5px;
+                                "
+                            />
+                        </div>
+
                         <select
                             v-model="filterPeriod"
                             style="
@@ -33,34 +124,10 @@
                             <option>Cette semaine</option>
                             <option>Ce mois</option>
                             <option>Toutes les ventes</option>
-                            <option>À une date précise</option>
                         </select>
-                        <div v-if="filterPeriod === 'À une date précise'">
-                            <input
-                                type="date"
-                                v-model="selectedDate"
-                                style="
-                                    padding: 0.5rem;
-                                    border: 1px solid #ddd;
-                                    border-radius: 5px;
-                                "
-                            />
-                            <button
-                                @click="fetchDailyRentability"
-                                style="
-                                    padding: 0.5rem 1rem;
-                                    background: #667eea;
-                                    color: white;
-                                    border: none;
-                                    border-radius: 5px;
-                                    cursor: pointer;
-                                "
-                            >
-                                Voir
-                            </button>
-                        </div>
                     </div>
                 </div>
+
                 <table class="table" v-if="paginatedRentability.length > 0">
                     <thead>
                         <tr>
@@ -81,25 +148,46 @@
                                 </strong>
                             </td>
                             <td>
-                                <button
-                                    class="invoice-btn"
-                                    @click="showRentabilityDetails(day.day)"
-                                >
-                                    <i
-                                        class="fas fa-eye"
-                                        style="margin: 2px"
-                                    ></i>
-                                    Voir
-                                </button>
+                                <div style="display: flex; gap: 0.5rem">
+                                    <button
+                                        class="invoice-btn"
+                                        @click="showRentabilityDetails(day.day)"
+                                        title="Voir les détails"
+                                    >
+                                        <i
+                                            class="fas fa-eye"
+                                            style="margin: 2px"
+                                        ></i>
+                                        Voir
+                                    </button>
+                                    <!-- Ajout d'un bouton pour imprimer les détails d'une journée -->
+                                    <button
+                                        class="btn-sm"
+                                        style="
+                                            background-color: #667eea;
+                                            color: white;
+                                            border: none;
+                                            padding: 0.5rem 1rem;
+                                            border-radius: 5px;
+                                            cursor: pointer;
+                                        "
+                                        @click="printDailyDetails(day.day)"
+                                        title="Imprimer cette journée"
+                                    >
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+
                 <div v-else class="no-sales-message">
                     <strong>
                         Aucune vente disponible pour la période sélectionnée
                     </strong>
                 </div>
+
                 <div class="pagination-container" v-if="totalPages > 1">
                     <ul class="pagination">
                         <li
@@ -142,6 +230,7 @@
                         </li>
                     </ul>
                 </div>
+
                 <div class="modal-overlay" v-if="showSaleModal">
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
@@ -219,7 +308,7 @@
                                                         p.name || p.product_name
                                                     }}
                                                 </td>
-                                                <td data-label="Quantité">
+                                                <td data-label="Qté">
                                                     {{ p.quantity }}
                                                 </td>
                                                 <td data-label="PA">
@@ -233,14 +322,14 @@
                                                 <td data-label="PV">
                                                     {{ formatAmount(p.price) }}
                                                 </td>
-                                                <td data-label="Total vente">
+                                                <td data-label="Vente">
                                                     {{
                                                         formatAmount(
                                                             p.quantity * p.price
                                                         )
                                                     }}
                                                 </td>
-                                                <td data-label="Bénéfice">
+                                                <td data-label="Profit">
                                                     {{ formatAmount(p.profit) }}
                                                 </td>
                                             </tr>
@@ -314,6 +403,9 @@
                 filterPeriod: 'Toutes les ventes',
                 currentPage: 1,
                 perPage: 10,
+                dateFilterMode: '',
+                filterDateStart: '',
+                filterDateEnd: '',
             };
         },
         mounted() {
@@ -328,6 +420,7 @@
                         console.error('Erreur récupération rentabilité:', err)
                     );
             },
+
             showRentabilityDetails(day) {
                 this.selectedDay = day;
 
@@ -335,16 +428,6 @@
 
                 const parts = day.split('-');
                 const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-
-                console.log(
-                    'Datee choisie (format dd/mm/yyyy) :',
-                    formattedDate
-                );
-
-                console.log(
-                    'URL appelée :',
-                    '/rentabilityApi/daily?date=' + formattedDate
-                );
 
                 axios
                     .get('/rentabilityApi/daily', {
@@ -366,7 +449,6 @@
                         }));
 
                         this.showSaleModal = true;
-                        console.log(this.details);
                     })
                     .catch((err) => {
                         console.error(
@@ -376,47 +458,12 @@
                         alert('Impossible de récupérer les détails du jour.');
                     });
             },
-            fetchDailyRentability() {
-                if (!this.selectedDate) {
-                    alert('Veuillez choisir une date.');
-                    return;
-                }
 
-                const dateForApi = this.selectedDate;
-
-                axios
-                    .get('/rentability/daily', {
-                        params: { date: dateForApi },
-                    })
-                    .then((res) => {
-                        this.details = res.data.map((sale) => ({
-                            id: sale.sale_id,
-                            client_name: sale.client_name,
-                            seller_name: sale.seller_name || '-',
-                            total: parseFloat(sale.total_sale),
-                            products: sale.products.map((p) => ({
-                                name: p.product_name,
-                                quantity: parseFloat(p.quantity),
-                                price: parseFloat(p.price),
-                                purchase_price: parseFloat(p.purchase_price),
-                                profit: parseFloat(p.profit),
-                            })),
-                        }));
-
-                        this.selectedDay = this.selectedDate;
-                        this.showSaleModal = true;
-                    })
-                    .catch((err) =>
-                        console.error(
-                            'Erreur récupération rentabilité du jour:',
-                            err
-                        )
-                    );
-            },
             closeSaleModal() {
                 this.showSaleModal = false;
                 this.details = [];
             },
+
             formatDate(dateStr) {
                 const date = new Date(dateStr);
                 const day = String(date.getDate()).padStart(2, '0');
@@ -424,9 +471,11 @@
                 const year = date.getFullYear();
                 return `${day}/${month}/${year}`;
             },
+
             formatAmount(value) {
                 return Number(value).toLocaleString('fr-FR');
             },
+
             printList() {
                 const printWindow = window.open('', '_blank');
 
@@ -438,126 +487,446 @@
                 let tableRows = '';
                 this.filteredRentability.forEach((day, index) => {
                     tableRows += `
-                        <tr>
-                            <td style="padding: 12px; border: 1px solid #ddd;">${
-                                index + 1
-                            }</td>
-                            <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDate(
-                                day.day
-                            )}</td>
-                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;"><strong>${this.formatAmount(
-                                day.total_profit
-                            )} FCFA</strong></td>
-                        </tr>
-                    `;
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;">${
+                            index + 1
+                        }</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDate(
+                            day.day
+                        )}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: right;"><strong>${this.formatAmount(
+                            day.total_profit
+                        )} FCFA</strong></td>
+                    </tr>
+                `;
                 });
 
                 const htmlContent = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Rapport de Rentabilité</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; padding: 20px; }
-                            h1 { text-align: center; color: #333; margin-bottom: 10px; }
-                            .info { text-align: center; margin-bottom: 30px; color: #666; }
-                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                            th { background-color: #667eea; color: white; padding: 12px; text-align: left; border: 1px solid #ddd; }
-                            .total-row { background-color: #f0f4ff; font-weight: bold; }
-                            @media print {
-                                button { display: none; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Rapport de Rentabilité</h1>
-                        <div class="info">
-                            <p><strong>Période:</strong> ${
-                                this.filterPeriod
-                            }</p>
-                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
-                                'fr-FR'
-                            )}</p>
-                            <p><strong>Nombre de jours:</strong> ${
-                                this.filteredRentability.length
-                            }</p>
-                        </div>
-                        
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Date</th>
-                                    <th style="text-align: right;">Bénéfice</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRows}
-                                <tr class="total-row">
-                                    <td colspan="2" style="padding: 12px; border: 1px solid #ddd; text-align: right;">BÉNÉFICE TOTAL:</td>
-                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                        totalProfit
-                                    )} FCFA</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        
-                        <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
-                            Imprimer
-                        </button>
-                    </body>
-                    </html>
-                `;
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Rapport de Rentabilité</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            padding: 20px;
+                            color: #333;
+                        }
+                        .company-header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 3px solid #667eea;
+                            padding-bottom: 20px;
+                        }
+                        .company-header h1 {
+                            color: #667eea;
+                            margin: 0;
+                            font-size: 2rem;
+                        }
+                        .company-header p {
+                            margin: 5px 0;
+                            color: #666;
+                        }
+                        h2 { 
+                            text-align: center; 
+                            color: #764ba2; 
+                            margin-bottom: 30px;
+                        }
+                        .info { 
+                            background: #f8f9fa;
+                            padding: 15px;
+                            border-radius: 8px;
+                            margin-bottom: 20px;
+                            border-left: 4px solid #667eea;
+                        }
+                        .info p {
+                            margin: 5px 0;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-bottom: 20px; 
+                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                        }
+                        thead {
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                        }
+                        th { 
+                            padding: 12px; 
+                            text-align: left; 
+                            border: 1px solid #667eea;
+                        }
+                        .total-row { 
+                            background-color: #f8f9fa; 
+                            font-weight: bold; 
+                        }
+                        .footer {
+                            margin-top: 40px;
+                            text-align: center;
+                            color: #666;
+                            font-size: 0.9rem;
+                        }
+                        @media print {
+                            button { display: none; }
+                            body { margin: 10mm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="company-header">
+                        <h1>SAGER</h1>
+                        <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                        Distribution professionnelle • Vente en gros et détail</p>
+                        <p><strong>Téléphone:</strong> +229 0196466625</p>
+                        <p><strong>IFU:</strong> 0202586942320</p>
+                    </div>
+
+                    <h2>RAPPORT DE RENTABILITÉ</h2>
+
+                    <div class="info">
+                        <p><strong>Période:</strong> ${this.filterPeriod}</p>
+                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                            'fr-FR'
+                        )}</p>
+                        <p><strong>Nombre de jours:</strong> ${
+                            this.filteredRentability.length
+                        }</p>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th style="text-align: right;">Bénéfice</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                            <tr class="total-row">
+                                <td colspan="2" style="padding: 12px; border: 1px solid #ddd; text-align: right;">BÉNÉFICE TOTAL:</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                    totalProfit
+                                )} FCFA</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="footer">
+                        <p>Merci de votre confiance</p>
+                        <p>Rapport généré avec l'application SagerMarket</p>
+                    </div>
+                </body>
+                </html>
+            `;
 
                 printWindow.document.write(htmlContent);
                 printWindow.document.close();
             },
+
+            printDailyDetails(day) {
+                if (!day) return;
+
+                const parts = day.split('-');
+                const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+                axios
+                    .get('/rentabilityApi/daily', {
+                        params: { date: formattedDate },
+                    })
+                    .then((res) => {
+                        const dailyDetails = res.data.map((sale) => ({
+                            id: sale.sale_id,
+                            client_name: sale.client_name,
+                            seller_name: sale.seller_name || '-',
+                            total: sale.total_sale,
+                            products: sale.products.map((p) => ({
+                                name: p.product_name,
+                                quantity: p.quantity,
+                                price: parseFloat(p.price),
+                                purchase_price: parseFloat(p.purchase_price),
+                                profit: parseFloat(p.profit),
+                            })),
+                        }));
+
+                        this.generateDailyPrintContent(day, dailyDetails);
+                    })
+                    .catch((err) => {
+                        console.error(
+                            'Erreur récupération rentabilité du jour:',
+                            err
+                        );
+                        alert('Impossible de récupérer les détails du jour.');
+                    });
+            },
+
+            generateDailyPrintContent(day, details) {
+                const printWindow = window.open('', '_blank');
+
+                const totalSales = details.reduce(
+                    (sum, sale) =>
+                        sum +
+                        sale.products.reduce(
+                            (s, p) => s + p.quantity * p.price,
+                            0
+                        ),
+                    0
+                );
+
+                const totalProfit = details.reduce(
+                    (sum, sale) =>
+                        sum +
+                        sale.products.reduce((s, p) => s + (p.profit || 0), 0),
+                    0
+                );
+
+                let tableRows = '';
+                details.forEach((sale, i) => {
+                    sale.products.forEach((p, j) => {
+                        tableRows += `
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                sale.client_name
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${
+                                p.name
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${
+                                p.quantity
+                            }</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                p.purchase_price || 0
+                            )}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                p.price
+                            )}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                p.quantity * p.price
+                            )}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: right;"><strong>${this.formatAmount(
+                                p.profit
+                            )}</strong></td>
+                        </tr>
+                    `;
+                    });
+                });
+
+                const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Rentabilité du ${this.formatDate(day)}</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            padding: 20px;
+                            color: #333;
+                        }
+                        .company-header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 3px solid #667eea;
+                            padding-bottom: 20px;
+                        }
+                        .company-header h1 {
+                            color: #667eea;
+                            margin: 0;
+                            font-size: 2rem;
+                        }
+                        .company-header p {
+                            margin: 5px 0;
+                            color: #666;
+                        }
+                        h2 { 
+                            text-align: center; 
+                            color: #764ba2; 
+                            margin-bottom: 30px;
+                        }
+                        .info { 
+                            background: #f8f9fa;
+                            padding: 15px;
+                            border-radius: 8px;
+                            margin-bottom: 20px;
+                            border-left: 4px solid #667eea;
+                        }
+                        .info p {
+                            margin: 5px 0;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-bottom: 20px; 
+                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                        }
+                        thead {
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                        }
+                        th { 
+                            padding: 12px; 
+                            text-align: left; 
+                            border: 1px solid #667eea;
+                        }
+                        .total-row { 
+                            background-color: #f8f9fa; 
+                            font-weight: bold; 
+                        }
+                        .footer {
+                            margin-top: 40px;
+                            text-align: center;
+                            color: #666;
+                            font-size: 0.9rem;
+                        }
+                        @media print {
+                            body { margin: 10mm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="company-header">
+                        <h1>SAGER</h1>
+                        <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                        Distribution professionnelle • Vente en gros et détail</p>
+                        <p><strong>Téléphone:</strong> +229 0196466625</p>
+                        <p><strong>IFU:</strong> 0202586942320</p>
+                    </div>
+
+                    <h2>RAPPORT DE RENTABILITÉ</h2>
+
+                    <div class="info">
+                        <p><strong>Date:</strong> ${this.formatDate(day)}</p>
+                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                            'fr-FR'
+                        )}</p>
+                        <p><strong>Nombre de transactions:</strong> ${
+                            details.length
+                        }</p>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Produit</th>
+                                <th style="text-align: center;">Quantité</th>
+                                <th style="text-align: right;">Prix d'achat</th>
+                                <th style="text-align: right;">Prix de vente</th>
+                                <th style="text-align: right;">Total vente</th>
+                                <th style="text-align: right;">Bénéfice</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                            <tr class="total-row">
+                                <td colspan="5" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAL VENTES:</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                    totalSales
+                                )} FCFA</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                    totalProfit
+                                )} FCFA</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="footer">
+                        <p>Merci de votre confiance</p>
+                        <p>Rapport généré avec l'application SagerMarket</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            },
+
             goToPage(page) {
                 if (page >= 1 && page <= this.totalPages)
                     this.currentPage = page;
             },
         },
         computed: {
+            totalProfit() {
+                return this.rentability.reduce(
+                    (sum, day) => sum + parseFloat(day.total_profit || 0),
+                    0
+                );
+            },
+            averageProfit() {
+                if (this.rentability.length === 0) return 0;
+                return this.totalProfit / this.rentability.length;
+            },
             filteredRentability() {
                 const now = new Date();
-                return this.rentability.filter((day) => {
-                    const saleDate = new Date(day.day);
-                    switch (this.filterPeriod) {
-                        case "Aujourd'hui":
-                            return (
-                                saleDate.toDateString() === now.toDateString()
-                            );
-                        case 'Hier':
-                            const yesterday = new Date(now);
-                            yesterday.setDate(now.getDate() - 1);
-                            return (
-                                saleDate.toDateString() ===
-                                yesterday.toDateString()
-                            );
-                        case 'Cette semaine':
-                            const firstDayOfWeek = new Date(now);
-                            firstDayOfWeek.setDate(
-                                now.getDate() - now.getDay() + 1
-                            );
-                            firstDayOfWeek.setHours(0, 0, 0, 0);
-                            const lastDayOfWeek = new Date(firstDayOfWeek);
-                            lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
-                            lastDayOfWeek.setHours(23, 59, 59, 999);
-                            return (
-                                saleDate >= firstDayOfWeek &&
-                                saleDate <= lastDayOfWeek
-                            );
-                        case 'Ce mois':
-                            return (
-                                saleDate.getMonth() === now.getMonth() &&
-                                saleDate.getFullYear() === now.getFullYear()
-                            );
-                        case 'Toutes les ventes':
-                        case 'À une date précise':
-                        default:
-                            return true;
-                    }
-                });
+                let filtered = this.rentability;
+
+                if (this.dateFilterMode === 'specific' && this.selectedDate) {
+                    const selectedDateObj = new Date(this.selectedDate);
+                    filtered = filtered.filter((day) => {
+                        const saleDate = new Date(day.day);
+                        return (
+                            saleDate.toDateString() ===
+                            selectedDateObj.toDateString()
+                        );
+                    });
+                } else if (
+                    this.dateFilterMode === 'range' &&
+                    this.filterDateStart &&
+                    this.filterDateEnd
+                ) {
+                    const startDate = new Date(this.filterDateStart);
+                    const endDate = new Date(this.filterDateEnd);
+                    filtered = filtered.filter((day) => {
+                        const saleDate = new Date(day.day);
+                        return saleDate >= startDate && saleDate <= endDate;
+                    });
+                } else {
+                    // Filtre par période
+                    filtered = filtered.filter((day) => {
+                        const saleDate = new Date(day.day);
+                        switch (this.filterPeriod) {
+                            case "Aujourd'hui":
+                                return (
+                                    saleDate.toDateString() ===
+                                    now.toDateString()
+                                );
+                            case 'Hier':
+                                const yesterday = new Date(now);
+                                yesterday.setDate(now.getDate() - 1);
+                                return (
+                                    saleDate.toDateString() ===
+                                    yesterday.toDateString()
+                                );
+                            case 'Cette semaine':
+                                const firstDayOfWeek = new Date(now);
+                                firstDayOfWeek.setDate(
+                                    now.getDate() - now.getDay() + 1
+                                );
+                                firstDayOfWeek.setHours(0, 0, 0, 0);
+                                const lastDayOfWeek = new Date(firstDayOfWeek);
+                                lastDayOfWeek.setDate(
+                                    firstDayOfWeek.getDate() + 6
+                                );
+                                lastDayOfWeek.setHours(23, 59, 59, 999);
+                                return (
+                                    saleDate >= firstDayOfWeek &&
+                                    saleDate <= lastDayOfWeek
+                                );
+                            case 'Ce mois':
+                                return (
+                                    saleDate.getMonth() === now.getMonth() &&
+                                    saleDate.getFullYear() === now.getFullYear()
+                                );
+                            case 'Toutes les ventes':
+                            default:
+                                return true;
+                        }
+                    });
+                }
+
+                return filtered;
             },
             totalPages() {
                 return Math.ceil(
@@ -1368,5 +1737,95 @@
         border: none;
         font-size: 1.5rem;
         cursor: pointer;
+    }
+</style>
+
+<style>
+    /* Added statistics section styles */
+    .statistics-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        padding: 1rem 0;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-card-1 {
+        border-left: 4px solid #667eea;
+    }
+
+    .stat-card-2 {
+        border-left: 4px solid #28a745;
+    }
+
+    .stat-card-3 {
+        border-left: 4px solid #ffc107;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+    }
+
+    .stat-card-1 .stat-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .stat-card-2 .stat-icon {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .stat-card-3 .stat-icon {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        color: white;
+    }
+
+    .stat-info {
+        flex: 1;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    @media (max-width: 768px) {
+        .statistics-section {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+        }
     }
 </style>

@@ -469,7 +469,7 @@
                 }
                 try {
                     const response = await axios.post(
-                        `${window.location.origin}/expenses/add`,
+                        `${window.location.origin}/expenses`,
                         this.newExpense
                     );
                     if (response.data.success) {
@@ -775,7 +775,10 @@
                         </style>
                     </head>
                     <body>
-                        <h1>SAGER MARKET</h1>
+                        <h1>SAGER</h1>
+                          <p style="margin-auto; text-align: center">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                                    Distribution professionnelle • Vente en gros et détail</p>
+                                
                         <div class="company-info">
                             <p><strong>Téléphone:</strong> +229 0196466625</p>
                             <p><strong>IFU:</strong> 0202586942320</p>
@@ -810,6 +813,10 @@
                                 </tr>
                             </tbody>
                         </table>
+                          <div class="footer" style="margin-auto; text-align: center">
+                                    <p>Merci de votre confiance</p>
+                                    <p>Rapport généré avec l'application SagerMarket</p>
+                                </div>
 
                         <button onclick="window.print()">Imprimer</button>
                     </body>

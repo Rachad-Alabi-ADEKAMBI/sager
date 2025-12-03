@@ -35,7 +35,7 @@
                 </button>
                 <input
                     type="text"
-                    class="search-input"
+                    class="search-input small-input"
                     placeholder="Rechercher par client ou produit..."
                     v-model="searchQuery"
                 />
@@ -146,14 +146,16 @@
                     </thead>
                     <tbody>
                         <tr v-for="item in group.items" :key="item.id">
-                            <td>{{ item.product_name }}</td>
-                            <td class="text-center">
+                            <td data-label="Produit">
+                                {{ item.product_name }}
+                            </td>
+                            <td data-label="Qté Achetée" class="text-center">
                                 {{ item.quantity_purchased }}
                             </td>
-                            <td class="text-center">
+                            <td data-label="Qté Retournée" class="text-center">
                                 {{ item.quantity_returned }}
                             </td>
-                            <td class="text-center">
+                            <td data-label="Qté Restante" class="text-center">
                                 <strong>
                                     {{
                                         item.quantity_purchased -
@@ -161,13 +163,15 @@
                                     }}
                                 </strong>
                             </td>
-                            <td>
+                            <td data-label="Statut">
                                 <span :style="getStatusBadgeStyle(item)">
                                     {{ getStatusText(item) }}
                                 </span>
                             </td>
-                            <td>{{ formatDate(item.created_at) }}</td>
-                            <td>
+                            <td data-label="Date d'achat">
+                                {{ formatDate(item.created_at) }}
+                            </td>
+                            <td data-label="Actions">
                                 <div class="action-buttons">
                                     <button
                                         v-if="
@@ -194,14 +198,16 @@
                     </tbody>
                     <tfoot class="invoice-total">
                         <tr>
-                            <td><strong>TOTAL FACTURE</strong></td>
-                            <td class="text-center">
+                            <td data-label="">
+                                <strong>TOTAL FACTURE</strong>
+                            </td>
+                            <td data-label="total" class="text-center">
                                 <strong>{{ group.totalPurchased }}</strong>
                             </td>
-                            <td class="text-center">
+                            <td data-label="Retour" class="text-center">
                                 <strong>{{ group.totalReturned }}</strong>
                             </td>
-                            <td class="text-center">
+                            <td data-label="Reste" class="text-center">
                                 <strong>{{ group.totalRemaining }}</strong>
                             </td>
                             <td colspan="3"></td>
@@ -238,6 +244,7 @@
         </div>
 
         <!-- Modal Retourner des Emballages -->
+        <!-- Modal Retourner des Emballages -->
         <div
             v-if="showReturnModal"
             class="modal-overlay"
@@ -250,6 +257,7 @@
                         &times;
                     </span>
                 </div>
+
                 <div class="modal-body">
                     <p>
                         <strong>Client:</strong>
@@ -285,7 +293,21 @@
                             placeholder="Entrez la quantité"
                         />
                     </div>
+
+                    <div class="form-group" style="margin-top: 10px">
+                        <label for="returnDate">
+                            Date du retour
+                            <span class="required">*</span>
+                        </label>
+                        <input
+                            type="date"
+                            id="returnDate"
+                            v-model="returnDate"
+                            class="form-control"
+                        />
+                    </div>
                 </div>
+
                 <div class="modal-footer">
                     <button
                         class="btn btn-secondary"
@@ -369,14 +391,25 @@
                 </div>
                 <div class="modal-body">
                     <div v-if="returnHistory.length > 0">
-                        <table class="table">
+                        <table
+                            class="table"
+                            style="width: 100%; border-collapse: collapse"
+                        >
                             <thead>
                                 <tr>
-                                    <th>Produit</th>
-                                    <th>Qté Achetée</th>
-                                    <th>Qté Retournée</th>
-                                    <th>Qté Restante</th>
-                                    <th>Date de Retour</th>
+                                    <th style="text-align: left">Produit</th>
+                                    <th style="text-align: right">
+                                        Qté Achetée
+                                    </th>
+                                    <th style="text-align: right">
+                                        Qté Retournée
+                                    </th>
+                                    <th style="text-align: right">
+                                        Qté Restante
+                                    </th>
+                                    <th style="text-align: right">
+                                        Date de Retour
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -384,16 +417,28 @@
                                     v-for="(history, idx) in returnHistory"
                                     :key="idx"
                                 >
-                                    <td>
+                                    <td
+                                        data-label="Produit"
+                                        style="text-align: left"
+                                    >
                                         {{ getProductName(history.product_id) }}
                                     </td>
-                                    <td class="text-center">
+                                    <td
+                                        data-label="Total"
+                                        style="text-align: right"
+                                    >
                                         {{ history.quantity_purchased }}
                                     </td>
-                                    <td class="text-center">
+                                    <td
+                                        data-label="Retour"
+                                        style="text-align: right"
+                                    >
                                         {{ history.quantity_returned }}
                                     </td>
-                                    <td class="text-center">
+                                    <td
+                                        data-label="Reste"
+                                        style="text-align: right"
+                                    >
                                         <strong>
                                             {{
                                                 history.quantity_purchased -
@@ -401,10 +446,13 @@
                                             }}
                                         </strong>
                                     </td>
-                                    <td>
+                                    <td
+                                        data-label="Date"
+                                        style="text-align: right"
+                                    >
                                         {{
-                                            history.updated_at
-                                                ? formatDate(history.updated_at)
+                                            history.date
+                                                ? formatDate(history.date)
                                                 : 'N/A'
                                         }}
                                     </td>
@@ -444,6 +492,7 @@
                 showReturnModal: false,
                 showDeleteConfirmation: false,
                 returnableToDelete: null,
+                returnDate: new Date().toISOString().split('T')[0], // date du jour
                 returnItem: {
                     id: null,
                     client_name: '',
@@ -474,6 +523,7 @@
                         `${window.location.origin}/returnableProductsList`
                     );
                     this.returnables = response.data;
+                    console.log(this.returnables);
                 } catch (error) {
                     console.error(
                         'Erreur lors de la récupération des emballages:',
@@ -484,7 +534,7 @@
 
             openReturnModal(item) {
                 this.returnItem = { ...item };
-                this.returnQuantity = 0;
+                this.returnQuantity = '';
                 this.showReturnModal = true;
             },
 
@@ -517,11 +567,17 @@
                     return;
                 }
 
+                if (!this.returnDate) {
+                    alert('Veuillez sélectionner une date de retour');
+                    return;
+                }
+
                 try {
                     const response = await axios.post(
                         `${window.location.origin}/returnableProducts/${this.returnItem.id}/return`,
                         {
                             quantity_returned: this.returnQuantity,
+                            date: this.returnDate,
                         }
                     );
 
@@ -548,8 +604,8 @@
                 if (!this.returnableToDelete) return;
 
                 try {
-                    const response = await axios.delete(
-                        `${window.location.origin}/returnableProducts/${this.returnableToDelete.id}`
+                    const response = await axios.post(
+                        `${window.location.origin}/returnableProducts/${this.returnableToDelete.id}/delete`
                     );
                     if (response.data.success) {
                         await this.fetchReturnables();
@@ -660,166 +716,170 @@
                         totalRemaining += remaining;
 
                         return `
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd;">${
-                                idx + 1
-                            }</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">${
-                                item.product_name
-                            }</td>
-                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-                                item.quantity_purchased
-                            }</td>
-                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-                                item.quantity_returned
-                            }</td>
-                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${remaining}</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">${this.formatDate(
-                                item.created_at
-                            )}</td>
-                        </tr>
-                    `;
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${
+                                    idx + 1
+                                }</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${
+                                    item.product_name
+                                }</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
+                                    item.quantity_purchased
+                                }</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
+                                    item.quantity_returned
+                                }</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${remaining}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${this.formatDate(
+                                    item.created_at
+                                )}</td>
+                            </tr>
+                        `;
                     })
                     .join('');
 
                 const htmlContent = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Facture Emballages #${saleId}</title>
-                        <style>
-                            body {
-                                font-family: Arial, sans-serif;
-                                margin: 20px;
-                                color: #333;
-                            }
-                            .company-header {
-                                text-align: center;
-                                margin-bottom: 30px;
-                                border-bottom: 3px solid #667eea;
-                                padding-bottom: 20px;
-                            }
-                            .company-header h1 {
-                                color: #667eea;
-                                margin: 0;
-                                font-size: 2rem;
-                            }
-                            .company-header p {
-                                margin: 5px 0;
-                                color: #666;
-                            }
-                            h2 {
-                                text-align: center;
-                                color: #764ba2;
-                                margin-bottom: 30px;
-                            }
-                            .client-info {
-                                background: #f8f9fa;
-                                padding: 15px;
-                                border-radius: 8px;
-                                margin-bottom: 20px;
-                                border-left: 4px solid #667eea;
-                            }
-                            .client-info p {
-                                margin: 5px 0;
-                            }
-                            table {
-                                width: 100%;
-                                border-collapse: collapse;
-                                margin-top: 20px;
-                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                            }
-                            thead {
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                color: white;
-                            }
-                            th {
-                                padding: 12px;
-                                text-align: left;
-                                border: 1px solid #667eea;
-                            }
-                            tfoot {
-                                background: #f8f9fa;
-                                font-weight: bold;
-                            }
-                            .observation {
-                                margin-top: 30px;
-                                padding: 15px;
-                                background: #fff3cd;
-                                border-left: 4px solid #ffc107;
-                                border-radius: 4px;
-                            }
-                            .observation p {
-                                margin: 0;
-                                color: #856404;
-                            }
-                            .footer {
-                                margin-top: 40px;
-                                text-align: center;
-                                color: #666;
-                                font-size: 0.9rem;
-                            }
-                            @media print {
-                                body { margin: 10mm; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="company-header">
-                            <h1>SAGER MARKET</h1>
-                            <p><strong>Téléphone:</strong> +229 0196466625</p>
-                            <p><strong>IFU:</strong> 0202586942320</p>
-                        </div>
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Facture Emballages #${saleId}</title>
+                            <style>
+                                body {
+                                    font-family: Arial, sans-serif;
+                                    margin: 20px;
+                                    color: #333;
+                                }
+                                .company-header {
+                                    text-align: center;
+                                    margin-bottom: 30px;
+                                    border-bottom: 3px solid #667eea;
+                                    padding-bottom: 20px;
+                                }
+                                .company-header h1 {
+                                    color: #667eea;
+                                    margin: 0;
+                                    font-size: 2rem;
+                                }
+                                .company-header p {
+                                    margin: 5px 0;
+                                    color: #666;
+                                }
+                                h2 {
+                                    text-align: center;
+                                    color: #764ba2;
+                                    margin-bottom: 30px;
+                                }
+                                .client-info {
+                                    background: #f8f9fa;
+                                    padding: 15px;
+                                    border-radius: 8px;
+                                    margin-bottom: 20px;
+                                    border-left: 4px solid #667eea;
+                                }
+                                .client-info p {
+                                    margin: 5px 0;
+                                }
+                                table {
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    margin-top: 20px;
+                                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                                }
+                                thead {
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    color: white;
+                                }
+                                th {
+                                    padding: 12px;
+                                    text-align: left;
+                                    border: 1px solid #667eea;
+                                }
+                                tfoot {
+                                    background: #f8f9fa;
+                                    font-weight: bold;
+                                }
+                                .observation {
+                                    margin-top: 30px;
+                                    padding: 15px;
+                                    background: #fff3cd;
+                                    border-left: 4px solid #ffc107;
+                                    border-radius: 4px;
+                                }
+                                .observation p {
+                                    margin: 0;
+                                    color: #856404;
+                                }
+                                .footer {
+                                    margin-top: 40px;
+                                    text-align: center;
+                                    color: #666;
+                                    font-size: 0.9rem;
+                                }
+                                @media print {
+                                    body { margin: 10mm; }
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="company-header">
+                                <h1>SAGER</h1>
+                                <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique
+     <br> Distribution professionnelle • Vente en gros et détail </p>
 
-                        <h2>FACTURE EMBALLAGES CONSIGNÉS</h2>
+                                <p><strong>Téléphone:</strong> +229 0196466625</p>
+                                <p><strong>IFU:</strong> 0202586942320</p>
+                            </div>
 
-                        <div class="client-info">
-                            <p><strong>Facture N°:</strong> ${saleId}</p>
-                            <p><strong>Client:</strong> ${client}</p>
-                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleDateString(
-                                'fr-FR'
-                            )}</p>
-                        </div>
+                            <h2>FACTURE EMBALLAGES CONSIGNÉS</h2>
 
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>N°</th>
-                                    <th>Produit</th>
-                                    <th style="text-align: center;">Qté Achetée</th>
-                                    <th style="text-align: center;">Qté Retournée</th>
-                                    <th style="text-align: center;">Qté Restante</th>
-                                    <th>Date d'achat</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRows}
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="2" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAL:</td>
-                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${totalPurchased}</td>
-                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${totalReturned}</td>
-                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: ${
-                                        totalRemaining > 0
-                                            ? '#c62828'
-                                            : '#388e3c'
-                                    };">${totalRemaining}</td>
-                                    <td style="padding: 12px; border: 1px solid #ddd;"></td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                            <div class="client-info">
+                                <p><strong>Facture N°:</strong> ${saleId}</p>
+                                <p><strong>Client:</strong> ${client}</p>
+                                <p><strong>Date d'impression:</strong> ${new Date().toLocaleDateString(
+                                    'fr-FR'
+                                )}</p>
+                            </div>
 
-                        <div class="observation">
-                            <p><strong>Observation:</strong> Les emballages consignés restent la propriété de SAGER MARKET jusqu'à leur retour complet.</p>
-                        </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>N°</th>
+                                        <th>Produit</th>
+                                        <th style="text-align: center;">Qté Achetée</th>
+                                        <th style="text-align: center;">Qté Retournée</th>
+                                        <th style="text-align: center;">Qté Restante</th>
+                                        <th>Date d'achat</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="2" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAL:</td>
+                                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${totalPurchased}</td>
+                                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${totalReturned}</td>
+                                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: ${
+                                            totalRemaining > 0
+                                                ? '#c62828'
+                                                : '#388e3c'
+                                        };">${totalRemaining}</td>
+                                        <td style="padding: 12px; border: 1px solid #ddd;"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
 
-                        <div class="footer">
-                            <p>Merci de votre confiance</p>
-                        </div>
-                    </body>
-                    </html>
-                `;
+                            <div class="observation">
+                                <p><strong>Observation:</strong> Les emballages consignés restent la propriété de SAGER MARKET jusqu'à leur retour complet.</p>
+                            </div>
+
+                            <div class="footer">
+                                <p>Merci de votre confiance</p>
+                                <p>Rapport généré avec l'application SagerMarket<p>
+                            </div>
+                        </body>
+                        </html>
+                    `;
 
                 const printWindow = window.open('', '', 'width=800,height=600');
                 printWindow.document.open();
@@ -845,120 +905,123 @@
                                 item.quantity_returned;
 
                             return `
-                            <tr>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${
-                                    idx + 1
-                                }</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${
-                                    item.product_name
-                                }</td>
-                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-                                    item.quantity_purchased
-                                }</td>
-                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-                                    item.quantity_returned
-                                }</td>
-                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${remaining}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${this.formatDate(
-                                    item.created_at
-                                )}</td>
-                            </tr>
-                        `;
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${
+                                        idx + 1
+                                    }</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${
+                                        item.product_name
+                                    }</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
+                                        item.quantity_purchased
+                                    }</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
+                                        item.quantity_returned
+                                    }</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${remaining}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${this.formatDate(
+                                        item.created_at
+                                    )}</td>
+                                </tr>
+                            `;
                         })
                         .join('');
 
                     invoicesHTML += `
-                        <div class="invoice-page" style="${
-                            index > 0 ? 'page-break-before: always;' : ''
-                        }">
-                            <div class="company-header" style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #667eea; padding-bottom: 20px;">
-                                <h1 style="color: #667eea; margin: 0; font-size: 2rem;">SAGER MARKET</h1>
-                                <p style="margin: 5px 0; color: #666;"><strong>Téléphone:</strong> +229 0196466625</p>
-                                <p style="margin: 5px 0; color: #666;"><strong>IFU:</strong> 0202586942320</p>
+                            <div class="invoice-page" style="${
+                                index > 0 ? 'page-break-before: always;' : ''
+                            }">
+                                <div class="company-header" style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #667eea; padding-bottom: 20px;">
+                                    <h1 style="color: #667eea; margin: 0; font-size: 2rem;">SAGER</h1>
+                                     <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique
+     <br> Distribution professionnelle • Vente en gros et détail </p>
+                                    <p style="margin: 5px 0; color: #666;"><strong>Téléphone:</strong> +229 0196466625</p>
+                                    <p style="margin: 5px 0; color: #666;"><strong>IFU:</strong> 0202586942320</p>
+                                </div>
+
+                                <h2 style="text-align: center; color: #764ba2; margin-bottom: 30px;">FACTURE EMBALLAGES CONSIGNÉS</h2>
+
+                                <div class="client-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea;">
+                                    <p style="margin: 5px 0;"><strong>Facture N°:</strong> ${
+                                        group.sale_id
+                                    }</p>
+                                    <p style="margin: 5px 0;"><strong>Client:</strong> ${
+                                        group.items[0].client_name
+                                    }</p>
+                                    <p style="margin: 5px 0;"><strong>Date d'impression:</strong> ${new Date().toLocaleDateString(
+                                        'fr-FR'
+                                    )}</p>
+                                </div>
+
+                                <table style="width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                                    <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                        <tr>
+                                            <th style="padding: 12px; text-align: left; border: 1px solid #667eea;">N°</th>
+                                            <th style="padding: 12px; text-align: left; border: 1px solid #667eea;">Produit</th>
+                                            <th style="padding: 12px; text-align: center; border: 1px solid #667eea;">Qté Achetée</th>
+                                            <th style="padding: 12px; text-align: center; border: 1px solid #667eea;">Qté Retournée</th>
+                                            <th style="padding: 12px; text-align: center; border: 1px solid #667eea;">Qté Restante</th>
+                                            <th style="padding: 12px; text-align: left; border: 1px solid #667eea;">Date d'achat</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${tableRows}
+                                    </tbody>
+                                    <tfoot style="background: #f8f9fa; font-weight: bold;">
+                                        <tr>
+                                            <td colspan="2" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAL:</td>
+                                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${
+                                                group.totalPurchased
+                                            }</td>
+                                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${
+                                                group.totalReturned
+                                            }</td>
+                                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: ${
+                                                group.totalRemaining > 0
+                                                    ? '#c62828'
+                                                    : '#388e3c'
+                                            };">${group.totalRemaining}</td>
+                                            <td style="padding: 12px; border: 1px solid #ddd;"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+
+                                <div class="observation" style="margin-top: 30px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                                    <p style="margin: 0; color: #856404;"><strong>Observation:</strong> Les emballages consignés restent la propriété de SAGER MARKET jusqu'à leur retour complet.</p>
+                                </div>
+
+                                <div class="footer" style="margin-top: 40px; text-align: center; color: #666; font-size: 0.9rem;">
+                                    <p>Merci de votre confiance</p>
+                                <p>Rapport généré avec l'application SagerMarket<p>
+                                </div>
                             </div>
-
-                            <h2 style="text-align: center; color: #764ba2; margin-bottom: 30px;">FACTURE EMBALLAGES CONSIGNÉS</h2>
-
-                            <div class="client-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea;">
-                                <p style="margin: 5px 0;"><strong>Facture N°:</strong> ${
-                                    group.sale_id
-                                }</p>
-                                <p style="margin: 5px 0;"><strong>Client:</strong> ${
-                                    group.items[0].client_name
-                                }</p>
-                                <p style="margin: 5px 0;"><strong>Date d'impression:</strong> ${new Date().toLocaleDateString(
-                                    'fr-FR'
-                                )}</p>
-                            </div>
-
-                            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
-                                <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                                    <tr>
-                                        <th style="padding: 12px; text-align: left; border: 1px solid #667eea;">N°</th>
-                                        <th style="padding: 12px; text-align: left; border: 1px solid #667eea;">Produit</th>
-                                        <th style="padding: 12px; text-align: center; border: 1px solid #667eea;">Qté Achetée</th>
-                                        <th style="padding: 12px; text-align: center; border: 1px solid #667eea;">Qté Retournée</th>
-                                        <th style="padding: 12px; text-align: center; border: 1px solid #667eea;">Qté Restante</th>
-                                        <th style="padding: 12px; text-align: left; border: 1px solid #667eea;">Date d'achat</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tableRows}
-                                </tbody>
-                                <tfoot style="background: #f8f9fa; font-weight: bold;">
-                                    <tr>
-                                        <td colspan="2" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAL:</td>
-                                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${
-                                            group.totalPurchased
-                                        }</td>
-                                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${
-                                            group.totalReturned
-                                        }</td>
-                                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: ${
-                                            group.totalRemaining > 0
-                                                ? '#c62828'
-                                                : '#388e3c'
-                                        };">${group.totalRemaining}</td>
-                                        <td style="padding: 12px; border: 1px solid #ddd;"></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-
-                            <div class="observation" style="margin-top: 30px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-                                <p style="margin: 0; color: #856404;"><strong>Observation:</strong> Les emballages consignés restent la propriété de SAGER MARKET jusqu'à leur retour complet.</p>
-                            </div>
-
-                            <div class="footer" style="margin-top: 40px; text-align: center; color: #666; font-size: 0.9rem;">
-                                <p>Merci de votre confiance</p>
-                            </div>
-                        </div>
-                    `;
+                        `;
                 });
 
                 const htmlContent = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Factures Emballages Consignés</title>
-                        <style>
-                            body {
-                                font-family: Arial, sans-serif;
-                                margin: 20px;
-                                color: #333;
-                            }
-                            @media print {
-                                .invoice-page {
-                                    page-break-after: always;
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Factures Emballages Consignés</title>
+                            <style>
+                                body {
+                                    font-family: Arial, sans-serif;
+                                    margin: 20px;
+                                    color: #333;
                                 }
-                                body { margin: 10mm; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        ${invoicesHTML}
-                    </body>
-                    </html>
-                `;
+                                @media print {
+                                    .invoice-page {
+                                        page-break-after: always;
+                                    }
+                                    body { margin: 10mm; }
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${invoicesHTML}
+                        </body>
+                        </html>
+                    `;
 
                 const printWindow = window.open('', '', 'width=800,height=600');
                 printWindow.document.open();
@@ -1660,5 +1723,49 @@
         .table-container {
             box-shadow: none;
         }
+    }
+</style>
+
+<style>
+    /* Version responsive type “cartes” */
+    @media screen and (max-width: 768px) {
+        .table,
+        .table tbody,
+        .table tr,
+        .table td {
+            display: block;
+            width: 100%;
+        }
+
+        .table thead {
+            display: none;
+        }
+
+        .table tr {
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            padding: 0.5rem;
+            border-radius: 5px;
+        }
+
+        .table td {
+            text-align: right;
+            padding: 0.5rem;
+            position: relative;
+        }
+
+        .table td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 0;
+            text-align: left;
+            font-weight: bold;
+        }
+    }
+</style>
+<style>
+    .small-input {
+        width: 100px;
+        max-width: 100px;
     }
 </style>

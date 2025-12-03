@@ -14,8 +14,9 @@ class StocksReturnableProduct extends Model
     protected $fillable = [
         'sale_id',
         'product_id',
-        'buyer_name',
+        'buyer_id',
         'quantity_purchased',
         'quantity_returned',
+        'date'
     ];
 }
