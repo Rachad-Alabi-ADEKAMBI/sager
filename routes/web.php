@@ -19,7 +19,8 @@ use App\Http\Controllers\{
     ClaimController,
     ClaimsPaymentController,
     ExpenseController,
-    ReturnableProductController
+    ReturnableProductController,
+    StocksReturnableProductController
 };
 
 use App\Models\{
@@ -183,6 +184,11 @@ Route::post('/expenses/update/{id}', [ExpenseController::class, 'update'])
     ->name('expenses.update');
 Route::post('/expenses/delete/{id}', [ExpenseController::class, 'destroy'])
     ->name('expenses.destroy');
+
+//route pour l'historique des retours
+Route::get('/stocksReturnableProductsList', [StocksReturnableProductController::class, 'stocksReturnableProductsList'])
+    ->name('stocksReturnableProductsList');
+
 
 //proformas
 Route::get('/proformas', function () {

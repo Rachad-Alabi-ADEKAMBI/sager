@@ -56,6 +56,7 @@ class ReturnableProductController extends Controller
             ->leftJoin('sales', 'returnable_products.sale_id', '=', 'sales.id')
             ->select(
                 'returnable_products.id',
+                'returnable_products.sale_id',
                 'products.name as product_name',
                 'sales.buyer_name as client_name',
                 'returnable_products.quantity_purchased',

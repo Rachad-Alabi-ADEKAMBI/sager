@@ -29,9 +29,9 @@
         <div class="returnables-header">
             <h2>Gestion des Emballages Consignés</h2>
             <div class="header-actions">
-                <button @click="printInvoice" class="btn btn-print">
+                <button @click="printGlobalInvoice" class="btn btn-print">
                     <i class="fas fa-print"></i>
-                    Imprimer Facture
+                    Imprimer Liste Complète
                 </button>
                 <input
                     type="text"
@@ -100,70 +100,115 @@
         </div>
 
         <!-- Returnables Table -->
-        <div class="table-container" v-if="filteredReturnables.length > 0">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Client</th>
-                        <th>Produit</th>
-                        <th>Qté Achetée</th>
-                        <th>Qté Retournée</th>
-                        <th>Qté Restante</th>
-                        <th>Statut</th>
-                        <th>Date d'achat</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="item in paginatedReturnables" :key="item.id">
-                        <td>{{ item.client_name }}</td>
-                        <td>{{ item.product_name }}</td>
-                        <td class="text-center">
-                            {{ item.quantity_purchased }}
-                        </td>
-                        <td class="text-center">
-                            {{ item.quantity_returned }}
-                        </td>
-                        <td class="text-center">
-                            <strong>
-                                {{
-                                    item.quantity_purchased -
-                                    item.quantity_returned
-                                }}
-                            </strong>
-                        </td>
-                        <td>
-                            <span :style="getStatusBadgeStyle(item)">
-                                {{ getStatusText(item) }}
-                            </span>
-                        </td>
-                        <td>{{ formatDate(item.created_at) }}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button
-                                    v-if="
+        <div class="table-container" v-if="groupedBySaleId.length > 0">
+            <!-- Group items by sale_id (invoice) -->
+            <div
+                v-for="(group, index) in paginatedGroups"
+                :key="group.sale_id"
+                class="invoice-group"
+            >
+                <div class="invoice-header">
+                    <h3>
+                        Facture #{{ group.sale_id }} -
+                        {{ group.items[0].client_name }}
+                    </h3>
+                    <div class="invoice-actions">
+                        <button
+                            @click="viewReturnHistory(group.sale_id)"
+                            class="btn-sm btn-history"
+                            title="Voir l'historique des retours"
+                        >
+                            <i class="fas fa-history"></i>
+                            Historique
+                        </button>
+                        <button
+                            @click="printInvoice(group.sale_id, group.items)"
+                            class="btn-sm btn-print-invoice"
+                            title="Imprimer cette facture"
+                        >
+                            <i class="fas fa-print"></i>
+                            Imprimer
+                        </button>
+                    </div>
+                </div>
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th>Qté Achetée</th>
+                            <th>Qté Retournée</th>
+                            <th>Qté Restante</th>
+                            <th>Statut</th>
+                            <th>Date d'achat</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="item in group.items" :key="item.id">
+                            <td>{{ item.product_name }}</td>
+                            <td class="text-center">
+                                {{ item.quantity_purchased }}
+                            </td>
+                            <td class="text-center">
+                                {{ item.quantity_returned }}
+                            </td>
+                            <td class="text-center">
+                                <strong>
+                                    {{
                                         item.quantity_purchased -
-                                            item.quantity_returned >
-                                        0
-                                    "
-                                    class="btn-sm btn-return"
-                                    title="Retourner des emballages"
-                                    @click="openReturnModal(item)"
-                                >
-                                    <i class="fas fa-undo-alt"></i>
-                                </button>
-                                <button
-                                    class="btn-sm btn-delete"
-                                    title="Supprimer"
-                                    @click="confirmDeleteReturnable(item)"
-                                >
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                                        item.quantity_returned
+                                    }}
+                                </strong>
+                            </td>
+                            <td>
+                                <span :style="getStatusBadgeStyle(item)">
+                                    {{ getStatusText(item) }}
+                                </span>
+                            </td>
+                            <td>{{ formatDate(item.created_at) }}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button
+                                        v-if="
+                                            item.quantity_purchased -
+                                                item.quantity_returned >
+                                            0
+                                        "
+                                        class="btn-sm btn-return"
+                                        title="Retourner des emballages"
+                                        @click="openReturnModal(item)"
+                                    >
+                                        <i class="fas fa-undo-alt"></i>
+                                    </button>
+                                    <button
+                                        class="btn-sm btn-delete"
+                                        title="Supprimer"
+                                        @click="confirmDeleteReturnable(item)"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot class="invoice-total">
+                        <tr>
+                            <td><strong>TOTAL FACTURE</strong></td>
+                            <td class="text-center">
+                                <strong>{{ group.totalPurchased }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <strong>{{ group.totalReturned }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <strong>{{ group.totalRemaining }}</strong>
+                            </td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
 
             <!-- Pagination -->
             <div class="pagination">
@@ -306,6 +351,84 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal for Return History -->
+        <div
+            v-if="showHistoryModal"
+            class="modal-overlay"
+            @click.self="closeHistoryModal()"
+        >
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3>
+                        Historique des Retours - Facture #{{ selectedSaleId }}
+                    </h3>
+                    <span class="close" @click="closeHistoryModal()">
+                        &times;
+                    </span>
+                </div>
+                <div class="modal-body">
+                    <div v-if="returnHistory.length > 0">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th>Qté Achetée</th>
+                                    <th>Qté Retournée</th>
+                                    <th>Qté Restante</th>
+                                    <th>Date de Retour</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="(history, idx) in returnHistory"
+                                    :key="idx"
+                                >
+                                    <td>
+                                        {{ getProductName(history.product_id) }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ history.quantity_purchased }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ history.quantity_returned }}
+                                    </td>
+                                    <td class="text-center">
+                                        <strong>
+                                            {{
+                                                history.quantity_purchased -
+                                                history.quantity_returned
+                                            }}
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        {{
+                                            history.updated_at
+                                                ? formatDate(history.updated_at)
+                                                : 'N/A'
+                                        }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div v-else class="empty-state-small">
+                        <p>
+                            Aucun historique de retour disponible pour cette
+                            facture.
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-secondary"
+                        @click="closeHistoryModal()"
+                    >
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -315,6 +438,9 @@
         data() {
             return {
                 returnables: [],
+                showHistoryModal: false,
+                returnHistory: [],
+                selectedSaleId: null,
                 showReturnModal: false,
                 showDeleteConfirmation: false,
                 returnableToDelete: null,
@@ -335,7 +461,7 @@
                 filterDateEnd: '',
                 sortOption: 'Date (récent)',
                 currentPage: 1,
-                itemsPerPage: 10,
+                itemsPerPage: 5, // Reduced to 5 groups per page
             };
         },
         mounted() {
@@ -486,34 +612,237 @@
                 };
             },
 
-            printInvoice() {
-                const clientData = {};
+            async viewReturnHistory(saleId) {
+                this.selectedSaleId = saleId;
+                this.showHistoryModal = true;
 
-                // Group by client
-                this.filteredReturnables.forEach((item) => {
-                    if (!clientData[item.client_name]) {
-                        clientData[item.client_name] = [];
-                    }
-                    clientData[item.client_name].push(item);
-                });
+                try {
+                    const response = await axios.get(
+                        `${window.location.origin}/stocksReturnableProductsList`
+                    );
+                    // Filter history by sale_id
+                    this.returnHistory = response.data.filter(
+                        (item) => item.sale_id === saleId
+                    );
+                } catch (error) {
+                    console.error(
+                        "Erreur lors de la récupération de l'historique:",
+                        error
+                    );
+                }
+            },
 
-                // Generate invoice HTML for each client
+            closeHistoryModal() {
+                this.showHistoryModal = false;
+                this.returnHistory = [];
+                this.selectedSaleId = null;
+            },
+
+            getProductName(productId) {
+                const item = this.returnables.find(
+                    (r) => r.product_id === productId
+                );
+                return item ? item.product_name : 'Produit inconnu';
+            },
+
+            printInvoice(saleId, items) {
+                const client = items[0].client_name;
+                let totalPurchased = 0;
+                let totalReturned = 0;
+                let totalRemaining = 0;
+
+                const tableRows = items
+                    .map((item, idx) => {
+                        const remaining =
+                            item.quantity_purchased - item.quantity_returned;
+                        totalPurchased += item.quantity_purchased;
+                        totalReturned += item.quantity_returned;
+                        totalRemaining += remaining;
+
+                        return `
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${
+                                idx + 1
+                            }</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${
+                                item.product_name
+                            }</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
+                                item.quantity_purchased
+                            }</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
+                                item.quantity_returned
+                            }</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${remaining}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${this.formatDate(
+                                item.created_at
+                            )}</td>
+                        </tr>
+                    `;
+                    })
+                    .join('');
+
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Facture Emballages #${saleId}</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                margin: 20px;
+                                color: #333;
+                            }
+                            .company-header {
+                                text-align: center;
+                                margin-bottom: 30px;
+                                border-bottom: 3px solid #667eea;
+                                padding-bottom: 20px;
+                            }
+                            .company-header h1 {
+                                color: #667eea;
+                                margin: 0;
+                                font-size: 2rem;
+                            }
+                            .company-header p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            h2 {
+                                text-align: center;
+                                color: #764ba2;
+                                margin-bottom: 30px;
+                            }
+                            .client-info {
+                                background: #f8f9fa;
+                                padding: 15px;
+                                border-radius: 8px;
+                                margin-bottom: 20px;
+                                border-left: 4px solid #667eea;
+                            }
+                            .client-info p {
+                                margin: 5px 0;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-top: 20px;
+                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                            }
+                            thead {
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                            }
+                            th {
+                                padding: 12px;
+                                text-align: left;
+                                border: 1px solid #667eea;
+                            }
+                            tfoot {
+                                background: #f8f9fa;
+                                font-weight: bold;
+                            }
+                            .observation {
+                                margin-top: 30px;
+                                padding: 15px;
+                                background: #fff3cd;
+                                border-left: 4px solid #ffc107;
+                                border-radius: 4px;
+                            }
+                            .observation p {
+                                margin: 0;
+                                color: #856404;
+                            }
+                            .footer {
+                                margin-top: 40px;
+                                text-align: center;
+                                color: #666;
+                                font-size: 0.9rem;
+                            }
+                            @media print {
+                                body { margin: 10mm; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="company-header">
+                            <h1>SAGER MARKET</h1>
+                            <p><strong>Téléphone:</strong> +229 0196466625</p>
+                            <p><strong>IFU:</strong> 0202586942320</p>
+                        </div>
+
+                        <h2>FACTURE EMBALLAGES CONSIGNÉS</h2>
+
+                        <div class="client-info">
+                            <p><strong>Facture N°:</strong> ${saleId}</p>
+                            <p><strong>Client:</strong> ${client}</p>
+                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleDateString(
+                                'fr-FR'
+                            )}</p>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>N°</th>
+                                    <th>Produit</th>
+                                    <th style="text-align: center;">Qté Achetée</th>
+                                    <th style="text-align: center;">Qté Retournée</th>
+                                    <th style="text-align: center;">Qté Restante</th>
+                                    <th>Date d'achat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="2" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAL:</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${totalPurchased}</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${totalReturned}</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: ${
+                                        totalRemaining > 0
+                                            ? '#c62828'
+                                            : '#388e3c'
+                                    };">${totalRemaining}</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd;"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div class="observation">
+                            <p><strong>Observation:</strong> Les emballages consignés restent la propriété de SAGER MARKET jusqu'à leur retour complet.</p>
+                        </div>
+
+                        <div class="footer">
+                            <p>Merci de votre confiance</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
+
+                const printWindow = window.open('', '', 'width=800,height=600');
+                printWindow.document.open();
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            },
+
+            printGlobalInvoice() {
+                const groups = this.groupedBySaleId;
+
                 let invoicesHTML = '';
 
-                Object.keys(clientData).forEach((clientName, index) => {
-                    const items = clientData[clientName];
-                    let totalPurchased = 0;
-                    let totalReturned = 0;
-                    let totalPending = 0;
-
-                    const tableRows = items
+                groups.forEach((group, index) => {
+                    const tableRows = group.items
                         .map((item, idx) => {
                             const remaining =
                                 item.quantity_purchased -
                                 item.quantity_returned;
-                            totalPurchased += item.quantity_purchased;
-                            totalReturned += item.quantity_returned;
-                            totalPending += remaining;
 
                             return `
                             <tr>
@@ -544,19 +873,24 @@
                         }">
                             <div class="company-header" style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #667eea; padding-bottom: 20px;">
                                 <h1 style="color: #667eea; margin: 0; font-size: 2rem;">SAGER MARKET</h1>
-                                <p style="margin: 5px 0; color: #666;">Téléphone: +229 61 11 00 66</p>
-                                <p style="margin: 5px 0; color: #666;">IFU: 1202411712985</p>
+                                <p style="margin: 5px 0; color: #666;"><strong>Téléphone:</strong> +229 0196466625</p>
+                                <p style="margin: 5px 0; color: #666;"><strong>IFU:</strong> 0202586942320</p>
                             </div>
-                            
+
                             <h2 style="text-align: center; color: #764ba2; margin-bottom: 30px;">FACTURE EMBALLAGES CONSIGNÉS</h2>
-                            
+
                             <div class="client-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea;">
-                                <p style="margin: 5px 0;"><strong>Client:</strong> ${clientName}</p>
+                                <p style="margin: 5px 0;"><strong>Facture N°:</strong> ${
+                                    group.sale_id
+                                }</p>
+                                <p style="margin: 5px 0;"><strong>Client:</strong> ${
+                                    group.items[0].client_name
+                                }</p>
                                 <p style="margin: 5px 0;"><strong>Date d'impression:</strong> ${new Date().toLocaleDateString(
                                     'fr-FR'
                                 )}</p>
                             </div>
-                            
+
                             <table style="width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
                                 <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                                     <tr>
@@ -574,22 +908,26 @@
                                 <tfoot style="background: #f8f9fa; font-weight: bold;">
                                     <tr>
                                         <td colspan="2" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAL:</td>
-                                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${totalPurchased}</td>
-                                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${totalReturned}</td>
+                                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${
+                                            group.totalPurchased
+                                        }</td>
+                                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${
+                                            group.totalReturned
+                                        }</td>
                                         <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: ${
-                                            totalPending > 0
+                                            group.totalRemaining > 0
                                                 ? '#c62828'
                                                 : '#388e3c'
-                                        };">${totalPending}</td>
+                                        };">${group.totalRemaining}</td>
                                         <td style="padding: 12px; border: 1px solid #ddd;"></td>
                                     </tr>
                                 </tfoot>
                             </table>
-                            
+
                             <div class="observation" style="margin-top: 30px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
                                 <p style="margin: 0; color: #856404;"><strong>Observation:</strong> Les emballages consignés restent la propriété de SAGER MARKET jusqu'à leur retour complet.</p>
                             </div>
-                            
+
                             <div class="footer" style="margin-top: 40px; text-align: center; color: #666; font-size: 0.9rem;">
                                 <p>Merci de votre confiance</p>
                             </div>
@@ -601,7 +939,7 @@
                     <!DOCTYPE html>
                     <html>
                     <head>
-                        <title>Facture Emballages Consignés</title>
+                        <title>Factures Emballages Consignés</title>
                         <style>
                             body {
                                 font-family: Arial, sans-serif;
@@ -612,6 +950,7 @@
                                 .invoice-page {
                                     page-break-after: always;
                                 }
+                                body { margin: 10mm; }
                             }
                         </style>
                     </head>
@@ -768,15 +1107,41 @@
                 ];
             },
 
+            groupedBySaleId() {
+                const groups = {};
+
+                this.filteredReturnables.forEach((item) => {
+                    if (!groups[item.sale_id]) {
+                        groups[item.sale_id] = {
+                            sale_id: item.sale_id,
+                            items: [],
+                            totalPurchased: 0,
+                            totalReturned: 0,
+                            totalRemaining: 0,
+                        };
+                    }
+
+                    groups[item.sale_id].items.push(item);
+                    groups[item.sale_id].totalPurchased +=
+                        item.quantity_purchased;
+                    groups[item.sale_id].totalReturned +=
+                        item.quantity_returned;
+                    groups[item.sale_id].totalRemaining +=
+                        item.quantity_purchased - item.quantity_returned;
+                });
+
+                return Object.values(groups);
+            },
+
             totalPages() {
                 return Math.ceil(
-                    this.filteredReturnables.length / this.itemsPerPage
+                    this.groupedBySaleId.length / this.itemsPerPage
                 );
             },
 
-            paginatedReturnables() {
+            paginatedGroups() {
                 const start = (this.currentPage - 1) * this.itemsPerPage;
-                return this.filteredReturnables.slice(
+                return this.groupedBySaleId.slice(
                     start,
                     start + this.itemsPerPage
                 );
@@ -1205,6 +1570,77 @@
         gap: 1rem;
         padding: 1.5rem;
         border-top: 2px solid #f0f0f0;
+    }
+
+    /* Styles for invoice grouping */
+    .invoice-group {
+        margin-bottom: 2rem;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .invoice-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .invoice-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+
+    .invoice-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-history {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .btn-history:hover {
+        background-color: #138496;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+    }
+
+    .btn-print-invoice {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-print-invoice:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    .invoice-total {
+        background: #f8f9fa;
+        font-weight: bold;
+        border-top: 3px solid #667eea;
+    }
+
+    .invoice-total td {
+        padding: 1rem !important;
+        font-size: 1.05rem;
+    }
+
+    .modal-large {
+        max-width: 800px;
+    }
+
+    .empty-state-small {
+        padding: 2rem;
+        text-align: center;
+        color: #999;
     }
 
     @media print {

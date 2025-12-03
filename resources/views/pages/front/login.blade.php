@@ -203,16 +203,35 @@
     <main class="main-content">
         <div class="login-container">
             <div class="logo">
-                <h1>SAGER MARKET</h1>
+                <h1>
+
+                    SAGER MARKET
+                </h1>
                 <p>Système de Gestion de Stock</p>
             </div>
 
+            <!-- Erreur de connexion -->
+            @if ($errors->any())
+            <script>
+                alert("Nom d’utilisateur ou mot de passe invalide");
+            </script>
+            @endif
+
+            @if(session('error'))
+            <script>
+                alert("{{ session('error') }}");
+            </script>
+            @endif
+
+            <!-- FORMULAIRE -->
             <form method="POST" action="{{ route('login') }}">
                 @csrf
+
                 <div class="form-group">
                     <i class="fas fa-envelope form-icon"></i>
-                    <input type="text" name="login" class="form-control" placeholder="Nom d’utilisateur ou email" required>
-
+                    <input type="text" name="login" class="form-control"
+                        placeholder="Nom d’utilisateur ou email"
+                        value="{{ old('login') }}" required>
                 </div>
 
                 <div class="form-group">
@@ -222,9 +241,9 @@
                     <i class="fas fa-eye password-toggle" id="togglePassword"></i>
                 </div>
 
-                <!-- Case à cocher Se souvenir de moi -->
                 <div class="form-group remember-me">
-                    <input type="checkbox" name="remember" id="remember">
+                    <input type="checkbox" name="remember" id="remember"
+                        {{ old('remember') ? 'checked' : '' }}>
                     <label for="remember" style="color: grey">Se souvenir de moi</label>
                 </div>
 
@@ -234,12 +253,17 @@
 
                 <div class="forgot-password">
                     <a href="{{ route('reset_password') }}">Mot de passe oublié ?</a>
+                    <p style="color: #666;">
+                        Pas de compte ?
+                        <a style="text-decoration: none; color: #667eea;" href="{{ route('register') }}">
+                            Inscrivez-vous ici
+                        </a>
+                    </p>
                 </div>
             </form>
-
-
         </div>
     </main>
+
 
     <script>
         const togglePassword = document.getElementById('togglePassword');
