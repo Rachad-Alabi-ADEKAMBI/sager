@@ -3,7 +3,7 @@
         <div class="claims-header">
             <h2>Gestion des Créances</h2>
 
-            <!-- Added statistics section at the top -->
+            <!-- Improved responsive statistics section -->
             <div class="statistics-section">
                 <div class="stat-card">
                     <div class="stat-label">Total des Créances</div>
@@ -68,7 +68,7 @@
             </div>
         </div>
 
-        <!-- Vue groupée par client -->
+        <!-- Improved responsive table with white text on header and print button for each client -->
         <div class="showClaims" v-if="showClaims && groupByClient">
             <div
                 class="table-container"
@@ -76,21 +76,32 @@
                 :key="client.client_id"
             >
                 <div class="table-header">
-                    <h3>
-                        <i class="fas fa-user"></i>
-                        {{ client.client_name }} - {{ client.client_phone }}
-                    </h3>
-                    <div style="display: flex; gap: 1rem; align-items: center">
-                        <strong style="color: #fff3cd; font-size: 1.1rem">
-                            Total: {{ formatAmount(client.total_debt) }} FCFA
-                        </strong>
-                        <strong style="color: #d4edda; font-size: 1.1rem">
-                            Payé: {{ formatAmount(client.total_paid) }} FCFA
-                        </strong>
-                        <strong style="color: #f8d7da; font-size: 1.1rem">
-                            Reste: {{ formatAmount(client.remaining) }} FCFA
-                        </strong>
+                    <div class="header-info">
+                        <h3>
+                            <i class="fas fa-user"></i>
+                            {{ client.client_name }} - {{ client.client_phone }}
+                        </h3>
+                        <div class="stats-row">
+                            <strong class="stat-item">
+                                Total:
+                                {{ formatAmount(client.total_debt) }} FCFA
+                            </strong>
+                            <strong class="stat-item stat-paid">
+                                Payé: {{ formatAmount(client.total_paid) }} FCFA
+                            </strong>
+                            <strong class="stat-item stat-remaining">
+                                Reste: {{ formatAmount(client.remaining) }} FCFA
+                            </strong>
+                        </div>
                     </div>
+                    <button
+                        @click="printClientHistory(client)"
+                        class="btn-print-client"
+                        title="Imprimer l'historique du client"
+                    >
+                        <i class="fas fa-print"></i>
+                        Imprimer
+                    </button>
                 </div>
 
                 <table class="table">
@@ -215,7 +226,6 @@
                 <strong>Aucune créance disponible</strong>
             </div>
 
-            <!-- Added pagination controls for grouped view -->
             <div v-if="groupedClaims.length > 0" class="pagination">
                 <button
                     @click="previousPage"
@@ -1301,20 +1311,206 @@
                 <html>
                 <head>
                     <title>Liste des Créances</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h1 { text-align: center; color: #333; margin-bottom: 10px; }
-                        .info { text-align: center; margin-bottom: 30px; color: #666; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                        th { background-color: #667eea; color: white; padding: 12px; text-align: left; border: 1px solid #ddd; }
-                        .total-row { background-color: #f0f4ff; font-weight: bold; }
-                        @media print {
-                            button { display: none; }
-                        }
-                    </style>
+                      <style>
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                padding: 20px;
+                                color: #333;
+                            }
+                            .company-header {
+                                text-align: center;
+                                margin-bottom: 30px;
+                                border-bottom: 3px solid #667eea;
+                                padding-bottom: 20px;
+                            }
+                            .company-header h1 {
+                                color: #667eea;
+                                margin: 0;
+                                font-size: 2rem;
+                            }
+                            .company-header p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            h2 { 
+                                text-align: center; 
+                                color: #764ba2; 
+                                margin-bottom: 30px;
+                            }
+                            .client-info { 
+                                background: #f8f9fa;
+                                padding: 15px;
+                                border-radius: 8px;
+                                margin-bottom: 20px;
+                                border-left: 4px solid #667eea;
+                            }
+                            .client-info p {
+                                margin: 8px 0;
+                            }
+                            .stats-summary {
+                                display: grid;
+                                grid-template-columns: repeat(3, 1fr);
+                                gap: 15px;
+                                margin-bottom: 20px;
+                            }
+                            .stat-box {
+                                background: #f8f9fa;
+                                padding: 15px;
+                                border-radius: 8px;
+                                text-align: center;
+                                border-left: 4px solid #667eea;
+                            }
+                            .stat-box.paid {
+                                border-left-color: #28a745;
+                            }
+                            .stat-box.remaining {
+                                border-left-color: #dc3545;
+                            }
+                            .stat-label {
+                                font-size: 0.9rem;
+                                color: #666;
+                                margin-bottom: 5px;
+                            }
+                            .stat-value {
+                                font-size: 1.3rem;
+                                font-weight: 700;
+                                color: #667eea;
+                            }
+                            .stat-box.paid .stat-value {
+                                color: #28a745;
+                            }
+                            .stat-box.remaining .stat-value {
+                                color: #dc3545;
+                            }
+                            table { 
+                                width: 100%; 
+                                border-collapse: collapse; 
+                                margin-top: 20px; 
+                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                            }
+                            thead {
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                            }
+                            th, td { 
+                                border: 1px solid #ddd; 
+                                padding: 12px; 
+                                text-align: left; 
+                            }
+                            th {
+                                border: 1px solid #667eea;
+                            }
+                            tbody tr:nth-child(even) {
+                                background-color: #f8f9fa;
+                            }
+                            .total-row {
+                                background: #e9ecef !important;
+                                font-weight: bold;
+                            }
+                            .footer {
+                                margin-top: 40px;
+                                text-align: center;
+                                color: #666;
+                                font-size: 0.9rem;
+                            }
+                            @media print {
+                                button { display: none; }
+                                body { margin: 10mm; }
+                            }
+                        </style>
+                          <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                margin: 20px;
+                                color: #333;
+                            }
+                            h1 {
+                                color: #667eea;
+                                text-align: center;
+                                margin-bottom: 10px;
+                            }
+                            h2 {
+                                text-align: center;
+                                margin-bottom: 20px;
+                                color: #333;
+                            }
+                            .company-info {
+                                text-align: center;
+                                margin-bottom: 30px;
+                            }
+                            .company-info p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            .info {
+                                background: #f8f9fa;
+                                padding: 15px;
+                                border-radius: 8px;
+                                margin-bottom: 20px;
+                                border-left: 4px solid #667eea;
+                            }
+                            .info p {
+                                margin: 5px 0;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-top: 20px;
+                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                            }
+                            thead {
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                            }
+                            th {
+                                padding: 12px;
+                                text-align: left;
+                                border: 1px solid #667eea;
+                            }
+                            th:last-child {
+                                text-align: right;
+                            }
+                            tbody tr:nth-child(even) {
+                                background: #f8f9fa;
+                            }
+                            tbody tr:hover {
+                                background: #e9ecef;
+                            }
+                            .total-row {
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                                color: white;
+                                font-weight: bold;
+                            }
+                            button {
+                                margin-top: 20px;
+                                padding: 10px 20px;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+                            }
+                            button:hover {
+                                transform: translateY(-2px);
+                                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                            }
+                            @media print {
+                                button { display: none; }
+                            }
+                        </style>
                 </head>
-                <body>
-                    <h1>Liste des Créances</h1>
+                <body>  
+                       <h1>SAGER</h1>
+                          <p style="margin: auto; text-align: center">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                                    Distribution professionnelle • Vente en gros et détail</p>
+                                
+                        <div class="company-info">
+                            <p style="margin: auto; text-align: center"><strong>Téléphone:</strong> +229 0196466625</p>
+                            <p style="margin: auto; text-align: center"><strong>IFU:</strong> 0202586942320</p>
+                        </div>
+
                     <div class="info">
                         <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
                             'fr-FR'
@@ -1356,6 +1552,11 @@
                             </tr>
                         </tbody>
                     </table>
+                     <div class="footer" style="margin-auto; text-align: center">
+                                    <p>Merci de votre confiance</p>
+                                    <p>Rapport généré avec l'application SagerMarket</p>
+                                </div>
+
 
                     <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
                         Imprimer
@@ -1363,6 +1564,343 @@
                 </body>
                 </html>
             `;
+
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            },
+
+            printClientHistory(client) {
+                const printWindow = window.open('', '_blank');
+
+                const totalDebt = client.total_debt;
+                const totalPaid = client.total_paid;
+                const totalRemaining = client.remaining;
+
+                const tableRows = client.claims
+                    .map(
+                        (claim, index) => `
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;">${
+                            index + 1
+                        }</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDateTime(
+                            claim.created_at
+                        )}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">${
+                            claim.comment || '-'
+                        }</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                            claim.debt_amount
+                        )} FCFA</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                            this.getClaimPaidAmount(claim.id)
+                        )} FCFA</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                            claim.debt_amount -
+                                this.getClaimPaidAmount(claim.id)
+                        )} FCFA</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                            ${
+                                this.getClaimPaidAmount(claim.id) >=
+                                claim.debt_amount
+                                    ? '<span style="color: #155724; font-weight: 600;">Soldé</span>'
+                                    : this.getClaimPaidAmount(claim.id) > 0
+                                    ? '<span style="color: #856404; font-weight: 600;">Partiel</span>'
+                                    : '<span style="color: #721c24; font-weight: 600;">Impayé</span>'
+                            }
+                        </td>
+                    </tr>
+                `
+                    )
+                    .join('');
+
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Historique des Créances - ${
+                            client.client_name
+                        }</title>
+                        <meta charset="UTF-8">
+                        <style>
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                padding: 20px;
+                                color: #333;
+                            }
+                            .company-header {
+                                text-align: center;
+                                margin-bottom: 30px;
+                                border-bottom: 3px solid #667eea;
+                                padding-bottom: 20px;
+                            }
+                            .company-header h1 {
+                                color: #667eea;
+                                margin: 0;
+                                font-size: 2rem;
+                            }
+                            .company-header p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            h2 { 
+                                text-align: center; 
+                                color: #764ba2; 
+                                margin-bottom: 30px;
+                            }
+                            .client-info { 
+                                background: #f8f9fa;
+                                padding: 15px;
+                                border-radius: 8px;
+                                margin-bottom: 20px;
+                                border-left: 4px solid #667eea;
+                            }
+                            .client-info p {
+                                margin: 8px 0;
+                            }
+                            .stats-summary {
+                                display: grid;
+                                grid-template-columns: repeat(3, 1fr);
+                                gap: 15px;
+                                margin-bottom: 20px;
+                            }
+                            .stat-box {
+                                background: #f8f9fa;
+                                padding: 15px;
+                                border-radius: 8px;
+                                text-align: center;
+                                border-left: 4px solid #667eea;
+                            }
+                            .stat-box.paid {
+                                border-left-color: #28a745;
+                            }
+                            .stat-box.remaining {
+                                border-left-color: #dc3545;
+                            }
+                            .stat-label {
+                                font-size: 0.9rem;
+                                color: #666;
+                                margin-bottom: 5px;
+                            }
+                            .stat-value {
+                                font-size: 1.3rem;
+                                font-weight: 700;
+                                color: #667eea;
+                            }
+                            .stat-box.paid .stat-value {
+                                color: #28a745;
+                            }
+                            .stat-box.remaining .stat-value {
+                                color: #dc3545;
+                            }
+                            table { 
+                                width: 100%; 
+                                border-collapse: collapse; 
+                                margin-top: 20px; 
+                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                            }
+                            thead {
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                            }
+                            th, td { 
+                                border: 1px solid #ddd; 
+                                padding: 12px; 
+                                text-align: left; 
+                            }
+                            th {
+                                border: 1px solid #667eea;
+                            }
+                            tbody tr:nth-child(even) {
+                                background-color: #f8f9fa;
+                            }
+                            .total-row {
+                                background: #e9ecef !important;
+                                font-weight: bold;
+                            }
+                            .footer {
+                                margin-top: 40px;
+                                text-align: center;
+                                color: #666;
+                                font-size: 0.9rem;
+                            }
+                            @media print {
+                                button { display: none; }
+                                body { margin: 10mm; }
+                            }
+                        </style>
+                          <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                margin: 20px;
+                                color: #333;
+                            }
+                            h1 {
+                                color: #667eea;
+                                text-align: center;
+                                margin-bottom: 10px;
+                            }
+                            h2 {
+                                text-align: center;
+                                margin-bottom: 20px;
+                                color: #333;
+                            }
+                            .company-info {
+                                text-align: center;
+                                margin-bottom: 30px;
+                            }
+                            .company-info p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            .info {
+                                background: #f8f9fa;
+                                padding: 15px;
+                                border-radius: 8px;
+                                margin-bottom: 20px;
+                                border-left: 4px solid #667eea;
+                            }
+                            .info p {
+                                margin: 5px 0;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-top: 20px;
+                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                            }
+                            thead {
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                            }
+                            th {
+                                padding: 12px;
+                                text-align: left;
+                                border: 1px solid #667eea;
+                            }
+                            th:last-child {
+                                text-align: right;
+                            }
+                            tbody tr:nth-child(even) {
+                                background: #f8f9fa;
+                            }
+                            tbody tr:hover {
+                                background: #e9ecef;
+                            }
+                            .total-row {
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                                color: white;
+                                font-weight: bold;
+                            }
+                            button {
+                                margin-top: 20px;
+                                padding: 10px 20px;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+                            }
+                            button:hover {
+                                transform: translateY(-2px);
+                                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                            }
+                            @media print {
+                                button { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                       <h1>SAGER</h1>
+                          <p style="margin: auto; text-align: center">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                                    Distribution professionnelle • Vente en gros et détail</p>
+                                
+                        <div class="company-info">
+                            <p><strong>Téléphone:</strong> +229 0196466625</p>
+                            <p><strong>IFU:</strong> 0202586942320</p>
+                        </div>
+
+                        <h2>HISTORIQUE DES CRÉANCES</h2>
+
+                        <div class="client-info">
+                            <p><strong>Client:</strong> ${
+                                client.client_name
+                            }</p>
+                            <p><strong>Téléphone:</strong> ${
+                                client.client_phone
+                            }</p>
+                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
+                                'fr-FR'
+                            )}</p>
+                            <p><strong>Nombre de créances:</strong> ${
+                                client.claims.length
+                            }</p>
+                        </div>
+
+                        <div class="stats-summary">
+                            <div class="stat-box">
+                                <div class="stat-label">Total des Créances</div>
+                                <div class="stat-value">${this.formatAmount(
+                                    totalDebt
+                                )} FCFA</div>
+                            </div>
+                            <div class="stat-box paid">
+                                <div class="stat-label">Total Payé</div>
+                                <div class="stat-value">${this.formatAmount(
+                                    totalPaid
+                                )} FCFA</div>
+                            </div>
+                            <div class="stat-box remaining">
+                                <div class="stat-label">Total Restant</div>
+                                <div class="stat-value">${this.formatAmount(
+                                    totalRemaining
+                                )} FCFA</div>
+                            </div>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Commentaire</th>
+                                    <th style="text-align: right;">Montant dû</th>
+                                    <th style="text-align: right;">Montant payé</th>
+                                    <th style="text-align: right;">Reste</th>
+                                    <th style="text-align: center;">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                                <tr class="total-row">
+                                    <td colspan="3" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAUX:</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        totalDebt
+                                    )} FCFA</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        totalPaid
+                                    )} FCFA</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        totalRemaining
+                                    )} FCFA</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd;"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                         <div class="footer">
+                        <p>Merci de votre confiance</p>
+                        <p>Rapport généré avec l'application SagerMarket</p>
+                    </div>
+
+                        <button onclick="window.print()" style="margin-top: 20px; padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                            Imprimer
+                        </button>
+                    </body>
+                    </html>
+                `;
 
                 printWindow.document.write(htmlContent);
                 printWindow.document.close();
@@ -1515,35 +2053,37 @@
         margin-bottom: 2rem;
     }
 
-    /* Added statistics section styles */
+    /* Improved responsive statistics section */
     .statistics-section {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
         margin-bottom: 2rem;
     }
 
     .stat-card {
         background: white;
         border-radius: 10px;
-        padding: 1.5rem;
+        padding: 1.25rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         border-left: 4px solid #667eea;
     }
 
     .stat-label {
         color: #6c757d;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 500;
         margin-bottom: 0.5rem;
     }
 
     .stat-value {
         color: #667eea;
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         font-weight: 700;
+        word-break: break-word;
     }
 
+    /* Improved table header for mobile with white text */
     .table-header {
         display: flex;
         justify-content: space-between;
@@ -1552,6 +2092,64 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border-radius: 10px 10px 0 0;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .table-header h3 {
+        color: white;
+        margin: 0;
+        font-size: 1.2rem;
+    }
+
+    .header-info {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .stats-row {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        color: white;
+        font-size: 0.95rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-paid {
+        background: rgba(40, 167, 69, 0.3);
+    }
+
+    .stat-remaining {
+        background: rgba(220, 53, 69, 0.3);
+    }
+
+    /* Added print button for client */
+    .btn-print-client {
+        padding: 0.6rem 1.2rem;
+        background: white;
+        color: #667eea;
+        border: 2px solid white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+    .btn-print-client:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateY(-2px);
     }
 
     .claims-header h2 {
@@ -1592,7 +2190,6 @@
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
-    /* Added styling for new client button */
     .btn-success {
         background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
         color: white;
@@ -1614,17 +2211,16 @@
         box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
     }
 
-    /* Added pagination button styles */
     .btn-pagination {
         padding: 0.75rem 1rem;
         border: 1px solid #667eea;
         background: white;
         color: #667eea;
-        border-radius: 5px;
+        border-radius: 8px;
         cursor: pointer;
         font-weight: 500;
         transition: all 0.3s ease;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         gap: 0.5rem;
     }
@@ -1639,71 +2235,28 @@
         cursor: not-allowed;
     }
 
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 1rem;
-        margin-top: 2rem;
-        padding: 1.5rem;
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .pagination-info {
-        font-weight: 500;
-        color: #667eea;
-        min-width: 120px;
-        text-align: center;
-    }
-
-    .btn-sm {
-        padding: 0.5rem 0.75rem;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.85rem;
-        transition: all 0.2s ease;
-    }
-
-    .btn-edit {
-        background: #007bff;
-        color: white;
-    }
-
-    .btn-edit:hover {
-        background: #0056b3;
-    }
-
-    .btn-delete {
-        background: #dc3545;
-        color: white;
-    }
-
-    .btn-delete:hover {
-        background: #c82333;
-    }
-
-    /* Inputs */
+    /* Form inputs */
     .search-input,
     .filter-select {
         padding: 0.75rem;
-        border: 1px solid #ddd;
+        border: 2px solid #e0e0e0;
         border-radius: 8px;
         font-size: 0.95rem;
-        min-width: 200px;
         transition: border-color 0.3s ease;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: 200px;
     }
 
     .search-input:focus,
     .filter-select:focus {
         outline: none;
         border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
-    /* Table */
+    /* Tables */
     .table-container {
         background: white;
         border-radius: 10px;
@@ -1718,107 +2271,95 @@
     }
 
     .table thead {
-        background: #f8f9fa;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
     }
 
     .table th {
         padding: 1rem;
         text-align: left;
         font-weight: 600;
-        color: #495057;
-        border-bottom: 2px solid #dee2e6;
+        font-size: 0.9rem;
     }
 
     .table td {
         padding: 1rem;
-        border-bottom: 1px solid #dee2e6;
+        border-bottom: 1px solid #f0f0f0;
     }
 
     .table tbody tr:hover {
-        background: #f8f9fa;
+        background-color: #f8f9fa;
     }
 
+    /* Action buttons */
     .action-buttons {
         display: flex;
         gap: 0.5rem;
-        flex-wrap: wrap;
     }
 
-    /* Modals */
-    .modal-add-claim,
-    .modal-add-payment,
-    .modal-delete-claim,
-    .modal-add-client {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
+    .btn-sm {
+        padding: 0.5rem 0.75rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-edit {
+        background-color: #667eea;
+        color: white;
+    }
+
+    .btn-edit:hover {
+        background-color: #5568d3;
+        transform: translateY(-2px);
+    }
+
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background-color: #c82333;
+        transform: translateY(-2px);
+    }
+
+    /* Pagination */
+    .pagination {
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 9999;
+        gap: 1rem;
+        margin-top: 2rem;
     }
 
-    .modal-content {
-        background: white;
-        border-radius: 10px;
-        padding: 2rem;
-        max-width: 600px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .modal-header h3 {
-        margin: 0;
+    .pagination-info {
+        font-weight: 500;
         color: #333;
     }
 
-    .form-group {
-        margin-bottom: 1rem;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        color: #495057;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        transition: border-color 0.3s ease;
-    }
-
-    .form-control:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
+    /* No data message */
     .no-data {
         text-align: center;
         padding: 3rem;
         color: #6c757d;
     }
 
-    /* Responsive */
+    /* Improved responsive styles for mobile */
     @media (max-width: 768px) {
         .statistics-section {
             grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .stat-card {
+            padding: 1rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
         }
 
         .header-actions {
@@ -1826,27 +2367,119 @@
             width: 100%;
         }
 
+        .header-actions .btn,
         .search-input,
         .filter-select {
             width: 100%;
         }
 
+        .table-header {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 1rem;
+        }
+
+        .header-info {
+            width: 100%;
+            min-width: auto;
+        }
+
+        .table-header h3 {
+            font-size: 1rem;
+            word-break: break-word;
+        }
+
+        .stats-row {
+            flex-direction: column;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .stat-item {
+            font-size: 0.85rem;
+            width: 100%;
+        }
+
+        .btn-print-client {
+            width: 100%;
+            justify-content: center;
+        }
+
         .table {
             display: block;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table thead {
+            display: none;
+        }
+
+        .table tbody,
+        .table tr,
+        .table td {
+            display: block;
+            width: 100%;
+        }
+
+        .table tr {
+            margin-bottom: 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table td {
+            text-align: right;
+            padding: 0.75rem;
+            position: relative;
+            padding-left: 50%;
+        }
+
+        .table td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 0;
+            width: 45%;
+            padding-left: 0.75rem;
+            font-weight: 600;
+            text-align: left;
+            color: #667eea;
         }
 
         .action-buttons {
-            flex-direction: column;
+            justify-content: flex-end;
+            gap: 0.5rem;
         }
 
         .pagination {
             flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .btn-pagination {
             flex: 1;
             min-width: 100px;
+            justify-content: center;
+        }
+
+        .pagination-info {
+            width: 100%;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .statistics-section {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+        }
+
+        .claims-header h2 {
+            font-size: 1.5rem;
         }
     }
 </style>

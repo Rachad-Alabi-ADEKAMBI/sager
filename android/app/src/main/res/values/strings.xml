@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">sager</string>
+    <string name="title_activity_main">sager</string>
+    <string name="package_name">dom.sagermarket.mobile</string>
+    <string name="custom_url_scheme">dom.sagermarket.mobile</string>
+</resources>
