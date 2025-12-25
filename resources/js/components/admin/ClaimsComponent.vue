@@ -6,9 +6,10 @@
             <!-- Improved responsive statistics section -->
             <div class="statistics-section">
                 <div class="stat-card">
-                    <div class="stat-label">Total des Créances</div>
+                    <!-- Afficher uniquement le total des créances en cours (non soldées) -->
+                    <div class="stat-label">Total des Créances en cours</div>
                     <div class="stat-value">
-                        {{ formatAmount(totalDebtAmount) }} FCFA
+                        {{ formatAmount(totalOngoingDebtAmount) }} FCFA
                     </div>
                 </div>
                 <div class="stat-card">
@@ -70,6 +71,14 @@
 
         <!-- Improved responsive table with white text on header and print button for each client -->
         <div class="showClaims" v-if="showClaims && groupByClient">
+            <!-- Ajouter un message si aucun client n'est trouvé -->
+            <div
+                v-if="paginatedGroupedClaims.length === 0 && searchQuery"
+                class="no-data"
+            >
+                <strong>Aucun client trouvé pour "{{ searchQuery }}"</strong>
+            </div>
+
             <div
                 class="table-container"
                 v-for="client in paginatedGroupedClaims"
@@ -251,7 +260,15 @@
 
         <!-- Vue liste complète -->
         <div class="showClaims" v-if="showClaims && !groupByClient">
-            <div class="table-container">
+            <!-- Ajouter un message si aucune créance n'est trouvée -->
+            <div
+                v-if="paginatedClaims.length === 0 && searchQuery"
+                class="no-data"
+            >
+                <strong>Aucune créance trouvée pour "{{ searchQuery }}"</strong>
+            </div>
+
+            <div class="table-container" v-if="paginatedClaims.length > 0">
                 <div class="table-header">
                     <h3>Liste complète des créances</h3>
                     <strong>Total: {{ filteredClaims.length }}</strong>
@@ -383,7 +400,7 @@
                 </table>
 
                 <strong
-                    v-if="paginatedClaims.length === 0"
+                    v-if="paginatedClaims.length === 0 && !searchQuery"
                     class="mx-auto text-center"
                 >
                     Aucune créance disponible
@@ -418,37 +435,55 @@
         <div class="showPaymentHistory" v-if="showPaymentHistory">
             <div class="table-container">
                 <div class="table-header">
-                    <h3 style="display: flex; align-items: center; gap: 0.5rem">
-                        <span
-                            @click="closePaymentHistory()"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                cursor: pointer;
-                                color: #007bff;
-                                font-weight: bold;
-                            "
-                        >
-                            <i
-                                class="fas fa-arrow-left"
-                                style="color: white"
-                            ></i>
-                        </span>
-                        | Historique des paiements -
-                        <strong>{{ selectedClaim.client_name }}</strong>
+                    <h3 style="display: flex; align-items: center; gap: 10px">
+                        <i
+                            class="fas fa-arrow-left"
+                            style="cursor: pointer"
+                            @click="closePaymentHistory"
+                        ></i>
+                        Historique des paiements -
+                        {{ selectedClaim.client_name }}
                     </h3>
-                    <strong>
-                        Total payé:
-                        {{
-                            formatAmount(getTotalPaidForClaim(selectedClaim.id))
-                        }}
-                        FCFA
-                    </strong>
+                    <div class="stats-row">
+                        <strong class="stat-item">
+                            Total dû:
+                            {{ formatAmount(selectedClaim.debt_amount) }} FCFA
+                        </strong>
+                        <strong class="stat-item stat-paid">
+                            Payé:
+                            {{
+                                formatAmount(
+                                    getClaimPaidAmount(selectedClaim.id)
+                                )
+                            }}
+                            FCFA
+                        </strong>
+                        <strong class="stat-item stat-remaining">
+                            Reste:
+                            {{
+                                formatAmount(
+                                    selectedClaim.debt_amount -
+                                        getClaimPaidAmount(selectedClaim.id)
+                                )
+                            }}
+                            FCFA
+                        </strong>
+                    </div>
+                    <!-- Ajouter un bouton d'impression dans l'historique des paiements -->
+                    <button
+                        @click="printPaymentHistory"
+                        class="btn-print-client"
+                        title="Imprimer l'historique des paiements"
+                    >
+                        <i class="fas fa-print"></i>
+                        Imprimer
+                    </button>
                 </div>
 
                 <table class="table">
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Date</th>
                             <th>Montant</th>
                             <th>Méthode</th>
@@ -457,11 +492,12 @@
                     </thead>
                     <tbody>
                         <tr
-                            v-for="payment in getPaymentsForClaim(
+                            v-for="(payment, index) in getPaymentsForClaim(
                                 selectedClaim.id
                             )"
                             :key="payment.id"
                         >
+                            <td data-label="#">{{ index + 1 }}</td>
                             <td data-label="Date">
                                 {{ formatDateTime(payment.created_at) }}
                             </td>
@@ -475,6 +511,17 @@
                             </td>
                             <td data-label="Commentaire">
                                 {{ payment.comment }}
+                            </td>
+                            <td data-label="Actions">
+                                <div class="action-buttons">
+                                    <button
+                                        class="btn-sm btn-delete"
+                                        title="Supprimer le paiement"
+                                        @click="deletePayment(payment)"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -868,7 +915,7 @@
                             Pragma: 'no-cache',
                         },
                         params: {
-                            _t: new Date().getTime(), // Timestamp pour forcer le rechargement
+                            _t: new Date().getTime(),
                         },
                     };
 
@@ -905,31 +952,20 @@
                         amount: parseFloat(payment.amount),
                     }));
 
-                    console.log('[v0] Données normalisées:', {
-                        claims: this.claims.length,
-                        clients: this.clients.length,
-                        payments: this.payments.length,
+                    console.log('[v0] Données chargées:', {
+                        claimsCount: this.claims.length,
+                        clientsCount: this.clients.length,
+                        paymentsCount: this.payments.length,
                     });
 
-                    console.log('[v0] Exemple de paiement:', this.payments[0]);
-                    console.log('[v0] Exemple de créance:', this.claims[0]);
-
-                    this.$nextTick(() => {
-                        this.$forceUpdate();
-                        console.log('[v0] Vue forcé à se mettre à jour');
-                    });
-
-                    console.log('[v0] === FIN CHARGEMENT DES DONNÉES ===');
+                    this.showClaims = true;
                 } catch (error) {
-                    console.error('[v0] === ERREUR LORS DU CHARGEMENT ===');
-                    console.error('[v0] Message:', error.message);
-                    console.error('[v0] Réponse:', error.response?.data);
-                    console.error('[v0] Status:', error.response?.status);
-                    console.error('[v0] URL:', error.config?.url);
+                    console.error('[v0] Erreur lors du chargement:', error);
                     alert(
                         'Erreur lors du chargement des données: ' +
-                            (error.response?.data?.message || error.message)
+                            error.message
                     );
+                    this.showClaims = false;
                 }
             },
 
@@ -962,16 +998,15 @@
                     0
                 );
 
-                // Log uniquement si des paiements sont trouvés (pour éviter trop de logs)
                 if (claimPayments.length > 0) {
-                    console.log(
-                        `[v0] Paiements pour créance ${normalizedClaimId}:`,
-                        {
-                            nombrePaiements: claimPayments.length,
-                            total: total,
-                            paiements: claimPayments,
-                        }
-                    );
+                    // console.log(
+                    //     `[v0] Paiements pour créance ${normalizedClaimId}:`,
+                    //     {
+                    //         nombrePaiements: claimPayments.length,
+                    //         total: total,
+                    //         paiements: claimPayments,
+                    //     }
+                    // );
                 }
 
                 return total;
@@ -1008,6 +1043,9 @@
             },
 
             openAddClaimModal() {
+                console.log(
+                    `[v0] Action: Ouverture du modal d'ajout de créance`
+                );
                 this.showAddClaimModal = true;
             },
 
@@ -1021,6 +1059,9 @@
             },
 
             openAddClientModal() {
+                console.log(
+                    `[v0] Action: Ouverture du modal d'ajout de client`
+                );
                 this.showAddClientModal = true;
             },
 
@@ -1032,16 +1073,20 @@
                 };
             },
 
-            // Amélioration de addClientForm avec logs et rechargement optimisé
             async addClientForm() {
                 console.log("[v0] === AJOUT D'UN CLIENT ===");
+                console.log(
+                    "[v0] Action: Soumission du formulaire d'ajout de client"
+                );
                 try {
                     const API_BASE = window.location.origin;
                     const clientData = {
                         name: this.newClient.name,
                         phone: this.newClient.phone,
                     };
-                    console.log('[v0] Envoi des données:', clientData);
+                    console.log('[v0] Route:', `${API_BASE}/clients`);
+                    console.log('[v0] Contenu de la requête:', clientData);
+
                     const response = await axios.post(
                         `${API_BASE}/clients`,
                         clientData
@@ -1064,6 +1109,9 @@
 
             async addClaimForm() {
                 console.log("[v0] === AJOUT D'UNE CRÉANCE ===");
+                console.log(
+                    "[v0] Action: Soumission du formulaire d'ajout de créance"
+                );
                 try {
                     const API_BASE = window.location.origin;
                     const claimData = {
@@ -1072,7 +1120,9 @@
                         comment: this.newClaim.comment,
                     };
 
-                    console.log('[v0] Envoi des données:', claimData);
+                    console.log('[v0] Route:', `${API_BASE}/claims/add`);
+                    console.log('[v0] Contenu de la requête:', claimData);
+
                     const response = await axios.post(
                         `${API_BASE}/claims/add`,
                         claimData
@@ -1094,6 +1144,10 @@
             },
 
             openAddPaymentModal(claim) {
+                console.log(
+                    `[v0] Action: Ouverture du modal d'ajout de paiement`
+                );
+                console.log(`[v0] Créance sélectionnée:`, claim);
                 this.selectedClaim = claim;
                 this.showAddPaymentModal = true;
             },
@@ -1110,6 +1164,9 @@
 
             async addPaymentForm() {
                 console.log("[v0] === AJOUT D'UN PAIEMENT ===");
+                console.log(
+                    "[v0] Action: Soumission du formulaire d'ajout de paiement"
+                );
                 console.log('[v0] Créance sélectionnée:', this.selectedClaim);
                 console.log('[v0] Données du paiement:', this.newPayment);
 
@@ -1122,7 +1179,8 @@
                         comment: this.newPayment.comment,
                     };
 
-                    console.log('[v0] Envoi des données:', paymentData);
+                    console.log('[v0] Route:', `${API_BASE}/claims/pay`);
+                    console.log('[v0] Contenu de la requête:', paymentData);
 
                     const response = await axios.post(
                         `${API_BASE}/claims/pay`,
@@ -1148,9 +1206,7 @@
                     );
                 } catch (error) {
                     console.error('[v0] === ERREUR AJOUT PAIEMENT ===');
-                    console.error('[v0] Message:', error.message);
-                    console.error('[v0] Réponse:', error.response?.data);
-                    console.error('[v0] Status:', error.response?.status);
+                    console.error('[v0] Détails erreur:', error);
                     alert(
                         "Erreur lors de l'ajout du paiement: " +
                             (error.response?.data?.message || error.message)
@@ -1159,6 +1215,10 @@
             },
 
             viewPaymentHistory(claim) {
+                console.log(
+                    `[v0] Action: Ouverture de l'historique des paiements`
+                );
+                console.log(`[v0] Créance sélectionnée:`, claim);
                 this.selectedClaim = claim;
                 this.showPaymentHistory = true;
                 this.showClaims = false;
@@ -1171,6 +1231,10 @@
             },
 
             openDeleteClaimModal(claim) {
+                console.log(
+                    `[v0] Action: Ouverture du modal de suppression de créance`
+                );
+                console.log(`[v0] Créance à supprimer:`, claim);
                 this.currentClaim = claim;
                 this.showDeleteClaimModal = true;
             },
@@ -1181,17 +1245,18 @@
             },
 
             async deleteClaim() {
-                console.log("[v0] === SUPPRESSION D'UNE CRÉANCE ===");
+                console.log(`[v0] === SUPPRESSION D'UNE CRÉANCE ===`);
+                console.log(
+                    `[v0] Action: Confirmation de suppression de créance`
+                );
                 try {
                     const API_BASE = window.location.origin;
-                    console.log(
-                        '[v0] Suppression de la créance:',
-                        this.currentClaim.id
-                    );
+                    const deleteRoute = `${API_BASE}/claims/${this.currentClaim.id}/delete`;
 
-                    await axios.post(
-                        `${API_BASE}/claims/${this.currentClaim.id}/delete`
-                    );
+                    console.log(`[v0] Route:`, deleteRoute);
+                    console.log(`[v0] ID de la créance:`, this.currentClaim.id);
+
+                    await axios.post(deleteRoute);
 
                     alert('Créance supprimée avec succès.');
                     this.closeDeleteClaimModal();
@@ -1199,15 +1264,19 @@
                     await new Promise((resolve) => setTimeout(resolve, 300));
                     await this.fetchAllData();
                 } catch (error) {
-                    console.error('[v0] Erreur suppression:', error);
-                    alert(
-                        'Erreur lors de la suppression: ' +
-                            (error.response?.data?.message || error.message)
-                    );
+                    console.error(`[v0] Erreur suppression:`, error);
+                    alert('Erreur lors de la suppression: ' + error.message);
                 }
             },
 
             printList() {
+                console.log(`[v0] Action: Impression de la liste des créances`);
+                console.log(
+                    `[v0] Nombre de créances à imprimer:`,
+                    this.filteredClaims.length
+                );
+                console.log(`[v0] Mode groupé:`, this.groupByClient);
+
                 const printWindow = window.open('', '_blank');
 
                 const totalDebt = this.filteredClaims.reduce(
@@ -1311,205 +1380,32 @@
                 <html>
                 <head>
                     <title>Liste des Créances</title>
-                      <style>
-                            body { 
-                                font-family: Arial, sans-serif; 
-                                padding: 20px;
-                                color: #333;
-                            }
-                            .company-header {
-                                text-align: center;
-                                margin-bottom: 30px;
-                                border-bottom: 3px solid #667eea;
-                                padding-bottom: 20px;
-                            }
-                            .company-header h1 {
-                                color: #667eea;
-                                margin: 0;
-                                font-size: 2rem;
-                            }
-                            .company-header p {
-                                margin: 5px 0;
-                                color: #666;
-                            }
-                            h2 { 
-                                text-align: center; 
-                                color: #764ba2; 
-                                margin-bottom: 30px;
-                            }
-                            .client-info { 
-                                background: #f8f9fa;
-                                padding: 15px;
-                                border-radius: 8px;
-                                margin-bottom: 20px;
-                                border-left: 4px solid #667eea;
-                            }
-                            .client-info p {
-                                margin: 8px 0;
-                            }
-                            .stats-summary {
-                                display: grid;
-                                grid-template-columns: repeat(3, 1fr);
-                                gap: 15px;
-                                margin-bottom: 20px;
-                            }
-                            .stat-box {
-                                background: #f8f9fa;
-                                padding: 15px;
-                                border-radius: 8px;
-                                text-align: center;
-                                border-left: 4px solid #667eea;
-                            }
-                            .stat-box.paid {
-                                border-left-color: #28a745;
-                            }
-                            .stat-box.remaining {
-                                border-left-color: #dc3545;
-                            }
-                            .stat-label {
-                                font-size: 0.9rem;
-                                color: #666;
-                                margin-bottom: 5px;
-                            }
-                            .stat-value {
-                                font-size: 1.3rem;
-                                font-weight: 700;
-                                color: #667eea;
-                            }
-                            .stat-box.paid .stat-value {
-                                color: #28a745;
-                            }
-                            .stat-box.remaining .stat-value {
-                                color: #dc3545;
-                            }
-                            table { 
-                                width: 100%; 
-                                border-collapse: collapse; 
-                                margin-top: 20px; 
-                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                            }
-                            thead {
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                color: white;
-                            }
-                            th, td { 
-                                border: 1px solid #ddd; 
-                                padding: 12px; 
-                                text-align: left; 
-                            }
-                            th {
-                                border: 1px solid #667eea;
-                            }
-                            tbody tr:nth-child(even) {
-                                background-color: #f8f9fa;
-                            }
-                            .total-row {
-                                background: #e9ecef !important;
-                                font-weight: bold;
-                            }
-                            .footer {
-                                margin-top: 40px;
-                                text-align: center;
-                                color: #666;
-                                font-size: 0.9rem;
-                            }
-                            @media print {
-                                button { display: none; }
-                                body { margin: 10mm; }
-                            }
-                        </style>
-                          <style>
-                            body {
-                                font-family: Arial, sans-serif;
-                                margin: 20px;
-                                color: #333;
-                            }
-                            h1 {
-                                color: #667eea;
-                                text-align: center;
-                                margin-bottom: 10px;
-                            }
-                            h2 {
-                                text-align: center;
-                                margin-bottom: 20px;
-                                color: #333;
-                            }
-                            .company-info {
-                                text-align: center;
-                                margin-bottom: 30px;
-                            }
-                            .company-info p {
-                                margin: 5px 0;
-                                color: #666;
-                            }
-                            .info {
-                                background: #f8f9fa;
-                                padding: 15px;
-                                border-radius: 8px;
-                                margin-bottom: 20px;
-                                border-left: 4px solid #667eea;
-                            }
-                            .info p {
-                                margin: 5px 0;
-                            }
-                            table {
-                                width: 100%;
-                                border-collapse: collapse;
-                                margin-top: 20px;
-                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                            }
-                            thead {
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                color: white;
-                            }
-                            th {
-                                padding: 12px;
-                                text-align: left;
-                                border: 1px solid #667eea;
-                            }
-                            th:last-child {
-                                text-align: right;
-                            }
-                            tbody tr:nth-child(even) {
-                                background: #f8f9fa;
-                            }
-                            tbody tr:hover {
-                                background: #e9ecef;
-                            }
-                            .total-row {
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-                                color: white;
-                                font-weight: bold;
-                            }
-                            button {
-                                margin-top: 20px;
-                                padding: 10px 20px;
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                color: white;
-                                border: none;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-size: 16px;
-                                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-                            }
-                            button:hover {
-                                transform: translateY(-2px);
-                                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-                            }
-                            @media print {
-                                button { display: none; }
-                            }
-                        </style>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+                        h1 { color: #667eea; text-align: center; margin-bottom: 10px; }
+                        .company-info { text-align: center; margin-bottom: 30px; }
+                        .company-info p { margin: 5px 0; color: #666; }
+                        .info { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea; }
+                        .info p { margin: 5px 0; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+                        thead { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+                        th { padding: 12px; text-align: left; border: 1px solid #667eea; }
+                        tbody tr:nth-child(even) { background: #f8f9fa; }
+                        .total-row { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; color: white; font-weight: bold; }
+                        button { margin-top: 20px; padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+                        @media print { button { display: none; } }
+                    </style>
                 </head>
                 <body>  
-                       <h1>SAGER</h1>
-                          <p style="margin: auto; text-align: center">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
-                                    Distribution professionnelle • Vente en gros et détail</p>
-                                
-                        <div class="company-info">
-                            <p style="margin: auto; text-align: center"><strong>Téléphone:</strong> +229 0196466625</p>
-                            <p style="margin: auto; text-align: center"><strong>IFU:</strong> 0202586942320</p>
-                        </div>
+                    <h1>SAGER</h1>
+                    <p style="margin: auto; text-align: center">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                        Distribution professionnelle • Vente en gros et détail</p>
+                            
+                    <div class="company-info">
+                        <p style="margin: auto; text-align: center"><strong>Téléphone:</strong> +229 0196466625</p>
+                        <p style="margin: auto; text-align: center"><strong>IFU:</strong> 0202586942320</p>
+                    </div>
 
                     <div class="info">
                         <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
@@ -1552,15 +1448,12 @@
                             </tr>
                         </tbody>
                     </table>
-                     <div class="footer" style="margin-auto; text-align: center">
-                                    <p>Merci de votre confiance</p>
-                                    <p>Rapport généré avec l'application SagerMarket</p>
-                                </div>
+                    <div class="footer" style="margin: auto; text-align: center; margin-top: 40px; color: #666;">
+                        <p>Merci de votre confiance</p>
+                        <p>Rapport généré avec l'application SagerMarket</p>
+                    </div>
 
-
-                    <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
-                        Imprimer
-                    </button>
+                    <button onclick="window.print()">Imprimer</button>
                 </body>
                 </html>
             `;
@@ -1570,6 +1463,12 @@
             },
 
             printClientHistory(client) {
+                console.log(
+                    `[v0] Action: Impression de l'historique du client`
+                );
+                console.log(`[v0] Client:`, client.client_name);
+                console.log(`[v0] Nombre de créances:`, client.claims.length);
+
                 const printWindow = window.open('', '_blank');
 
                 const totalDebt = client.total_debt;
@@ -1623,199 +1522,34 @@
                         }</title>
                         <meta charset="UTF-8">
                         <style>
-                            body { 
-                                font-family: Arial, sans-serif; 
-                                padding: 20px;
-                                color: #333;
-                            }
-                            .company-header {
-                                text-align: center;
-                                margin-bottom: 30px;
-                                border-bottom: 3px solid #667eea;
-                                padding-bottom: 20px;
-                            }
-                            .company-header h1 {
-                                color: #667eea;
-                                margin: 0;
-                                font-size: 2rem;
-                            }
-                            .company-header p {
-                                margin: 5px 0;
-                                color: #666;
-                            }
-                            h2 { 
-                                text-align: center; 
-                                color: #764ba2; 
-                                margin-bottom: 30px;
-                            }
-                            .client-info { 
-                                background: #f8f9fa;
-                                padding: 15px;
-                                border-radius: 8px;
-                                margin-bottom: 20px;
-                                border-left: 4px solid #667eea;
-                            }
-                            .client-info p {
-                                margin: 8px 0;
-                            }
-                            .stats-summary {
-                                display: grid;
-                                grid-template-columns: repeat(3, 1fr);
-                                gap: 15px;
-                                margin-bottom: 20px;
-                            }
-                            .stat-box {
-                                background: #f8f9fa;
-                                padding: 15px;
-                                border-radius: 8px;
-                                text-align: center;
-                                border-left: 4px solid #667eea;
-                            }
-                            .stat-box.paid {
-                                border-left-color: #28a745;
-                            }
-                            .stat-box.remaining {
-                                border-left-color: #dc3545;
-                            }
-                            .stat-label {
-                                font-size: 0.9rem;
-                                color: #666;
-                                margin-bottom: 5px;
-                            }
-                            .stat-value {
-                                font-size: 1.3rem;
-                                font-weight: 700;
-                                color: #667eea;
-                            }
-                            .stat-box.paid .stat-value {
-                                color: #28a745;
-                            }
-                            .stat-box.remaining .stat-value {
-                                color: #dc3545;
-                            }
-                            table { 
-                                width: 100%; 
-                                border-collapse: collapse; 
-                                margin-top: 20px; 
-                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                            }
-                            thead {
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                color: white;
-                            }
-                            th, td { 
-                                border: 1px solid #ddd; 
-                                padding: 12px; 
-                                text-align: left; 
-                            }
-                            th {
-                                border: 1px solid #667eea;
-                            }
-                            tbody tr:nth-child(even) {
-                                background-color: #f8f9fa;
-                            }
-                            .total-row {
-                                background: #e9ecef !important;
-                                font-weight: bold;
-                            }
-                            .footer {
-                                margin-top: 40px;
-                                text-align: center;
-                                color: #666;
-                                font-size: 0.9rem;
-                            }
-                            @media print {
-                                button { display: none; }
-                                body { margin: 10mm; }
-                            }
-                        </style>
-                          <style>
-                            body {
-                                font-family: Arial, sans-serif;
-                                margin: 20px;
-                                color: #333;
-                            }
-                            h1 {
-                                color: #667eea;
-                                text-align: center;
-                                margin-bottom: 10px;
-                            }
-                            h2 {
-                                text-align: center;
-                                margin-bottom: 20px;
-                                color: #333;
-                            }
-                            .company-info {
-                                text-align: center;
-                                margin-bottom: 30px;
-                            }
-                            .company-info p {
-                                margin: 5px 0;
-                                color: #666;
-                            }
-                            .info {
-                                background: #f8f9fa;
-                                padding: 15px;
-                                border-radius: 8px;
-                                margin-bottom: 20px;
-                                border-left: 4px solid #667eea;
-                            }
-                            .info p {
-                                margin: 5px 0;
-                            }
-                            table {
-                                width: 100%;
-                                border-collapse: collapse;
-                                margin-top: 20px;
-                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                            }
-                            thead {
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                color: white;
-                            }
-                            th {
-                                padding: 12px;
-                                text-align: left;
-                                border: 1px solid #667eea;
-                            }
-                            th:last-child {
-                                text-align: right;
-                            }
-                            tbody tr:nth-child(even) {
-                                background: #f8f9fa;
-                            }
-                            tbody tr:hover {
-                                background: #e9ecef;
-                            }
-                            .total-row {
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-                                color: white;
-                                font-weight: bold;
-                            }
-                            button {
-                                margin-top: 20px;
-                                padding: 10px 20px;
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                color: white;
-                                border: none;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-size: 16px;
-                                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-                            }
-                            button:hover {
-                                transform: translateY(-2px);
-                                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-                            }
-                            @media print {
-                                button { display: none; }
-                            }
+                            body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+                            h1 { color: #667eea; text-align: center; margin-bottom: 10px; }
+                            h2 { text-align: center; color: #764ba2; margin-bottom: 30px; }
+                            .company-info { text-align: center; margin-bottom: 30px; }
+                            .company-info p { margin: 5px 0; color: #666; }
+                            .client-info { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea; }
+                            .client-info p { margin: 8px 0; }
+                            .stats-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+                            .stat-box { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #667eea; }
+                            .stat-box.paid { border-left-color: #28a745; }
+                            .stat-box.remaining { border-left-color: #dc3545; }
+                            .stat-label { font-size: 0.9rem; color: #666; margin-bottom: 5px; }
+                            .stat-value { font-size: 1.3rem; font-weight: 700; color: #667eea; }
+                            .stat-box.paid .stat-value { color: #28a745; }
+                            .stat-box.remaining .stat-value { color: #dc3545; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+                            thead { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+                            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                            tbody tr:nth-child(even) { background-color: #f8f9fa; }
+                            .total-row { background: #e9ecef !important; font-weight: bold; }
+                            .footer { margin-top: 40px; text-align: center; color: #666; font-size: 0.9rem; }
+                            @media print { button { display: none; } body { margin: 10mm; } }
                         </style>
                     </head>
                     <body>
-                       <h1>SAGER</h1>
-                          <p style="margin: auto; text-align: center">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
-                                    Distribution professionnelle • Vente en gros et détail</p>
+                        <h1>SAGER</h1>
+                        <p style="margin: auto; text-align: center">Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                            Distribution professionnelle • Vente en gros et détail</p>
                                 
                         <div class="company-info">
                             <p><strong>Téléphone:</strong> +229 0196466625</p>
@@ -1890,12 +1624,12 @@
                             </tbody>
                         </table>
 
-                         <div class="footer">
-                        <p>Merci de votre confiance</p>
-                        <p>Rapport généré avec l'application SagerMarket</p>
-                    </div>
+                        <div class="footer">
+                            <p>Merci de votre confiance</p>
+                            <p>Rapport généré avec l'application SagerMarket</p>
+                        </div>
 
-                        <button onclick="window.print()" style="margin-top: 20px; padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                        <button onclick="window.print()" style="margin-top: 20px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600;">
                             Imprimer
                         </button>
                     </body>
@@ -1905,9 +1639,180 @@
                 printWindow.document.write(htmlContent);
                 printWindow.document.close();
             },
+
+            printPaymentHistory() {
+                console.log(
+                    `[v0] Action: Impression de l'historique des paiements`
+                );
+                console.log(`[v0] Créance:`, this.selectedClaim);
+
+                const claimPayments = this.payments.filter(
+                    (p) => Number(p.claim_id) === Number(this.selectedClaim.id)
+                );
+
+                console.log(`[v0] Nombre de paiements:`, claimPayments.length);
+
+                const printWindow = window.open('', '_blank');
+
+                const totalPaid = claimPayments.reduce(
+                    (sum, p) => sum + parseFloat(p.amount),
+                    0
+                );
+
+                const tableRows = claimPayments
+                    .map(
+                        (payment, index) => `
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;">${
+                            index + 1
+                        }</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDateTime(
+                            payment.created_at
+                        )}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                            payment.amount
+                        )} FCFA</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">${
+                            payment.payment_method
+                        }</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">${
+                            payment.comment || '-'
+                        }</td>
+                    </tr>
+                `
+                    )
+                    .join('');
+
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Historique des Paiements - ${
+                            this.selectedClaim.client_name
+                        }</title>
+                        <meta charset="UTF-8">
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+                            h1 { color: #667eea; text-align: center; margin-bottom: 30px; }
+                            h2 { text-align: center; color: #764ba2; margin-bottom: 20px; }
+                            .claim-info { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea; }
+                            .claim-info p { margin: 8px 0; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+                            thead { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+                            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                            tbody tr:nth-child(even) { background-color: #f8f9fa; }
+                            .total-row { background: #e9ecef !important; font-weight: bold; }
+                            .footer { margin-top: 40px; text-align: center; color: #666; font-size: 0.9rem; }
+                            @media print { button { display: none; } body { margin: 10mm; } }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Historique des Paiements</h1>
+                        <p style="text-align: center;">Client: ${
+                            this.selectedClaim.client_name
+                        } - ${this.selectedClaim.client_phone}</p>
+
+                        <h2>Détails de la Créance</h2>
+                        
+                        <div class="claim-info">
+                            <p><strong>Montant de la créance:</strong> ${this.formatAmount(
+                                this.selectedClaim.debt_amount
+                            )} FCFA</p>
+                            <p><strong>Montant payé:</strong> ${this.formatAmount(
+                                totalPaid
+                            )} FCFA</p>
+                            <p><strong>Reste à payer:</strong> ${this.formatAmount(
+                                this.selectedClaim.debt_amount - totalPaid
+                            )} FCFA</p>
+                            <p><strong>Commentaire:</strong> ${
+                                this.selectedClaim.comment || '-'
+                            }</p>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Montant</th>
+                                    <th>Méthode</th>
+                                    <th>Commentaire</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                                <tr class="total-row">
+                                    <td colspan="2" style="text-align: right; padding: 12px; border: 1px solid #ddd;">Total payé:</td>
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
+                                        totalPaid
+                                    )} FCFA</td>
+                                    <td colspan="2" style="padding: 12px; border: 1px solid #ddd;"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="footer">
+                            <p>Document imprimé le ${new Date().toLocaleString(
+                                'fr-FR'
+                            )}</p>
+                        </div>
+
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                            };
+                        <\/script>
+                    </body>
+                    </html>
+                `;
+
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            },
+
+            async deletePayment(payment) {
+                if (
+                    !confirm('Êtes-vous sûr de vouloir supprimer ce paiement ?')
+                ) {
+                    return;
+                }
+
+                console.log(`[v0] Action: Suppression d'un paiement`);
+                console.log(`[v0] Paiement à supprimer:`, payment);
+
+                try {
+                    const API_BASE = window.location.origin;
+                    const deleteRoute = `${API_BASE}/claims/payments/${payment.id}/delete`;
+
+                    console.log(`[v0] Route:`, deleteRoute);
+                    console.log(`[v0] ID du paiement:`, payment.id);
+
+                    await axios.post(deleteRoute);
+
+                    alert('Paiement supprimé avec succès.');
+
+                    await new Promise((resolve) => setTimeout(resolve, 300));
+                    await this.fetchAllData();
+                } catch (error) {
+                    console.error(`[v0] Erreur suppression paiement:`, error);
+                    alert('Erreur lors de la suppression: ' + error.message);
+                }
+            },
         },
 
         computed: {
+            totalOngoingDebtAmount() {
+                return this.filteredClaims
+                    .filter((claim) => {
+                        const paidAmount = this.getClaimPaidAmount(claim.id);
+                        return paidAmount < claim.debt_amount; // Seulement les créances non soldées
+                    })
+                    .reduce(
+                        (sum, claim) => sum + parseFloat(claim.debt_amount),
+                        0
+                    );
+            },
+
             totalDebtAmount() {
                 return this.filteredClaims.reduce(
                     (sum, claim) => sum + parseFloat(claim.debt_amount),
@@ -1963,8 +1868,16 @@
                         (c) =>
                             c.client_name.toLowerCase().includes(query) ||
                             c.client_phone.includes(query) ||
-                            c.comment.toLowerCase().includes(query)
+                            (c.comment &&
+                                c.comment.toLowerCase().includes(query))
                     );
+
+                    // Log pour la recherche
+                    console.log('[v0] Recherche client:', {
+                        query: this.searchQuery,
+                        resultCount: filtered.length,
+                        found: filtered.length > 0,
+                    });
                 }
 
                 switch (this.sortOption) {
@@ -1979,18 +1892,10 @@
                         );
                         break;
                     case 'Montant (croissant)':
-                        filtered.sort(
-                            (a, b) =>
-                                parseFloat(a.debt_amount) -
-                                parseFloat(b.debt_amount)
-                        );
+                        filtered.sort((a, b) => a.debt_amount - b.debt_amount);
                         break;
                     case 'Montant (décroissant)':
-                        filtered.sort(
-                            (a, b) =>
-                                parseFloat(b.debt_amount) -
-                                parseFloat(a.debt_amount)
-                        );
+                        filtered.sort((a, b) => b.debt_amount - a.debt_amount);
                         break;
                     case 'Date (récent)':
                         filtered.sort(
@@ -2004,9 +1909,11 @@
                                 new Date(a.created_at) - new Date(b.created_at)
                         );
                         break;
+                    default:
+                        break;
                 }
 
-                this.currentPage = 1;
+                this.currentPage = 1; // Reset to first page on filter/sort change
                 return filtered;
             },
 
@@ -2481,5 +2388,45 @@
         .claims-header h2 {
             font-size: 1.5rem;
         }
+    }
+
+    /* Ajout des styles pour les modals */
+    /* Modal styles */
+    .modal-add-claim,
+    .modal-add-client,
+    .modal-add-payment,
+    .modal-delete-claim {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 10px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #333;
+        font-size: 1.25rem;
     }
 </style>
