@@ -3,23 +3,33 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class ReturnableProduct extends Model
 {
     protected $fillable = [
-        'product_id',
-        'sale_id',
-        'quantity_purchased',
-        'quantity_returned',
+        'client_id',
+        'date',
+        'comment',
     ];
 
-    public function product()
+    protected static function booted()
     {
-        return $this->belongsTo(Product::class);
+        static::creating(function ($model) {
+            $year = now()->year;
+
+            $lastNumber = DB::table('returnable_products')
+                ->whereYear('created_at', $year)
+                ->max(DB::raw('CAST(SUBSTRING_INDEX(reference, "-", -1) AS UNSIGNED)'));
+
+            $nextNumber = str_pad(($lastNumber ?? 0) + 1, 4, '0', STR_PAD_LEFT);
+
+            $model->reference = "REM-{$year}-{$nextNumber}";
+        });
     }
 
-    public function sale()
+    public function client()
     {
-        return $this->belongsTo(Sale::class);
+        return $this->belongsTo(Client::class);
     }
 }

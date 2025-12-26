@@ -4,19 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class StocksReturnableProduct extends Model
+class ReturnableProductsList extends Model
 {
+    protected $table = 'returnable_products_list';
+
     protected $fillable = [
         'returnable_product_id',
         'product_id',
-        'quantity_returned',
-        'date',
-        'comment',
+        'quantity_given',
     ];
 
     protected $casts = [
-        'quantity_returned' => 'decimal:2',
-        'date' => 'date',
+        'quantity_given' => 'decimal:2',
     ];
 
     public function operation()

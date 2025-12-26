@@ -20,7 +20,8 @@ use App\Http\Controllers\{
     ClaimsPaymentController,
     ExpenseController,
     ReturnableProductController,
-    StocksReturnableProductController
+    StocksReturnableProductController,
+    ReturnableProductsListController
 };
 
 use App\Models\{
@@ -176,23 +177,28 @@ Route::post('/expenses', [ExpenseController::class, 'store'])
     ->name('expenses.store');
 Route::get('/expensesList', [ExpenseController::class, 'expensesList'])
     ->name('expenses.list');
-
-//route pour les emballages
-Route::get('/returnableProducts', [ReturnableProductController::class, 'index'])->name('returnableProducts');
-Route::get('/returnableProductsList', [ReturnableProductController::class, 'returnableProductsList'])->name('returnableProductsList');
 Route::post('/expenses/update/{id}', [ExpenseController::class, 'update'])
     ->name('expenses.update');
 Route::post('/expenses/delete/{id}', [ExpenseController::class, 'destroy'])
     ->name('expenses.destroy');
 
 
-//route pour l'historique des retours
-Route::get('/stocksReturnableProductsList', [StocksReturnableProductController::class, 'stocksReturnableProductsList'])
-    ->name('stocksReturnableProductsList');
-Route::post('/returnableProducts/{id}/return', [ReturnableProductController::class, 'handleReturn'])
-    ->name('handleReturn');
-// Suppression d'un produit retournable via POST
-Route::post('/returnableProducts/{id}/delete', [ReturnableProductController::class, 'destroy']);
+//route pour les returnable products
+
+Route::get('/returnableProducts', [ReturnableProductController::class, 'index'])->name('returnableProducts');
+
+Route::post('/returnable-products', [ReturnableProductController::class, 'store']);
+
+Route::post('/stocks-returnable-products', [
+    StocksReturnableProductController::class,
+    'store'
+]);
+
+Route::post('/returnable-products/items', [
+    ReturnableProductsListController::class,
+    'store'
+]);
+
 
 
 

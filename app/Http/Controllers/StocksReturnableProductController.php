@@ -3,45 +3,44 @@
 namespace App\Http\Controllers;
 
 use App\Models\StocksReturnableProduct;
+use App\Models\Product;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
-
 
 class StocksReturnableProductController extends Controller
 {
-    public function index()
-    {
-        return StocksReturnableProduct::orderBy('id', 'desc')->get();
-    }
-
-
-
     public function store(Request $request)
     {
         $data = $request->validate([
-            'sale_id' => 'required|integer',
-            'product_id' => 'required|integer',
-            'buyer_name' => 'required|string|max:255',
-            'quantity_purchased' => 'required|integer|min:0',
-            'quantity_returned' => 'required|integer|min:0',
-            'date' => 'nullable|date', // date optionnelle
+            'returnable_product_id' => 'required|exists:returnable_products,id',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity_returned' => 'required|numeric|min:0.01',
+            'date' => 'nullable|date',
+            'comment' => 'nullable|string',
         ]);
 
-        $now = Carbon::now();
-        $data['created_at'] = $now;
+        $rows = [];
+        $date = $data['date'] ?? now()->toDateString();
 
-        // si la date n'est pas envoyée, on met la date du jour
-        if (empty($data['date'])) {
-            $data['date'] = $now->toDateString();
+        foreach ($data['items'] as $item) {
+            $product = Product::findOrFail($item['product_id']);
+
+            // Vérifier que le produit est returnable
+            if (!$product->isReturnable) continue;
+
+            $rows[] = StocksReturnableProduct::create([
+                'returnable_product_id' => $data['returnable_product_id'],
+                'product_id' => $item['product_id'],
+                'quantity_returned' => round($item['quantity_returned'], 2),
+                'date' => $date,
+                'comment' => $data['comment'] ?? null,
+            ]);
         }
 
-        return StocksReturnableProduct::create($data);
-    }
-
-
-
-    public function stocksReturnableProductsList()
-    {
-        return StocksReturnableProduct::orderBy('id', 'desc')->get();
+        return response()->json([
+            'success' => true,
+            'message' => 'Retours enregistrés avec succès',
+            'data' => $rows,
+        ], 201);
     }
 }
