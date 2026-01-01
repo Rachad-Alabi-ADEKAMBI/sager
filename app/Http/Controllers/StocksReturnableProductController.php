@@ -8,6 +8,25 @@ use Illuminate\Http\Request;
 
 class StocksReturnableProductController extends Controller
 {
+    public function index()
+    {
+        $returns = StocksReturnableProduct::query()
+            ->orderBy('date', 'desc')
+            ->get([
+                'id',
+                'returnable_product_id',
+                'product_id',
+                'quantity_returned',
+                'date',
+                'comment',
+                'created_at',
+                'updated_at'
+            ]);
+
+        return response()->json($returns);
+    }
+
+
     public function store(Request $request)
     {
         $data = $request->validate([

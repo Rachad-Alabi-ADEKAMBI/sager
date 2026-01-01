@@ -32,4 +32,12 @@ class ReturnableProduct extends Model
     {
         return $this->belongsTo(Client::class);
     }
+
+    public function products()
+    {
+        return $this->hasMany(
+            ReturnableProductsList::class,
+            'returnable_product_id'
+        );
+    }
 }

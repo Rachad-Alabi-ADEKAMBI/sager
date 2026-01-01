@@ -184,7 +184,6 @@ Route::post('/expenses/delete/{id}', [ExpenseController::class, 'destroy'])
 
 
 //route pour les returnable products
-
 Route::get('/returnableProducts', [ReturnableProductController::class, 'index'])->name('returnableProducts');
 
 Route::post('/returnable-products', [ReturnableProductController::class, 'store']);
@@ -199,8 +198,14 @@ Route::post('/returnable-products/items', [
     'store'
 ]);
 
+Route::get('/returnable-products-transactions', [ReturnableProductController::class, 'getReturnableProductsTransactions'])
+    ->name('returnableProductsTransactions');;
 
+Route::get('/returnable-products-list', [ReturnableProductsListController::class, 'index'])
+    ->name('returnableProductsList.index');
 
+Route::get('/stocks-returnable-products', [StocksReturnableProductController::class, 'index'])
+    ->name('stocksReturnableProducts.index');
 
 //proformas
 Route::get('/proformas', function () {

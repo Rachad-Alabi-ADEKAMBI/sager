@@ -6,6 +6,7 @@ use App\Models\ReturnableProductsList;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\ReturnableProduct;
 
 class ReturnableProductsListController extends Controller
 {
@@ -51,5 +52,21 @@ class ReturnableProductsListController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function index()
+    {
+        $list = ReturnableProductsList::query()
+            ->orderBy('created_at', 'desc')
+            ->get([
+                'id',
+                'returnable_product_id',
+                'product_id',
+                'quantity_given',
+                'created_at',
+                'updated_at'
+            ]);
+
+        return response()->json($list);
     }
 }
