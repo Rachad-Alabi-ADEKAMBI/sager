@@ -21,28 +21,7 @@
                 </div>
 
                 <!-- Statistics Dashboard -->
-                <div class="stats-container">
-                    <div class="stat-card">
-                        <div class="stat-icon">📦</div>
-                        <div class="stat-number">{{ totalGiven }}</div>
-                        <div class="stat-label">Total Remis</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">↩️</div>
-                        <div class="stat-number">{{ totalReturned }}</div>
-                        <div class="stat-label">Total Retournés</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⏳</div>
-                        <div class="stat-number">{{ totalPending }}</div>
-                        <div class="stat-label">En Attente</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📊</div>
-                        <div class="stat-number">{{ activeTransactions }}</div>
-                        <div class="stat-label">Opérations Actives</div>
-                    </div>
-                </div>
+                <!-- Suppression de la section Statistics Dashboard avec les emoji cards -->
             </div>
 
             <!-- Controls Section -->
@@ -244,6 +223,7 @@
                 </div>
 
                 <!-- Pagination -->
+                <!-- Ajout de la pagination fonctionnelle -->
                 <div class="pagination" v-if="totalPages > 1">
                     <button
                         @click="currentPage = Math.max(1, currentPage - 1)"
@@ -337,6 +317,24 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- Ajout du bouton pour créer un nouveau client comme dans SaleComponent -->
+                                        <button
+                                            v-if="
+                                                newTransaction.customerSearch &&
+                                                !newTransaction.selectedClient &&
+                                                filteredNewCustomers.length ===
+                                                    0
+                                            "
+                                            type="button"
+                                            @click="openCreateCustomerModal"
+                                            class="btn-create-customer"
+                                        >
+                                            <i class="fas fa-plus"></i>
+                                            Créer "{{
+                                                newTransaction.customerSearch
+                                            }}"
+                                        </button>
                                     </div>
                                 </div>
 
@@ -971,6 +969,78 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Ajout du modal de création de client -->
+            <div
+                v-if="showCreateCustomerModal"
+                class="modal-overlay"
+                @click.self="closeCreateCustomerModal"
+            >
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h5>
+                            <i class="fas fa-user-plus"></i>
+                            Nouveau Client
+                        </h5>
+                        <button
+                            @click="closeCreateCustomerModal"
+                            class="modal-close"
+                        >
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form @submit.prevent="submitNewCustomer">
+                            <div class="form-group">
+                                <label>Nom du client *</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="newCustomer.name"
+                                    placeholder="Nom complet"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label>Téléphone *</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="newCustomer.phone"
+                                    placeholder="Numéro de téléphone"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label>Adresse</label>
+                                <textarea
+                                    class="form-control"
+                                    v-model="newCustomer.address"
+                                    placeholder="Adresse complète"
+                                    rows="3"
+                                ></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button
+                            @click="closeCreateCustomerModal"
+                            class="btn-secondary"
+                        >
+                            <i class="fas fa-times"></i>
+                            Annuler
+                        </button>
+                        <button
+                            @click="submitNewCustomer"
+                            :disabled="!newCustomer.name || !newCustomer.phone"
+                            class="btn-primary"
+                        >
+                            <i class="fas fa-save"></i>
+                            Créer le Client
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 </template>
@@ -982,6 +1052,8 @@
         name: 'ReturnableProductsComponent',
         data() {
             return {
+                BASE_URL: 'http://127.0.0.1:8000',
+
                 // Data
                 customers: [],
                 products: [],
@@ -995,6 +1067,7 @@
                 filterClient: '',
                 filterStatus: '',
                 sortOption: 'Date (récent)',
+                // Suppression de currentPage et itemsPerPage d'ici car gérés par le script
                 currentPage: 1,
                 itemsPerPage: 10,
 
@@ -1005,6 +1078,7 @@
                 showDeleteReturnModal: false,
                 showDeleteModal: false,
                 showNewCustomerDropdown: false,
+                showCreateCustomerModal: false,
 
                 // New Transaction Form
                 newTransaction: {
@@ -1019,6 +1093,12 @@
                         },
                     ],
                     comment: '',
+                },
+
+                newCustomer: {
+                    name: '',
+                    phone: '',
+                    address: '',
                 },
 
                 // Selected Items
@@ -1134,7 +1214,7 @@
 
             async fetchClients() {
                 try {
-                    const route = 'http://127.0.0.1:8000/clientslist';
+                    const route = `${this.BASE_URL}/clientslist`;
                     console.log('[v0] REQUEST: GET - Route:', route);
                     const response = await axios.get(route);
                     console.log('[v0] RESPONSE: Clients fetched', {
@@ -1144,7 +1224,7 @@
                     this.customers = response.data;
                 } catch (error) {
                     console.error('[v0] ERROR fetching clients:', {
-                        route: 'http://127.0.0.1:8000/clientslist',
+                        route: `${this.BASE_URL}/clientslist`,
                         error: error.message,
                         response: error.response?.data,
                     });
@@ -1153,7 +1233,7 @@
 
             async fetchProducts() {
                 try {
-                    const route = 'http://127.0.0.1:8000/productsList';
+                    const route = `${this.BASE_URL}/productsList`;
                     console.log('[v0] REQUEST: GET - Route:', route);
                     const response = await axios.get(route);
                     console.log('[v0] RESPONSE: Products fetched', {
@@ -1165,7 +1245,7 @@
                     );
                 } catch (error) {
                     console.error('[v0] ERROR fetching products:', {
-                        route: 'http://127.0.0.1:8000/productsList',
+                        route: `${this.BASE_URL}/productsList`,
                         error: error.message,
                         response: error.response?.data,
                     });
@@ -1174,8 +1254,7 @@
 
             async fetchTransactions() {
                 try {
-                    const route =
-                        'http://127.0.0.1:8000/returnable-products-transactions';
+                    const route = `${this.BASE_URL}/returnable-products-transactions`;
                     console.log('[v0] REQUEST: GET - Route:', route);
                     const response = await axios.get(route);
                     console.log('[v0] RESPONSE: Transactions fetched', {
@@ -1185,7 +1264,7 @@
                     this.transactions = response.data;
                 } catch (error) {
                     console.error('[v0] ERROR fetching transactions:', {
-                        route: 'http://127.0.0.1:8000/returnable-products-transactions',
+                        route: `${this.BASE_URL}/returnable-products-transactions`,
                         error: error.message,
                         response: error.response?.data,
                     });
@@ -1194,8 +1273,7 @@
 
             async fetchTransactionProducts() {
                 try {
-                    const route =
-                        'http://127.0.0.1:8000/returnable-products-list';
+                    const route = `${this.BASE_URL}/returnable-products-list`;
                     console.log('[v0] REQUEST: GET - Route:', route);
                     const response = await axios.get(route);
                     console.log('[v0] RESPONSE: Transaction products fetched', {
@@ -1205,7 +1283,7 @@
                     this.transactionProducts = response.data;
                 } catch (error) {
                     console.error('[v0] ERROR fetching transaction products:', {
-                        route: 'http://127.0.0.1:8000/returnable-products-list',
+                        route: `${this.BASE_URL}/returnable-products-list`,
                         error: error.message,
                         response: error.response?.data,
                     });
@@ -1214,8 +1292,7 @@
 
             async fetchStockReturns() {
                 try {
-                    const route =
-                        'http://127.0.0.1:8000/stocks-returnable-products';
+                    const route = `${this.BASE_URL}/stocks-returnable-products`;
                     console.log('[v0] REQUEST: GET - Route:', route);
                     const response = await axios.get(route);
                     console.log('[v0] RESPONSE: Stock returns fetched', {
@@ -1225,7 +1302,7 @@
                     this.stockReturns = response.data;
                 } catch (error) {
                     console.error('[v0] ERROR fetching stock returns:', {
-                        route: 'http://127.0.0.1:8000/stocks-returnable-products',
+                        route: `${this.BASE_URL}/stocks-returnable-products`,
                         error: error.message,
                         response: error.response?.data,
                     });
@@ -1556,17 +1633,85 @@
             // Customer Search
             filterNewTransactionCustomers() {
                 const query = this.newTransaction.customerSearch.toLowerCase();
-                this.filteredNewCustomers = this.customers.filter(
-                    (c) =>
-                        c.name.toLowerCase().includes(query) ||
-                        c.phone.includes(query)
-                );
+                if (!query) {
+                    this.filteredNewCustomers = [...this.customers];
+                } else {
+                    this.filteredNewCustomers = this.customers.filter(
+                        (c) =>
+                            c.name.toLowerCase().includes(query) ||
+                            c.phone.includes(query)
+                    );
+                }
+                this.showNewCustomerDropdown = true;
             },
 
-            selectNewTransactionCustomer(customer) {
-                this.newTransaction.selectedClient = customer;
-                this.newTransaction.customerSearch = customer.name;
+            selectNewTransactionCustomer(client) {
+                this.newTransaction.selectedClient = client;
+                this.newTransaction.customerSearch = client.name;
                 this.showNewCustomerDropdown = false;
+            },
+
+            openCreateCustomerModal() {
+                this.newCustomer.name = this.newTransaction.customerSearch;
+                this.newCustomer.phone = '';
+                this.newCustomer.address = '';
+                this.showCreateCustomerModal = true;
+                this.showNewCustomerDropdown = false;
+            },
+
+            closeCreateCustomerModal() {
+                this.showCreateCustomerModal = false;
+                this.newCustomer = {
+                    name: '',
+                    phone: '',
+                    address: '',
+                };
+            },
+
+            async submitNewCustomer() {
+                if (!this.newCustomer.name || !this.newCustomer.phone) {
+                    alert('Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
+
+                try {
+                    const response = await axios.post(
+                        `${this.BASE_URL}/clients`,
+                        {
+                            name: this.newCustomer.name,
+                            phone: this.newCustomer.phone,
+                            address: this.newCustomer.address,
+                        }
+                    );
+
+                    if (response.data.success) {
+                        alert('Client créé avec succès');
+                        await this.fetchClients();
+
+                        // Sélectionner automatiquement le nouveau client
+                        const newClient = this.customers.find(
+                            (c) =>
+                                c.name === this.newCustomer.name &&
+                                c.phone === this.newCustomer.phone
+                        );
+                        if (newClient) {
+                            this.selectNewTransactionCustomer(newClient);
+                        }
+
+                        this.closeCreateCustomerModal();
+                    } else {
+                        alert(
+                            response.data.message ||
+                                'Erreur lors de la création du client'
+                        );
+                    }
+                } catch (error) {
+                    console.error('Error creating customer:', error);
+                    alert(
+                        'Erreur lors de la création du client: ' +
+                            (error.response?.data?.message || error.message)
+                    );
+                }
             },
 
             // Product Search
@@ -1621,8 +1766,6 @@
                     return;
                 }
 
-                const route = 'http://127.0.0.1:8000/returnable-products';
-
                 const products = this.newTransaction.productLines
                     .filter((l) => l.selectedProduct && l.quantity > 0)
                     .map((l) => ({
@@ -1661,12 +1804,15 @@
                 };
 
                 console.group('[SUBMIT REMISE]');
-                console.log('Route:', route);
+                console.log('Route:', `${this.BASE_URL}/returnable-products`);
                 console.log('Payload:', payload);
                 console.groupEnd();
 
                 try {
-                    const response = await axios.post(route, payload);
+                    const response = await axios.post(
+                        `${this.BASE_URL}/returnable-products`,
+                        payload
+                    );
 
                     console.group('[RESPONSE REMISE]');
                     console.log(response.data);
@@ -1708,8 +1854,7 @@
                 try {
                     // Log each return request
                     for (const returnItem of returnsData) {
-                        const route =
-                            'http://127.0.0.1:8000/stocks-returnable-products';
+                        const route = `${this.BASE_URL}/stocks-returnable-products`;
                         console.log('[v0] REQUEST: POST - Route:', route);
                         console.log('[v0] PAYLOAD:', returnItem);
 
@@ -1725,7 +1870,7 @@
                     await this.fetchAllData();
                 } catch (error) {
                     console.error('[v0] ERROR submitting returns:', {
-                        route: 'http://127.0.0.1:8000/stocks-returnable-products',
+                        route: `${this.BASE_URL}/stocks-returnable-products`,
                         payload: returnsData,
                         error: error.message,
                         response: error.response?.data,
@@ -1742,7 +1887,7 @@
 
                 try {
                     await axios.delete(
-                        `http://127.0.0.1:8000/stocks-returnable-products/${this.returnToDelete.id}`
+                        `${this.BASE_URL}/stocks-returnable-products/${this.returnToDelete.id}`
                     );
                     alert('Retour supprimé avec succès');
                     this.closeDeleteReturnModal();
@@ -1761,7 +1906,7 @@
 
                 try {
                     await axios.delete(
-                        `http://127.0.0.1:8000/returnable-products-transactions/${this.transactionToDelete.id}`
+                        `${this.BASE_URL}/returnable-products-transactions/${this.transactionToDelete.id}`
                     );
                     alert('Opération supprimée avec succès');
                     this.closeDeleteModal();
@@ -2164,43 +2309,41 @@
 </script>
 
 <style scoped>
-    /* ... existing styles from the original component ... */
-
-    /* Updated button styles to match ProductsComponent appearance -->
+    /* Button Styles */
     .btn-eye {
-        background-color: #28a745;
+        background: #17a2b8;
         color: white;
     }
 
     .btn-eye:hover {
-        background-color: #218838;
+        background: #138496;
     }
 
     .btn-reply {
-        background-color: #667eea;
+        background: #28a745;
         color: white;
     }
 
     .btn-reply:hover {
-        background-color: #5568d3;
+        background: #218838;
     }
 
     .btn-print {
-        background-color: #17a2b8;
+        background: #6c757d;
         color: white;
     }
 
     .btn-print:hover {
-        background-color: #138496;
+        background: #5a6268;
     }
 
     .btn-delete {
-        background-color: #dc3545;
+        background: #dc3545;
         color: white;
     }
 
     .btn-delete:hover {
-        background-color: #c82333;
+        background: #c82333;
     }
 
     .main-content {
@@ -2235,42 +2378,7 @@
         font-size: 28px;
     }
 
-    .stats-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-top: 20px;
-    }
-
-    .stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 8px;
-        text-align: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-2px);
-    }
-
-    .stat-icon {
-        font-size: 24px;
-        margin-bottom: 10px;
-    }
-
-    .stat-number {
-        font-size: 28px;
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-
-    .stat-label {
-        font-size: 13px;
-        opacity: 0.9;
-    }
+    /* Suppression des styles .stats-container, .stat-card, .stat-icon, .stat-number, .stat-label */
 
     /* Controls Section */
     .controls-section {
@@ -2364,46 +2472,48 @@
         background: #e8e8e8;
     }
 
+    /* Amélioration des styles du tableau pour éviter le scroll horizontal */
     /* Table Section */
     .table-container {
         background: white;
         border-radius: 8px;
         padding: 20px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        /* REMOVED: overflow-x: auto; from here to allow table-wrapper to handle it */
+        overflow: hidden;
     }
 
     .table-wrapper {
         overflow-x: auto;
         width: 100%;
-        -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
+        -webkit-overflow-scrolling: touch;
     }
 
     .products-table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 900px; /* Ensure table doesn't shrink too much */
+        min-width: 100%;
     }
 
     .products-table thead {
-        /* Changed background to gradient to match other elements */
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        position: sticky; /* Keep header visible on scroll */
+        position: sticky;
         top: 0;
-        z-index: 10; /* Ensure header is above tbody */
+        z-index: 10;
     }
 
     .products-table th {
-        padding: 12px;
+        padding: 12px 8px;
         text-align: left;
         font-weight: 600;
-        white-space: nowrap; /* Prevent text wrapping in headers */
+        font-size: 13px;
+        white-space: nowrap;
     }
 
     .products-table td {
-        padding: 12px;
+        padding: 12px 8px;
         border-bottom: 1px solid #f0f0f0;
+        font-size: 13px;
     }
 
     .products-table tbody tr {
@@ -2454,7 +2564,7 @@
         display: flex;
         gap: 5px;
         flex-wrap: wrap;
-        justify-content: center; /* Center actions horizontally */
+        justify-content: center;
     }
 
     .btn-small {
@@ -2464,27 +2574,8 @@
         cursor: pointer;
         font-size: 12px;
         transition: all 0.2s;
-        white-space: nowrap; /* Prevent wrapping */
+        white-space: nowrap;
     }
-
-    /* Button styles moved up to be applied by .btn-eye, .btn-reply etc. */
-    /* .btn-action {
-        background: #667eea;
-        color: white;
-    }
-
-    .btn-action:hover {
-        background: #5568d3;
-    }
-
-    .btn-danger {
-        background: #dc3545;
-        color: white;
-    }
-
-    .btn-danger:hover {
-        background: #c82333;
-    } */
 
     .empty-row {
         height: 200px;
@@ -2497,13 +2588,15 @@
         align-items: center;
         gap: 15px;
         margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #f0f0f0;
     }
 
     .btn-pagination {
         padding: 8px 16px;
-        border: 1px solid #667eea; /* Matched primary color */
+        border: 1px solid #667eea;
         background: white;
-        color: #667eea; /* Matched primary color */
+        color: #667eea;
         border-radius: 6px;
         cursor: pointer;
         font-size: 14px;
@@ -2515,7 +2608,7 @@
     }
 
     .btn-pagination:hover:not(:disabled) {
-        background: #667eea; /* Matched primary button hover */
+        background: #667eea;
         color: white;
     }
 
@@ -2528,6 +2621,29 @@
         color: #666;
         font-size: 14px;
         font-weight: 500;
+    }
+
+    /* Ajout des styles pour le bouton de création de client */
+    .btn-create-customer {
+        margin-top: 10px;
+        padding: 10px 15px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-create-customer:hover {
+        background: #5568d3;
     }
 
     /* Modal Styles */
@@ -2969,23 +3085,26 @@
     @media (max-width: 1024px) {
         .products-table th,
         .products-table td {
-            padding: 10px;
-            font-size: 13px;
+            padding: 10px 6px;
+            font-size: 12px;
         }
     }
 
+    /* Amélioration du responsive pour mobile */
     @media (max-width: 768px) {
+        .main-content {
+            padding: 10px;
+        }
+
         .header-section {
-            padding: 20px;
+            padding: 20px 15px;
         }
 
         .section-header h2 {
-            font-size: 22px;
+            font-size: 20px;
         }
 
-        .stats-container {
-            grid-template-columns: repeat(2, 1fr);
-        }
+        /* Suppression des styles .stats-container, .stat-card, .stat-icon, .stat-number, .stat-label pour le responsive */
 
         .controls-section {
             padding: 15px;
@@ -3010,67 +3129,63 @@
             justify-content: center;
         }
 
+        .table-container {
+            padding: 15px 10px;
+            overflow-x: visible;
+        }
+
         .table-wrapper {
-            overflow-x: auto; /* Ensure horizontal scrolling for tables on smaller screens */
-            -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
+            overflow-x: auto;
         }
 
         .products-table {
-            min-width: 100%; /* Allow table to take full width if needed */
-            font-size: 12px; /* Reduce font size for smaller screens */
+            font-size: 11px;
+            display: table;
+        }
+
+        .products-table thead {
+            display: table-header-group;
+        }
+
+        .products-table tbody {
+            display: table-row-group;
+        }
+
+        .products-table tr {
+            display: table-row;
         }
 
         .products-table th,
         .products-table td {
-            padding: 8px;
-            font-size: 12px;
-            white-space: normal; /* Allow wrapping in cells */
-        }
-
-        .products-table th {
-            white-space: nowrap; /* Keep headers from wrapping for better alignment */
-        }
-
-        .product-count-badge {
+            display: table-cell;
+            padding: 8px 4px;
             font-size: 11px;
-            padding: 3px 6px;
         }
 
         .actions-cell {
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
+            flex-direction: row;
+            gap: 3px;
         }
 
         .btn-small {
-            width: 100%;
             padding: 5px 8px;
             font-size: 11px;
-            justify-content: center;
         }
 
         .modal-container {
             width: 95%;
             max-width: 100%;
+            margin: 10px;
         }
 
-        .modal-header h5 {
-            font-size: 16px;
-        }
-
-        .modal-footer {
-            flex-direction: column-reverse;
-            align-items: center;
-        }
-
-        .details-header {
-            grid-template-columns: 1fr;
+        .pagination {
+            flex-wrap: wrap;
             gap: 10px;
         }
 
-        .info-row {
-            flex-direction: column;
-            align-items: flex-start;
+        .pagination-info {
+            width: 100%;
+            text-align: center;
         }
     }
 </style>
