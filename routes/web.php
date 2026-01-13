@@ -204,7 +204,7 @@ Route::get('/returnable-products-transactions', [ReturnableProductController::cl
 Route::get('/returnable-products-list', [ReturnableProductsListController::class, 'index'])
     ->name('returnableProductsList.index');
 
-Route::get('/stocks-returnable-products', [StocksReturnableProductController::class, 'index'])
+Route::get('/returnable-products-returns', [StocksReturnableProductController::class, 'index'])
     ->name('stocksReturnableProducts.index');
 
 //proformas

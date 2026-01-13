@@ -1,0 +1,1 @@
+j'ai toujours cette erreur: Uncaught TypeError: this.$set  quand je veuxis not a function, utilises plûtot ref ou reactive au lieu de $set quand je clique sur le bouton d'enregistrement de retour, corrige stp et aussi Uncaught TypeError: this.allProducts.find is not a function  et 

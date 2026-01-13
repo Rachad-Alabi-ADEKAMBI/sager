@@ -1097,35 +1097,40 @@
 </template>
 
 <script>
+    const axios = window.axios;
+
     export default {
         name: 'ReturnableProductsComponent',
         data() {
             return {
                 BASE_URL: 'http://127.0.0.1:8000',
+
+                // Data
+                customers: [],
+                products: [],
                 transactions: [],
                 transactionProducts: [],
                 stockReturns: [],
                 allProducts: [],
-                customers: [],
+
+                // Search & Filters
                 searchQuery: '',
                 filterClient: '',
                 filterStatus: '',
                 sortOption: 'Date (récent)',
                 currentPage: 1,
                 itemsPerPage: 10,
+
+                // Modal States
                 showCreateModal: false,
                 showDetailsModal: false,
                 showReturnModal: false,
-                showDeleteModal: false,
                 showDeleteReturnModal: false,
-                showCreateCustomerModal: false,
+                showDeleteModal: false,
                 showNewCustomerDropdown: false,
-                selectedTransaction: null,
-                transactionToDelete: null,
-                returnToDelete: null,
-                returnDate: '',
-                returnComment: '',
-                returnData: {},
+                showCreateCustomerModal: false,
+
+                // New Transaction Form
                 newTransaction: {
                     customerSearch: '',
                     selectedClient: null,
@@ -1134,157 +1139,212 @@
                             selectedProduct: null,
                             searchQuery: '',
                             showDropdown: false,
-                            quantity: '',
+                            quantity: 0,
                         },
                     ],
                     comment: '',
                 },
-                filteredNewCustomers: [],
+
                 newCustomer: {
                     name: '',
                     phone: '',
                     address: '',
                 },
+
+                // Selected Items
+                selectedTransaction: null,
+                transactionToDelete: null,
+                returnToDelete: null,
+
+                // Return Form
+                returnDate: new Date().toISOString().split('T')[0],
+                returnComment: '',
+                returnData: {},
+
+                // Filtered Data
+                filteredNewCustomers: [],
             };
         },
 
         computed: {
-            filteredTransactions() {
-                return this.getFilteredTransactions();
-            },
-
             paginatedTransactions() {
+                let filtered = this.getFilteredTransactions();
                 const start = (this.currentPage - 1) * this.itemsPerPage;
-                const end = start + this.itemsPerPage;
-                return this.filteredTransactions.slice(start, end);
+                return filtered.slice(start, start + this.itemsPerPage);
             },
 
             totalPages() {
                 return Math.ceil(
-                    this.filteredTransactions.length / this.itemsPerPage
+                    this.getFilteredTransactions().length / this.itemsPerPage
                 );
             },
 
             uniqueClients() {
-                const clientMap = new Map();
-                this.transactions.forEach((t) => {
-                    if (t.client_id && t.client_name) {
-                        clientMap.set(t.client_id, {
-                            id: t.client_id,
-                            name: t.client_name,
-                        });
+                const uniqueClientsMap = new Map();
+                this.customers.forEach((client) => {
+                    if (!uniqueClientsMap.has(client.id)) {
+                        uniqueClientsMap.set(client.id, client);
                     }
                 });
-                return Array.from(clientMap.values());
+                return Array.from(uniqueClientsMap.values());
+            },
+
+            totalGiven() {
+                return this.transactionProducts
+                    .reduce(
+                        (sum, p) => sum + (parseFloat(p.quantity_given) || 0),
+                        0
+                    )
+                    .toFixed(2);
+            },
+
+            totalReturned() {
+                return this.stockReturns
+                    .reduce(
+                        (sum, r) =>
+                            sum + (parseFloat(r.quantity_returned) || 0),
+                        0
+                    )
+                    .toFixed(2);
+            },
+
+            totalPending() {
+                const given = parseFloat(this.totalGiven) || 0;
+                const returned = parseFloat(this.totalReturned) || 0;
+                return (given - returned).toFixed(2);
+            },
+
+            activeTransactions() {
+                return this.transactions.filter(
+                    (t) => parseFloat(this.getTotalQuantityPending(t.id)) > 0
+                ).length;
             },
 
             canSubmitNewTransaction() {
-                if (!this.newTransaction.selectedClient) return false;
-                const hasValidLines = this.newTransaction.productLines.some(
-                    (line) => line.selectedProduct && line.quantity > 0
+                return (
+                    this.newTransaction.selectedClient &&
+                    this.newTransaction.productLines.some(
+                        (line) => line.selectedProduct && line.quantity > 0
+                    )
                 );
-                return hasValidLines;
             },
 
             canSubmitReturn() {
-                return Object.values(this.returnData).some(
-                    (data) => data.selected && data.quantity > 0
+                return (
+                    this.returnDate &&
+                    Object.values(this.returnData).some(
+                        (item) => item.selected && item.quantity > 0
+                    )
                 );
             },
         },
 
-        async mounted() {
-            await this.fetchAllData();
+        mounted() {
+            this.fetchAllData();
         },
 
         methods: {
             async fetchAllData() {
                 try {
                     await Promise.all([
+                        this.fetchClients(),
+                        this.fetchProducts(),
                         this.fetchTransactions(),
                         this.fetchTransactionProducts(),
                         this.fetchStockReturns(),
-                        this.fetchAllProducts(),
-                        this.fetchClients(),
                     ]);
                     this.calculateReturnedQuantities();
                 } catch (error) {
-                    console.error('[v0] Error fetching data:', error);
+                    console.error('Error fetching data:', error);
+                    alert('Erreur lors du chargement des données');
+                }
+            },
+
+            async fetchClients() {
+                const route = `${this.BASE_URL}/clients`;
+                try {
+                    const response = await axios.get(route);
+                    this.customers = response.data;
+                } catch (error) {
+                    console.error('ERROR fetching clients:', {
+                        route: route,
+                        error: error.message,
+                        response: error.response?.data,
+                    });
+                }
+            },
+
+            async fetchProducts() {
+                const route = `${this.BASE_URL}/products`;
+                try {
+                    const response = await axios.get(route);
+                    // Ajouter le filtre pour n'afficher que les produits consignables
+                    this.allProducts = response.data.filter(p => p.isReturnable === 1);
+                } catch (error) {
+                    console.error('ERROR fetching products:', {
+                        route: route,
+                        error: error.message,
+                        response: error.response?.data,
+                    });
                 }
             },
 
             async fetchTransactions() {
                 try {
-                    const response = await axios.get(
-                        `${this.BASE_URL}/returnable-products-transactions`
-                    );
+                    const route = `${this.BASE_URL}/returnable-products-transactions`;
+                    const response = await axios.get(route);
                     this.transactions = response.data;
                 } catch (error) {
-                    console.error('[v0] Error fetching transactions:', error);
+                    console.error('ERROR fetching transactions:', {
+                        route: `${this.BASE_URL}/returnable-products-transactions`,
+                        error: error.message,
+                        response: error.response?.data,
+                    });
                 }
             },
 
             async fetchTransactionProducts() {
                 try {
-                    const response = await axios.get(
-                        `${this.BASE_URL}/returnable-products-list`
-                    );
-                    this.transactionProducts = response.data;
+                    const route = `${this.BASE_URL}/returnable-products-list`;
+                    const response = await axios.get(route);
+                    this.transactionProducts = response.data.map(p => ({
+                        ...p,
+                        quantity_returned: 0
+                    }));
                 } catch (error) {
-                    console.error(
-                        '[v0] Error fetching transaction products:',
-                        error
-                    );
+                    console.error('ERROR fetching transaction products:', {
+                        route: `${this.BASE_URL}/returnable-products-list`,
+                        error: error.message,
+                        response: error.response?.data,
+                    });
                 }
             },
 
             async fetchStockReturns() {
                 try {
-                    const response = await axios.get(
-                        `${this.BASE_URL}/returnable-products-returns`
-                    );
+                    const route = `${this.BASE_URL}/returnable-products-returns`;
+                    const response = await axios.get(route);
                     this.stockReturns = response.data;
                 } catch (error) {
-                    console.error('[v0] Error fetching stock returns:', error);
-                }
-            },
-
-            async fetchAllProducts() {
-                try {
-                    const response = await axios.get(
-                        `${this.BASE_URL}/products`
-                    );
-                    this.allProducts = response.data;
-                } catch (error) {
-                    console.error('[v0] Error fetching products:', error);
-                }
-            },
-
-            async fetchClients() {
-                try {
-                    const response = await axios.get(
-                        `${this.BASE_URL}/clients`
-                    );
-                    this.customers = response.data;
-                } catch (error) {
-                    console.error('[v0] Error fetching clients:', error);
+                    console.error('ERROR fetching stock returns:', {
+                        route: `${this.BASE_URL}/returnable-products-returns`,
+                        error: error.message,
+                        response: error.response?.data,
+                    });
                 }
             },
 
             calculateReturnedQuantities() {
-                // Pour chaque produit de transaction, calculer la quantité totale retournée
-                this.transactionProducts.forEach((product) => {
-                    // Trouver tous les retours pour ce produit spécifique (ligne dans returnable_products_list)
-                    const totalReturned = this.stockReturns
-                        .filter((r) => r.returnable_product_id === product.id)
-                        .reduce(
-                            (sum, r) =>
-                                sum + (parseFloat(r.quantity_returned) || 0),
-                            0
-                        );
-
-                    // Mettre à jour la quantité retournée dans l'objet product
-                    product.quantity_returned = totalReturned;
+                // Pour chaque ligne de produit, calculer la quantité retournée totale
+                this.transactionProducts.forEach(line => {
+                    const returns = this.stockReturns.filter(
+                        r => r.returnable_product_id === line.id
+                    );
+                    const totalReturned = returns.reduce(
+                        (sum, r) => sum + (parseFloat(r.quantity_returned) || 0),
+                        0
+                    );
+                    line.quantity_returned = totalReturned;
                 });
             },
 
@@ -1314,8 +1374,7 @@
 
                 if (this.filterStatus) {
                     filtered = filtered.filter(
-                        (t) =>
-                            this.getTransactionStatus(t) === this.filterStatus
+                        (t) => this.getTransactionStatus(t) === this.filterStatus
                     );
                 }
 
@@ -1345,7 +1404,7 @@
                                 parseFloat(this.getTotalQuantityPending(b.id)) -
                                 parseFloat(this.getTotalQuantityPending(a.id))
                         );
-                    default:
+                    default: // Date (récent)
                         return sorted.sort(
                             (a, b) => new Date(b.date) - new Date(a.date)
                         );
@@ -1361,24 +1420,24 @@
 
             getProductsForReturn(transactionId) {
                 return this.getProductsForTransaction(transactionId).filter(
-                    (p) => p.quantity_given > (p.quantity_returned || 0)
+                    (p) => {
+                        const remaining = parseFloat(p.quantity_given) - parseFloat(p.quantity_returned || 0);
+                        return remaining > 0;
+                    }
                 );
             },
 
             getReturnsForTransaction(transactionId) {
-                const productIds = this.getProductsForTransaction(
-                    transactionId
-                ).map((p) => p.id);
-                return this.stockReturns.filter((r) =>
-                    productIds.includes(r.returnable_product_id)
+                const productLines = this.getProductsForTransaction(transactionId);
+                const productLineIds = productLines.map(p => p.id);
+                return this.stockReturns.filter(
+                    (r) => productLineIds.includes(r.returnable_product_id)
                 );
             },
 
             getProductCountForTransaction(transactionId) {
                 return this.getProductsForTransaction(transactionId).length;
             },
-
-            // getReturnedQuantityForLineItem(lineItemId) a été supprimée
 
             getTotalQuantityGiven(transactionId) {
                 return this.getProductsForTransaction(transactionId)
@@ -1481,17 +1540,18 @@
             },
 
             getProductStatusText(product) {
-                const quantityReturned =
-                    parseFloat(product.quantity_returned) || 0;
-                if (parseFloat(product.quantity_given) === quantityReturned)
+                const quantityReturned = parseFloat(product.quantity_returned) || 0;
+                if (
+                    parseFloat(product.quantity_given) === quantityReturned
+                )
                     return 'Complètement retourné';
-                if (quantityReturned > 0) return 'Partiellement retourné';
+                if (quantityReturned > 0)
+                    return 'Partiellement retourné';
                 return 'Non retourné';
             },
 
             getProductStatusBadgeStyle(product) {
-                const quantityReturned =
-                    parseFloat(product.quantity_returned) || 0;
+                const quantityReturned = parseFloat(product.quantity_returned) || 0;
                 const pending =
                     parseFloat(product.quantity_given) - quantityReturned;
                 const styles = {
@@ -1514,7 +1574,8 @@
 
                 let status = 'pending';
                 if (pending === 0) status = 'complete';
-                else if (quantityReturned > 0) status = 'partial';
+                else if (quantityReturned > 0)
+                    status = 'partial';
 
                 const style = styles[status];
                 return {
@@ -1538,7 +1599,7 @@
                             selectedProduct: null,
                             searchQuery: '',
                             showDropdown: false,
-                            quantity: '',
+                            quantity: 0,
                         },
                     ],
                     comment: '',
@@ -1563,30 +1624,19 @@
                 this.selectedTransaction = null;
             },
 
-            // Méthode mise à jour pour utiliser la logique calculée
-            getTotalQuantityReturned(transactionId) {
-                return this.getProductsForTransaction(transactionId)
-                    .reduce(
-                        (sum, p) =>
-                            sum + (parseFloat(p.quantity_returned) || 0),
-                        0
-                    )
-                    .toFixed(2);
-            },
-
             openRecordReturnModal(transaction) {
                 this.selectedTransaction = transaction;
                 this.returnDate = new Date().toISOString().split('T')[0];
                 this.returnComment = '';
                 this.returnData = {};
-
+                
                 this.getProductsForReturn(transaction.id).forEach((product) => {
                     if (product && product.id !== undefined) {
-                        this.$set(this.returnData, product.id, {
+                        this.returnData[product.id] = {
                             selected: false,
                             quantity: 0,
                             product_id: product.product_id,
-                        });
+                        };
                     }
                 });
 
@@ -1674,15 +1724,13 @@
                     return;
                 }
 
+                const route = `${this.BASE_URL}/clients`;
                 try {
-                    const response = await axios.post(
-                        `${this.BASE_URL}/clients`,
-                        {
-                            name: this.newCustomer.name,
-                            phone: this.newCustomer.phone,
-                            address: this.newCustomer.address,
-                        }
-                    );
+                    const response = await axios.post(route, {
+                        name: this.newCustomer.name,
+                        phone: this.newCustomer.phone,
+                        address: this.newCustomer.address,
+                    });
 
                     if (response.data.success) {
                         alert('Client créé avec succès');
@@ -1841,38 +1889,29 @@
                         quantity_returned: data.quantity,
                         date: this.returnDate,
                         comment: this.returnComment,
+                        product_id: data.product_id,
                     }));
 
-                if (returnsData.length === 0) {
-                    alert('Aucune quantité à retourner sélectionnée.');
-                    return;
-                }
-
                 try {
-                    for (const returnItem of returnsData) {
-                        const route = `${this.BASE_URL}/returnable-products-returns`;
-                        console.log('[v0] REQUEST: POST - Route:', route);
-                        console.log('[v0] PAYLOAD:', returnItem);
+                    const response = await axios.post(
+                        `${this.BASE_URL}/returnable-products-returns/bulk`,
+                        { returns: returnsData }
+                    );
 
-                        const response = await axios.post(route, returnItem);
-                        console.log('[v0] RESPONSE: Return recorded', {
-                            status: response.status,
-                            data: response.data,
-                        });
+                    if (response.data.success) {
+                        alert('Retour enregistré avec succès');
+                        this.closeReturnModal();
+                        await this.fetchAllData();
+                    } else {
+                        alert(
+                            response.data.message ||
+                                "Erreur lors de l'enregistrement du retour"
+                        );
                     }
-
-                    alert('Retours enregistrés avec succès');
-                    this.closeReturnModal();
-                    await this.fetchAllData();
                 } catch (error) {
-                    console.error('[v0] ERROR submitting returns:', {
-                        route: `${this.BASE_URL}/returnable-products-returns`,
-                        payload: returnsData,
-                        error: error.message,
-                        response: error.response?.data,
-                    });
+                    console.error('Error submitting return:', error);
                     alert(
-                        "Erreur lors de l'enregistrement des retours: " +
+                        "Erreur lors de l'enregistrement du retour: " +
                             (error.response?.data?.message || error.message)
                     );
                 }
@@ -1881,15 +1920,18 @@
             async deleteReturn() {
                 if (!this.returnToDelete) return;
 
+                const route = `${this.BASE_URL}/returnable-products-returns/${this.returnToDelete.id}`;
                 try {
-                    await axios.delete(
-                        `${this.BASE_URL}/returnable-products-returns/${this.returnToDelete.id}`
-                    );
+                    await axios.delete(route);
                     alert('Retour supprimé avec succès');
                     this.closeDeleteReturnModal();
                     await this.fetchAllData();
                 } catch (error) {
-                    console.error('[v0] Error deleting return:', error);
+                    console.error('Error deleting return:', {
+                        route: route,
+                        error: error.message,
+                        response: error.response?.data,
+                    });
                     alert(
                         'Erreur lors de la suppression: ' +
                             (error.response?.data?.message || error.message)
@@ -1900,15 +1942,18 @@
             async deleteTransaction() {
                 if (!this.transactionToDelete) return;
 
+                const route = `${this.BASE_URL}/returnable-products-transactions/${this.transactionToDelete.id}`;
                 try {
-                    await axios.delete(
-                        `${this.BASE_URL}/returnable-products-transactions/${this.transactionToDelete.id}`
-                    );
+                    await axios.delete(route);
                     alert('Opération supprimée avec succès');
                     this.closeDeleteModal();
                     await this.fetchAllData();
                 } catch (error) {
-                    console.error('[v0] Error deleting transaction:', error);
+                    console.error('Error deleting transaction:', {
+                        route: route,
+                        error: error.message,
+                        response: error.response?.data,
+                    });
                     alert(
                         'Erreur lors de la suppression: ' +
                             (error.response?.data?.message || error.message)
@@ -2174,7 +2219,7 @@
 
                         <div class="footer">
                             <p>Merci de votre confiance</p>
-                            <p>Rapport généré avec l'application SagerMarket</p>
+                            <p>Rapport généré avec l\'application SagerMarket</p>
                         </div>
                     </body>
                     </html>
@@ -2205,166 +2250,106 @@
 </script>
 
 <style scoped>
-    /* Reset global pour éliminer le défilement horizontal */
+    /* Base Styles */
     * {
         box-sizing: border-box;
     }
 
-    /* Button Styles */
-    .btn-eye {
-        background: #17a2b8;
-        color: white;
-    }
-
-    .btn-eye:hover {
-        background: #138496;
-    }
-
-    .btn-reply {
-        background: #28a745;
-        color: white;
-    }
-
-    .btn-reply:hover {
-        background: #218838;
-    }
-
-    .btn-print {
-        background: #6c757d;
-        color: white;
-    }
-
-    .btn-print:hover {
-        background: #5a6268;
-    }
-
-    .btn-delete {
-        background: #dc3545;
-        color: white;
-    }
-
-    .btn-delete:hover {
-        background: #c82333;
-    }
-
-    .btn-danger {
-        background: #dc3545;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-    }
-
-    .btn-danger:hover {
-        background: #c82333;
-    }
-
-    .btn-action {
-        background: #ffc107;
-        color: #333;
-    }
-
-    .btn-action:hover {
-        background: #e0a800;
-    }
-
-    /* Correction du layout principal - suppression de l'espace à gauche */
     .main-content {
-        width: 100%;
-        max-width: 100%;
-        background: #f5f5f5;
-        min-height: 100vh;
         padding: 20px;
-        margin: 0;
-        overflow-x: hidden;
+        background: #f5f7fa;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+            'Helvetica Neue', Arial, sans-serif;
     }
 
-    /* Centrage correct du contenu sans espace à gauche */
     .returnables-content {
-        width: 100%;
         max-width: 1400px;
         margin: 0 auto;
-        padding: 0;
     }
 
     /* Header Section */
     .header-section {
         background: white;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
+        padding: 25px;
+        border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
-    .section-header {
-        margin-bottom: 0;
+        margin-bottom: 20px;
     }
 
     .section-header h2 {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         font-size: 24px;
-        flex-wrap: wrap;
     }
 
     /* Controls Section */
     .controls-section {
         background: white;
-        border-radius: 8px;
         padding: 20px;
-        margin-bottom: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
+        border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
     }
 
     .search-filters {
         display: flex;
-        flex-direction: column;
         gap: 15px;
-        width: 100%;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
     }
 
     .search-box {
         position: relative;
-        display: flex;
-        align-items: center;
-        width: 100%;
+        flex: 1;
+        min-width: 250px;
     }
 
     .search-input {
         width: 100%;
         padding: 10px 40px 10px 15px;
         border: 1px solid #ddd;
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
     .search-box i {
         position: absolute;
         right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
         color: #999;
-        pointer-events: none;
     }
 
     .filters-group {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 10px;
-        width: 100%;
+        flex: 2;
     }
 
     .select-filter {
-        padding: 10px 12px;
+        padding: 10px 15px;
         border: 1px solid #ddd;
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 14px;
         background: white;
         cursor: pointer;
-        width: 100%;
+        transition: all 0.2s;
+    }
+
+    .select-filter:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
     .action-buttons {
@@ -2377,9 +2362,9 @@
     .btn-secondary {
         padding: 10px 20px;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -2388,34 +2373,49 @@
     }
 
     .btn-primary {
-        background: #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
 
-    .btn-primary:hover:not(:disabled) {
-        background: #5568d3;
-    }
-
-    .btn-primary:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
     .btn-secondary {
-        background: #f0f0f0;
-        color: #333;
-        border: 1px solid #ddd;
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
     }
 
     .btn-secondary:hover {
-        background: #e8e8e8;
+        background: #f0f7ff;
     }
 
-    /* Table Section - correction du overflow */
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    /* Table Container */
     .table-container {
         background: white;
-        border-radius: 8px;
-        padding: 15px;
+        padding: 20px;
+        border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         overflow: hidden;
         width: 100%;
@@ -2431,6 +2431,7 @@
         width: 100%;
         border-collapse: collapse;
         table-layout: auto;
+        min-width: 900px;
     }
 
     .products-table thead {
@@ -2439,7 +2440,7 @@
     }
 
     .products-table th {
-        padding: 12px 8px;
+        padding: 14px 12px;
         text-align: left;
         font-weight: 600;
         font-size: 13px;
@@ -2447,7 +2448,7 @@
     }
 
     .products-table td {
-        padding: 12px 8px;
+        padding: 14px 12px;
         border-bottom: 1px solid #f0f0f0;
         font-size: 13px;
     }
@@ -2474,6 +2475,7 @@
 
     .qty-center {
         text-align: center !important;
+        font-weight: 600;
     }
 
     .pending-qty {
@@ -2482,7 +2484,7 @@
     }
 
     .reference {
-        font-family: monospace;
+        font-family: 'Courier New', monospace;
         font-size: 12px;
         color: #666;
     }
@@ -2490,28 +2492,70 @@
     .product-count-badge {
         background: #e7f3ff;
         color: #0066cc;
-        padding: 4px 8px;
+        padding: 5px 10px;
         border-radius: 12px;
         font-size: 12px;
         font-weight: 600;
         white-space: nowrap;
+        display: inline-block;
     }
 
     .actions-cell {
         display: flex;
-        gap: 5px;
+        gap: 6px;
         flex-wrap: wrap;
         justify-content: center;
+        align-items: center;
     }
 
     .btn-small {
-        padding: 6px 10px;
+        padding: 7px 11px;
         border: none;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
-        font-size: 12px;
+        font-size: 13px;
         transition: all 0.2s;
         white-space: nowrap;
+    }
+
+    .btn-eye {
+        background: #e7f3ff;
+        color: #0066cc;
+    }
+
+    .btn-eye:hover {
+        background: #0066cc;
+        color: white;
+    }
+
+    .btn-reply {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+
+    .btn-reply:hover {
+        background: #f57c00;
+        color: white;
+    }
+
+    .btn-print {
+        background: #e8f5e9;
+        color: #388e3c;
+    }
+
+    .btn-print:hover {
+        background: #388e3c;
+        color: white;
+    }
+
+    .btn-delete {
+        background: #ffebee;
+        color: #c62828;
+    }
+
+    .btn-delete:hover {
+        background: #c62828;
+        color: white;
     }
 
     .empty-row {
@@ -2531,57 +2575,35 @@
     }
 
     .btn-pagination {
-        padding: 8px 16px;
-        border: 1px solid #667eea;
+        padding: 10px 18px;
+        border: 2px solid #667eea;
         background: white;
         color: #667eea;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.2s;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
     }
 
     .btn-pagination:hover:not(:disabled) {
         background: #667eea;
         color: white;
+        transform: translateY(-1px);
     }
 
     .btn-pagination:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
     }
 
     .pagination-info {
         color: #666;
         font-size: 14px;
-        font-weight: 500;
-    }
-
-    /* Button create customer */
-    .btn-create-customer {
-        margin-top: 10px;
-        padding: 10px 15px;
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.2s;
-        width: 100%;
-        justify-content: center;
-    }
-
-    .btn-create-customer:hover {
-        background: #5568d3;
+        font-weight: 600;
     }
 
     /* Modal Styles */
@@ -2591,7 +2613,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.6);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2601,24 +2623,28 @@
 
     .modal-container {
         background: white;
-        border-radius: 8px;
+        border-radius: 12px;
         width: 100%;
         max-width: 600px;
         max-height: 90vh;
         overflow-y: auto;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
 
     .modal-large {
         max-width: 900px;
     }
 
+    .modal-confirm {
+        max-width: 450px;
+    }
+
     .modal-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 20px;
-        border-bottom: 1px solid #ddd;
+        padding: 24px;
+        border-bottom: 2px solid #f0f0f0;
         position: sticky;
         top: 0;
         background: white;
@@ -2628,37 +2654,44 @@
     .modal-header h5 {
         margin: 0;
         color: #333;
-        font-size: 18px;
+        font-size: 20px;
+        font-weight: 700;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
     }
 
     .modal-close {
         background: none;
         border: none;
-        font-size: 24px;
+        font-size: 26px;
         cursor: pointer;
         color: #999;
         padding: 0;
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s;
     }
 
     .modal-close:hover {
         color: #333;
+        background: #f5f5f5;
     }
 
     .modal-body {
-        padding: 20px;
+        padding: 24px;
     }
 
     .modal-footer {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         justify-content: flex-end;
-        padding: 20px;
-        border-top: 1px solid #ddd;
+        padding: 20px 24px;
+        border-top: 2px solid #f0f0f0;
         position: sticky;
         bottom: 0;
         background: white;
@@ -2667,8 +2700,8 @@
     /* Form Styles */
     .form-section {
         margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 24px;
+        border-bottom: 2px solid #f0f0f0;
     }
 
     .form-section:last-child {
@@ -2678,25 +2711,26 @@
     }
 
     .form-group {
-        margin-bottom: 15px;
+        margin-bottom: 18px;
     }
 
     .form-group label {
         display: block;
-        margin-bottom: 6px;
-        font-weight: 500;
+        margin-bottom: 8px;
+        font-weight: 600;
         color: #333;
         font-size: 14px;
     }
 
     .form-control {
         width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
+        padding: 11px 14px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
         font-size: 14px;
         font-family: inherit;
         box-sizing: border-box;
+        transition: all 0.2s;
     }
 
     .form-control:focus {
@@ -2707,64 +2741,72 @@
 
     textarea.form-control {
         resize: vertical;
-        min-height: 80px;
+        min-height: 90px;
     }
 
-    .customer-search-container {
+    /* Customer & Product Search */
+    .customer-search-container,
+    .product-search-container {
         position: relative;
     }
 
-    .customer-dropdown {
+    .customer-dropdown,
+    .product-dropdown {
         position: absolute;
         top: 100%;
         left: 0;
         right: 0;
         background: white;
-        border: 1px solid #ddd;
+        border: 2px solid #ddd;
         border-top: none;
-        border-radius: 0 0 6px 6px;
-        max-height: 250px;
+        border-radius: 0 0 8px 8px;
+        max-height: 280px;
         overflow-y: auto;
         z-index: 100;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
-    .customer-dropdown-item {
-        padding: 12px;
+    .customer-dropdown-item,
+    .product-dropdown-item {
+        padding: 14px;
         cursor: pointer;
         border-bottom: 1px solid #f0f0f0;
         transition: background 0.2s;
     }
 
-    .customer-dropdown-item:hover {
+    .customer-dropdown-item:hover,
+    .product-dropdown-item:hover {
         background: #f9f9f9;
     }
 
-    .customer-item-name {
+    .customer-item-name,
+    .product-item-name {
         font-weight: 600;
         color: #333;
+        margin-bottom: 4px;
     }
 
-    .customer-item-phone {
+    .customer-item-phone,
+    .product-item-stock {
         font-size: 12px;
         color: #999;
-        margin-top: 2px;
     }
 
     .selected-client-info {
         background: #f0f7ff;
-        padding: 15px;
-        border-radius: 6px;
-        margin-top: 10px;
+        padding: 16px;
+        border-radius: 8px;
+        margin-top: 12px;
         border-left: 4px solid #667eea;
     }
 
     .info-item {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         font-size: 14px;
         flex-wrap: wrap;
-        gap: 5px;
+        gap: 8px;
     }
 
     .info-label {
@@ -2779,16 +2821,17 @@
     /* Product Lines */
     .products-list {
         background: #fafafa;
-        padding: 15px;
-        border-radius: 6px;
-        margin-bottom: 15px;
+        padding: 18px;
+        border-radius: 8px;
+        margin-bottom: 18px;
     }
 
     .product-line-form {
         background: white;
-        padding: 15px;
-        border-radius: 6px;
-        margin-bottom: 15px;
+        padding: 18px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        border: 2px solid #f0f0f0;
     }
 
     .product-line-form:last-child {
@@ -2799,207 +2842,112 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #f0f0f0;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f0f0f0;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 12px;
     }
 
     .line-number {
-        font-weight: 600;
+        font-weight: 700;
         color: #333;
+        font-size: 15px;
     }
 
     .btn-remove-line {
-        padding: 6px 12px;
+        padding: 7px 14px;
         background: #ffe7e7;
         color: #dc3545;
         border: none;
-        border-radius: 4px;
-        font-size: 12px;
-        cursor: pointer;
-    }
-
-    .btn-remove-line:hover {
-        background: #ffcccc;
-    }
-
-    .product-search-container {
-        position: relative;
-    }
-
-    .product-search-input {
-        width: 100%;
-    }
-
-    .product-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #ddd;
-        border-top: none;
-        border-radius: 0 0 6px 6px;
-        max-height: 250px;
-        overflow-y: auto;
-        z-index: 100;
-    }
-
-    .product-dropdown-item {
-        padding: 12px;
-        cursor: pointer;
-        border-bottom: 1px solid #f0f0f0;
-        transition: background 0.2s;
-    }
-
-    .product-dropdown-item:hover {
-        background: #f9f9f9;
-    }
-
-    .product-item-name {
-        font-weight: 600;
-        color: #333;
-    }
-
-    .product-item-stock {
-        font-size: 12px;
-        color: #0066cc;
-        margin-top: 2px;
-    }
-
-    .quantity-input-group {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .quantity-input {
-        flex: 1;
-        min-width: 100px;
-    }
-
-    .quantity-info {
-        font-size: 12px;
-        color: #999;
-        white-space: nowrap;
-    }
-
-    .btn-add-line {
-        padding: 10px 20px;
-        background: #e7f3ff;
-        color: #0066cc;
-        border: 1px solid #cce5ff;
         border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
         transition: all 0.2s;
     }
 
-    .btn-add-line:hover {
-        background: #cce5ff;
+    .btn-remove-line:hover {
+        background: #dc3545;
+        color: white;
     }
 
-    /* Details Modal */
-    .details-header {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        background: #f9f9f9;
-        padding: 15px;
-        border-radius: 6px;
-        margin-bottom: 20px;
-    }
-
-    .detail-group {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .detail-item {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-    }
-
-    .detail-label {
-        font-weight: 600;
-        color: #333;
-        font-size: 13px;
-    }
-
-    .detail-value {
-        color: #666;
+    .btn-add-line {
+        padding: 12px 24px;
+        background: #e7f3ff;
+        color: #0066cc;
+        border: 2px solid #cce5ff;
+        border-radius: 8px;
         font-size: 14px;
-    }
-
-    .details-table-section {
-        margin-bottom: 30px;
-        overflow-x: auto;
-    }
-
-    .details-table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 400px;
-    }
-
-    .details-table thead {
-        background: #f9f9f9;
-    }
-
-    .details-table th {
-        padding: 12px;
-        text-align: left;
         font-weight: 600;
-        border-bottom: 1px solid #ddd;
-        white-space: nowrap;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.2s;
+        width: 100%;
+        justify-content: center;
     }
 
-    .details-table td {
-        padding: 12px;
-        border-bottom: 1px solid #f0f0f0;
+    .btn-add-line:hover {
+        background: #0066cc;
+        color: white;
     }
 
-    /* Styles améliorés pour le modal de retour */
+    .btn-create-customer {
+        margin-top: 12px;
+        padding: 12px 18px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.2s;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-create-customer:hover {
+        background: #5568d3;
+    }
+
+    /* Return Modal Specific Styles */
     .return-info-section {
         background: #f0f7ff;
-        padding: 15px;
-        border-radius: 6px;
-        margin-bottom: 20px;
+        padding: 18px;
+        border-radius: 8px;
+        margin-bottom: 24px;
         border-left: 4px solid #667eea;
     }
 
     .products-for-return {
-        margin-bottom: 20px;
+        margin-bottom: 24px;
     }
 
     .no-products-message {
         text-align: center;
-        padding: 30px;
+        padding: 40px;
         color: #28a745;
         background: #e8f5e9;
-        border-radius: 6px;
+        border-radius: 8px;
     }
 
     .no-products-message i {
-        font-size: 2rem;
-        margin-bottom: 10px;
+        font-size: 3rem;
+        margin-bottom: 12px;
         display: block;
     }
 
     .return-product-item {
         background: #fafafa;
-        padding: 15px;
-        border-radius: 6px;
-        margin-bottom: 15px;
+        padding: 18px;
+        border-radius: 8px;
+        margin-bottom: 16px;
         border: 2px solid transparent;
         transition: all 0.2s;
     }
@@ -3012,10 +2960,9 @@
     .product-selection-row {
         display: flex;
         align-items: flex-start;
-        gap: 15px;
+        gap: 16px;
     }
 
-    /* Checkbox custom styles */
     .checkbox-container {
         display: flex;
         align-items: center;
@@ -3034,11 +2981,11 @@
     }
 
     .checkmark {
-        height: 22px;
-        width: 22px;
+        height: 24px;
+        width: 24px;
         background-color: #fff;
         border: 2px solid #ddd;
-        border-radius: 4px;
+        border-radius: 6px;
         transition: all 0.2s;
     }
 
@@ -3064,10 +3011,10 @@
     .checkbox-container .checkmark:after {
         left: 8px;
         top: 4px;
-        width: 5px;
-        height: 10px;
+        width: 6px;
+        height: 11px;
         border: solid white;
-        border-width: 0 2px 2px 0;
+        border-width: 0 3px 3px 0;
         transform: rotate(45deg);
     }
 
@@ -3076,24 +3023,25 @@
     }
 
     .product-name {
-        font-weight: 600;
+        font-weight: 700;
         color: #333;
-        font-size: 15px;
+        font-size: 16px;
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
 
     .product-quantities {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         flex-wrap: wrap;
+        margin-bottom: 4px;
     }
 
     .qty-badge {
-        padding: 4px 10px;
+        padding: 5px 12px;
         border-radius: 12px;
         font-size: 12px;
-        font-weight: 500;
+        font-weight: 600;
     }
 
     .qty-given {
@@ -3112,17 +3060,17 @@
     }
 
     .quantity-input-section {
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px dashed #ddd;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 2px dashed #ddd;
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 16px;
         flex-wrap: wrap;
     }
 
     .quantity-label {
-        font-weight: 500;
+        font-weight: 600;
         color: #333;
         font-size: 14px;
         white-space: nowrap;
@@ -3131,14 +3079,14 @@
     .quantity-input-wrapper {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         flex: 1;
-        min-width: 200px;
+        min-width: 220px;
     }
 
     .quantity-field {
-        width: 120px;
-        padding: 8px 12px;
+        width: 130px;
+        padding: 10px 14px;
     }
 
     .max-quantity-hint {
@@ -3147,53 +3095,93 @@
         white-space: nowrap;
     }
 
-    /* Confirmation Modal */
-    .modal-confirm {
-        max-width: 400px;
+    /* Details Modal */
+    .details-header {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 24px;
+        background: #f9f9f9;
+        padding: 18px;
+        border-radius: 8px;
+        margin-bottom: 24px;
     }
 
-    .modal-confirm .modal-body {
-        padding: 30px;
-        text-align: center;
+    .detail-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
-    .modal-confirm p {
-        margin-bottom: 10px;
-        color: #666;
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
     }
 
-    .modal-confirm strong {
+    .detail-label {
+        font-weight: 600;
         color: #333;
+        font-size: 13px;
     }
 
-    /* Responsive amélioré */
+    .detail-value {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .details-table-section {
+        margin-bottom: 30px;
+        overflow-x: auto;
+    }
+
+    .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 500px;
+    }
+
+    .details-table thead {
+        background: #f9f9f9;
+    }
+
+    .details-table th {
+        padding: 14px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #ddd;
+        white-space: nowrap;
+    }
+
+    .details-table td {
+        padding: 14px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* Responsive Design */
     @media (max-width: 1024px) {
         .products-table th,
         .products-table td {
-            padding: 10px 6px;
+            padding: 12px 8px;
             font-size: 12px;
         }
 
         .filters-group {
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
         }
     }
 
     @media (max-width: 768px) {
         .main-content {
-            padding: 10px;
+            padding: 12px;
         }
 
-        .header-section {
-            padding: 15px;
+        .header-section,
+        .controls-section {
+            padding: 16px;
         }
 
         .section-header h2 {
-            font-size: 18px;
-        }
-
-        .controls-section {
-            padding: 15px;
+            font-size: 20px;
         }
 
         .filters-group {
@@ -3211,22 +3199,21 @@
         }
 
         .table-container {
-            padding: 10px;
+            padding: 12px;
         }
 
         .products-table th,
         .products-table td {
-            padding: 8px 4px;
+            padding: 10px 6px;
             font-size: 11px;
         }
 
         .actions-cell {
-            flex-direction: row;
-            gap: 3px;
+            gap: 4px;
         }
 
         .btn-small {
-            padding: 5px 8px;
+            padding: 6px 9px;
             font-size: 11px;
         }
 
@@ -3244,7 +3231,7 @@
 
         .pagination {
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
         }
 
         .pagination-info {
@@ -3259,11 +3246,7 @@
 
         .product-selection-row {
             flex-direction: column;
-            gap: 10px;
-        }
-
-        .checkbox-container {
-            order: -1;
+            gap: 12px;
         }
 
         .quantity-input-section {
@@ -3278,11 +3261,6 @@
         .quantity-field {
             flex: 1;
             width: 100%;
-        }
-
-        .product-quantities {
-            flex-direction: column;
-            gap: 5px;
         }
     }
 </style>
