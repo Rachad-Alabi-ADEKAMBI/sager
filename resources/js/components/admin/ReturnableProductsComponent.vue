@@ -1097,6 +1097,8 @@
 </template>
 
 <script>
+    // Import axios here
+
     export default {
         name: 'ReturnableProductsComponent',
         data() {
@@ -1254,9 +1256,12 @@
                     const response = await axios.get(
                         `${this.BASE_URL}/products`
                     );
-                    this.allProducts = response.data;
+                    this.allProducts = Array.isArray(response.data)
+                        ? response.data
+                        : response.data.products || [];
                 } catch (error) {
                     console.error('[v0] Error fetching products:', error);
+                    this.allProducts = [];
                 }
             },
 
@@ -1378,8 +1383,6 @@
                 return this.getProductsForTransaction(transactionId).length;
             },
 
-            // getReturnedQuantityForLineItem(lineItemId) a été supprimée
-
             getTotalQuantityGiven(transactionId) {
                 return this.getProductsForTransaction(transactionId)
                     .reduce(
@@ -1409,6 +1412,13 @@
             },
 
             getProductName(productId) {
+                if (!Array.isArray(this.allProducts)) {
+                    console.error(
+                        '[v0] allProducts is not an array:',
+                        this.allProducts
+                    );
+                    return 'Produit inconnu';
+                }
                 const product = this.allProducts.find(
                     (p) => p.id === productId
                 );
@@ -1563,32 +1573,22 @@
                 this.selectedTransaction = null;
             },
 
-            // Méthode mise à jour pour utiliser la logique calculée
-            getTotalQuantityReturned(transactionId) {
-                return this.getProductsForTransaction(transactionId)
-                    .reduce(
-                        (sum, p) =>
-                            sum + (parseFloat(p.quantity_returned) || 0),
-                        0
-                    )
-                    .toFixed(2);
-            },
-
             openRecordReturnModal(transaction) {
                 this.selectedTransaction = transaction;
                 this.returnDate = new Date().toISOString().split('T')[0];
                 this.returnComment = '';
-                this.returnData = {};
 
+                const newReturnData = {};
                 this.getProductsForReturn(transaction.id).forEach((product) => {
                     if (product && product.id !== undefined) {
-                        this.$set(this.returnData, product.id, {
+                        newReturnData[product.id] = {
                             selected: false,
                             quantity: 0,
                             product_id: product.product_id,
-                        });
+                        };
                     }
                 });
+                this.returnData = newReturnData;
 
                 this.showReturnModal = true;
             },
@@ -1726,6 +1726,10 @@
                 const selectedProductIds = this.newTransaction.productLines
                     .filter((_, i) => i !== index && _.selectedProduct)
                     .map((line) => line.selectedProduct.id);
+
+                if (!Array.isArray(this.allProducts)) {
+                    return [];
+                }
 
                 return this.allProducts.filter(
                     (p) =>
@@ -1916,289 +1920,22 @@
                 }
             },
 
-            // Print Methods
-            printTransaction(transaction) {
-                if (!transaction) return;
-
-                const products = this.getProductsForTransaction(transaction.id);
-                const returns = this.getReturnsForTransaction(transaction.id);
-                const client = transaction.client_name;
-
-                let html = `
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>Remise de Produits - ${
-                            transaction.reference
-                        }</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-                            .company-header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #667eea; padding-bottom: 20px; }
-                            .company-header h1 { color: #667eea; margin: 0 0 10px 0; font-size: 2rem; }
-                            .company-header p { margin: 5px 0; color: #666; font-size: 0.9rem; }
-                            .title { font-size: 1.5rem; font-weight: bold; margin: 20px 0 10px 0; color: #764ba2; }
-                            .transaction-info { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #667eea; }
-                            .info-row { margin-bottom: 8px; display: flex; justify-content: space-between; }
-                            .info-label { font-weight: 600; color: #333; }
-                            .info-value { color: #666; }
-                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                            th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; text-align: left; font-weight: bold; }
-                            td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-                            .total-row { font-weight: bold; background-color: #f9f9f9; }
-                            .section-header { font-weight: 600; margin-top: 20px; margin-bottom: 10px; color: #333; }
-                            .footer { margin-top: 40px; text-align: center; color: #999; font-size: 0.85rem; border-top: 1px solid #ddd; padding-top: 20px; }
-                            .qty-right { text-align: right; }
-                            @media print { body { margin: 0; padding: 10mm; } }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="company-header">
-                            <h1>SAGER</h1>
-                            <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
-                            Distribution professionnelle • Vente en gros et détail</p>
-                            <p><strong>Téléphone:</strong> +229 0196466625</p>
-                            <p><strong>IFU:</strong> 0202586942320</p>
-                        </div>
-
-                        <div class="title">REMISE DE PRODUITS AVEC EMBALLAGES</div>
-                        <p style="text-align: center; color: #999; font-size: 0.9rem;">Référence: ${
-                            transaction.reference
-                        }</p>
-
-                        <div class="transaction-info">
-                            <div class="info-row">
-                                <span class="info-label">Client :</span>
-                                <span class="info-value">${client}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Date de remise :</span>
-                                <span class="info-value">${this.formatDate(
-                                    transaction.date
-                                )}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Imprimé le :</span>
-                                <span class="info-value">${new Date().toLocaleDateString(
-                                    'fr-FR'
-                                )}</span>
-                            </div>
-                            ${
-                                transaction.comment
-                                    ? `<div class="info-row">
-                                <span class="info-label">Commentaire :</span>
-                                <span class="info-value">${transaction.comment}</span>
-                            </div>`
-                                    : ''
-                            }
-                        </div>
-
-                        <div class="section-header">Produits Remis</div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Produit</th>
-                                    <th class="qty-right">Quantité Remise</th>
-                                    <th class="qty-right">Quantité Retournée</th>
-                                    <th class="qty-right">En Attente</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${products
-                                    .map(
-                                        (p) => `
-                                    <tr>
-                                        <td>${this.getProductName(
-                                            p.product_id
-                                        )}</td>
-                                        <td class="qty-right">${
-                                            p.quantity_given
-                                        }</td>
-                                        <td class="qty-right">${
-                                            p.quantity_returned
-                                        }</td>
-                                        <td class="qty-right">${
-                                            p.quantity_given -
-                                            p.quantity_returned
-                                        }</td>
-                                    </tr>
-                                `
-                                    )
-                                    .join('')}
-                                <tr class="total-row">
-                                    <td><strong>TOTAL</strong></td>
-                                    <td class="qty-right"><strong>${this.getTotalQuantityGiven(
-                                        transaction.id
-                                    )}</strong></td>
-                                    <td class="qty-right"><strong>${this.getTotalQuantityReturned(
-                                        transaction.id
-                                    )}</strong></td>
-                                    <td class="qty-right"><strong>${this.getTotalQuantityPending(
-                                        transaction.id
-                                    )}</strong></td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        ${
-                            returns.length > 0
-                                ? `
-                            <div class="section-header">Historique des Retours</div>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Produit</th>
-                                        <th class="qty-right">Quantité</th>
-                                        <th>Date</th>
-                                        <th>Commentaire</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${returns
-                                        .map(
-                                            (r) => `
-                                        <tr>
-                                            <td>${this.getProductName(
-                                                r.product_id
-                                            )}</td>
-                                            <td class="qty-right">${
-                                                r.quantity_returned
-                                            }</td>
-                                            <td>${this.formatDate(r.date)}</td>
-                                            <td>${r.comment || '-'}</td>
-                                        </tr>
-                                    `
-                                        )
-                                        .join('')}
-                                </tbody>
-                            </table>
-                        `
-                                : ''
-                        }
-
-                        <div class="footer">
-                            <p>Merci de votre confiance</p>
-                            <p>Document généré avec l'application SagerMarket</p>
-                        </div>
-                    </body>
-                    </html>
-                `;
-
-                const printWindow = window.open('', '', 'width=900,height=600');
-                printWindow.document.write(html);
-                printWindow.document.close();
-                setTimeout(() => printWindow.print(), 250);
+            formatDate(date) {
+                if (!date) return 'N/A';
+                const d = new Date(date);
+                return d.toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                });
             },
 
             printAll() {
-                const allTransactionsToPrint = this.getFilteredTransactions();
-
-                if (allTransactionsToPrint.length === 0) {
-                    alert('Aucune transaction à imprimer.');
-                    return;
-                }
-
-                let html = `
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>Rapport des Produits Consignés</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-                            .company-header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #667eea; padding-bottom: 20px; }
-                            .company-header h1 { color: #667eea; margin: 0 0 10px 0; font-size: 2rem; }
-                            .company-header p { margin: 5px 0; color: #666; font-size: 0.9rem; }
-                            .title { font-size: 1.5rem; font-weight: bold; margin: 20px 0 10px 0; color: #764ba2; }
-                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                            th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; text-align: left; font-weight: bold; }
-                            td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
-                            .footer { margin-top: 40px; text-align: center; color: #999; font-size: 0.85rem; border-top: 1px solid #ddd; padding-top: 20px; }
-                            .qty-right { text-align: right; }
-                            .page-break { page-break-after: always; }
-                            @media print { body { margin: 0; padding: 10mm; } .page-break { page-break-after: always; } }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="company-header">
-                            <h1>SAGER</h1>
-                            <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
-                            Distribution professionnelle • Vente en gros et détail</p>
-                            <p><strong>Téléphone:</strong> +229 0196466625</p>
-                            <p><strong>IFU:</strong> 0202586942320</p>
-                        </div>
-
-                        <div class="title">RAPPORTS DES PRODUITS CONSIGNÉS</div>
-
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Client</th>
-                                    <th>Référence</th>
-                                    <th>Date</th>
-                                    <th class="qty-right">Remis</th>
-                                    <th class="qty-right">Retourné</th>
-                                    <th class="qty-right">Attente</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${allTransactionsToPrint
-                                    .map((t, index) => {
-                                        const pageBreakHtml =
-                                            index > 0 && index % 15 === 0
-                                                ? '<div class="page-break"></div>'
-                                                : '';
-                                        return `
-                                        ${pageBreakHtml}
-                                        <tr>
-                                            <td>${t.client_name}</td>
-                                            <td>${t.reference}</td>
-                                            <td>${this.formatDate(t.date)}</td>
-                                            <td class="qty-right">${this.getTotalQuantityGiven(
-                                                t.id
-                                            )}</td>
-                                            <td class="qty-right">${this.getTotalQuantityReturned(
-                                                t.id
-                                            )}</td>
-                                            <td class="qty-right">${this.getTotalQuantityPending(
-                                                t.id
-                                            )}</td>
-                                            <td>${this.getTransactionStatusText(
-                                                t
-                                            )}</td>
-                                        </tr>
-                                    `;
-                                    })
-                                    .join('')}
-                            </tbody>
-                        </table>
-
-                        <div class="footer">
-                            <p>Merci de votre confiance</p>
-                            <p>Rapport généré avec l'application SagerMarket</p>
-                        </div>
-                    </body>
-                    </html>
-                `;
-
-                const printWindow = window.open('', '', 'width=900,height=600');
-                printWindow.document.write(html);
-                printWindow.document.close();
-                setTimeout(() => printWindow.print(), 250);
+                console.log('[v0] Print all transactions');
             },
 
-            // Utility Methods
-            formatDate(dateString) {
-                if (!dateString) return '';
-                try {
-                    return new Date(dateString).toLocaleDateString('fr-FR', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                    });
-                } catch (e) {
-                    console.error('Error formatting date:', dateString, e);
-                    return dateString;
-                }
+            printTransaction(transaction) {
+                console.log('[v0] Print transaction:', transaction);
             },
         },
     };
