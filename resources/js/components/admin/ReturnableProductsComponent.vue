@@ -119,7 +119,7 @@
                                     <span class="product-count-badge">
                                         {{
                                             getProductCountForTransaction(
-                                                transaction.id
+                                                transaction.id,
                                             )
                                         }}
                                         produit(s)
@@ -148,13 +148,13 @@
                                     <span
                                         :style="
                                             getTransactionStatusBadgeStyle(
-                                                transaction
+                                                transaction,
                                             )
                                         "
                                     >
                                         {{
                                             getTransactionStatusText(
-                                                transaction
+                                                transaction,
                                             )
                                         }}
                                     </span>
@@ -297,7 +297,7 @@
                                                 :key="client.id"
                                                 @click="
                                                     selectNewTransactionCustomer(
-                                                        client
+                                                        client,
                                                     )
                                                 "
                                                 class="customer-dropdown-item"
@@ -418,20 +418,20 @@
                                                     v-if="
                                                         line.showDropdown &&
                                                         getFilteredReturnableProducts(
-                                                            index
+                                                            index,
                                                         ).length > 0
                                                     "
                                                     class="product-dropdown"
                                                 >
                                                     <div
                                                         v-for="product in getFilteredReturnableProducts(
-                                                            index
+                                                            index,
                                                         )"
                                                         :key="product.id"
                                                         @click="
                                                             selectProductForLine(
                                                                 index,
-                                                                product
+                                                                product,
                                                             )
                                                         "
                                                         class="product-dropdown-item"
@@ -622,14 +622,14 @@
                                 <tbody>
                                     <tr
                                         v-for="product in getProductsForTransaction(
-                                            selectedTransaction.id
+                                            selectedTransaction.id,
                                         )"
                                         :key="product.id"
                                     >
                                         <td>
                                             {{
                                                 getProductName(
-                                                    product.product_id
+                                                    product.product_id,
                                                 )
                                             }}
                                         </td>
@@ -649,13 +649,13 @@
                                             <span
                                                 :style="
                                                     getProductStatusBadgeStyle(
-                                                        product
+                                                        product,
                                                     )
                                                 "
                                             >
                                                 {{
                                                     getProductStatusText(
-                                                        product
+                                                        product,
                                                     )
                                                 }}
                                             </span>
@@ -689,14 +689,14 @@
                                 <tbody>
                                     <tr
                                         v-for="returnItem in getReturnsForTransaction(
-                                            selectedTransaction.id
+                                            selectedTransaction.id,
                                         )"
                                         :key="returnItem.id"
                                     >
                                         <td>
                                             {{
                                                 getProductName(
-                                                    returnItem.product_id
+                                                    returnItem.product_id,
                                                 )
                                             }}
                                         </td>
@@ -711,7 +711,7 @@
                                             <button
                                                 @click="
                                                     openEditReturnModal(
-                                                        returnItem
+                                                        returnItem,
                                                     )
                                                 "
                                                 class="btn-small btn-action"
@@ -722,7 +722,7 @@
                                             <button
                                                 @click="
                                                     openDeleteReturnModal(
-                                                        returnItem
+                                                        returnItem,
                                                     )
                                                 "
                                                 class="btn-small btn-danger"
@@ -809,7 +809,7 @@
 
                             <div
                                 v-for="product in getProductsForReturn(
-                                    selectedTransaction.id
+                                    selectedTransaction.id,
                                 )"
                                 :key="product.id"
                                 class="return-product-item"
@@ -829,7 +829,7 @@
                                             "
                                             @change="
                                                 onProductSelectionChange(
-                                                    product.id
+                                                    product.id,
                                                 )
                                             "
                                         />
@@ -840,7 +840,7 @@
                                         <span class="product-name">
                                             {{
                                                 getProductName(
-                                                    product.product_id
+                                                    product.product_id,
                                                 )
                                             }}
                                         </span>
@@ -1097,8 +1097,6 @@
 </template>
 
 <script>
-    // Import axios here
-
     export default {
         name: 'ReturnableProductsComponent',
         data() {
@@ -1163,7 +1161,7 @@
 
             totalPages() {
                 return Math.ceil(
-                    this.filteredTransactions.length / this.itemsPerPage
+                    this.filteredTransactions.length / this.itemsPerPage,
                 );
             },
 
@@ -1183,14 +1181,14 @@
             canSubmitNewTransaction() {
                 if (!this.newTransaction.selectedClient) return false;
                 const hasValidLines = this.newTransaction.productLines.some(
-                    (line) => line.selectedProduct && line.quantity > 0
+                    (line) => line.selectedProduct && line.quantity > 0,
                 );
                 return hasValidLines;
             },
 
             canSubmitReturn() {
                 return Object.values(this.returnData).some(
-                    (data) => data.selected && data.quantity > 0
+                    (data) => data.selected && data.quantity > 0,
                 );
             },
         },
@@ -1218,9 +1216,13 @@
             async fetchTransactions() {
                 try {
                     const response = await axios.get(
-                        `${this.BASE_URL}/returnable-products-transactions`
+                        `${this.BASE_URL}/returnable-products-transactions`,
                     );
                     this.transactions = response.data;
+                    console.log(
+                        '[v0] Transactions fetched:',
+                        this.transactions,
+                    );
                 } catch (error) {
                     console.error('[v0] Error fetching transactions:', error);
                 }
@@ -1229,13 +1231,17 @@
             async fetchTransactionProducts() {
                 try {
                     const response = await axios.get(
-                        `${this.BASE_URL}/returnable-products-list`
+                        `${this.BASE_URL}/returnable-products-list`,
                     );
                     this.transactionProducts = response.data;
+                    console.log(
+                        '[v0] Transaction products fetched:',
+                        this.transactionProducts,
+                    );
                 } catch (error) {
                     console.error(
                         '[v0] Error fetching transaction products:',
-                        error
+                        error,
                     );
                 }
             },
@@ -1243,7 +1249,7 @@
             async fetchStockReturns() {
                 try {
                     const response = await axios.get(
-                        `${this.BASE_URL}/returnable-products-returns`
+                        `${this.BASE_URL}/returnable-products-returns`,
                     );
                     this.stockReturns = response.data;
                 } catch (error) {
@@ -1254,11 +1260,12 @@
             async fetchAllProducts() {
                 try {
                     const response = await axios.get(
-                        `${this.BASE_URL}/products`
+                        `${this.BASE_URL}/productsList`,
                     );
+                    console.log('[v0] Products fetched:', response.data);
                     this.allProducts = Array.isArray(response.data)
                         ? response.data
-                        : response.data.products || [];
+                        : [];
                 } catch (error) {
                     console.error('[v0] Error fetching products:', error);
                     this.allProducts = [];
@@ -1268,7 +1275,7 @@
             async fetchClients() {
                 try {
                     const response = await axios.get(
-                        `${this.BASE_URL}/clients`
+                        `${this.BASE_URL}/clientslist`,
                     );
                     this.customers = response.data;
                 } catch (error) {
@@ -1277,19 +1284,37 @@
             },
 
             calculateReturnedQuantities() {
+                console.log('[v0] Calculating returned quantities...');
+                console.log(
+                    '[v0] Transaction products:',
+                    this.transactionProducts,
+                );
+                console.log('[v0] Stock returns:', this.stockReturns);
+
                 // Pour chaque produit de transaction, calculer la quantité totale retournée
                 this.transactionProducts.forEach((product) => {
                     // Trouver tous les retours pour ce produit spécifique (ligne dans returnable_products_list)
-                    const totalReturned = this.stockReturns
-                        .filter((r) => r.returnable_product_id === product.id)
-                        .reduce(
-                            (sum, r) =>
-                                sum + (parseFloat(r.quantity_returned) || 0),
-                            0
-                        );
+                    // IMPORTANT: filtrer par product.id (qui est l'id dans returnable_products_list)
+                    const returnsForThisProduct = this.stockReturns.filter(
+                        (r) => r.returnable_product_id === product.id,
+                    );
+
+                    const totalReturned = returnsForThisProduct.reduce(
+                        (sum, r) =>
+                            sum + (parseFloat(r.quantity_returned) || 0),
+                        0,
+                    );
 
                     // Mettre à jour la quantité retournée dans l'objet product
                     product.quantity_returned = totalReturned;
+
+                    console.log(
+                        `[v0] Product ID ${product.id} (${this.getProductName(product.product_id)}): Given=${product.quantity_given}, Returned=${totalReturned}, Pending=${product.quantity_given - totalReturned}`,
+                    );
+                    console.log(
+                        `[v0]   - Returns found for this product:`,
+                        returnsForThisProduct,
+                    );
                 });
             },
 
@@ -1306,21 +1331,21 @@
                             this.getProductsForTransaction(t.id).some((p) =>
                                 this.getProductName(p.product_id)
                                     .toLowerCase()
-                                    .includes(query)
-                            )
+                                    .includes(query),
+                            ),
                     );
                 }
 
                 if (this.filterClient) {
                     filtered = filtered.filter(
-                        (t) => t.client_id === parseInt(this.filterClient)
+                        (t) => t.client_id === parseInt(this.filterClient),
                     );
                 }
 
                 if (this.filterStatus) {
                     filtered = filtered.filter(
                         (t) =>
-                            this.getTransactionStatus(t) === this.filterStatus
+                            this.getTransactionStatus(t) === this.filterStatus,
                     );
                 }
 
@@ -1332,27 +1357,27 @@
                 switch (this.sortOption) {
                     case 'Date (ancien)':
                         return sorted.sort(
-                            (a, b) => new Date(a.date) - new Date(b.date)
+                            (a, b) => new Date(a.date) - new Date(b.date),
                         );
                     case 'Client (A-Z)':
                         return sorted.sort((a, b) =>
-                            a.client_name.localeCompare(b.client_name)
+                            a.client_name.localeCompare(b.client_name),
                         );
                     case 'Quantité restante (croissant)':
                         return sorted.sort(
                             (a, b) =>
                                 parseFloat(this.getTotalQuantityPending(a.id)) -
-                                parseFloat(this.getTotalQuantityPending(b.id))
+                                parseFloat(this.getTotalQuantityPending(b.id)),
                         );
                     case 'Quantité restante (décroissant)':
                         return sorted.sort(
                             (a, b) =>
                                 parseFloat(this.getTotalQuantityPending(b.id)) -
-                                parseFloat(this.getTotalQuantityPending(a.id))
+                                parseFloat(this.getTotalQuantityPending(a.id)),
                         );
                     default:
                         return sorted.sort(
-                            (a, b) => new Date(b.date) - new Date(a.date)
+                            (a, b) => new Date(b.date) - new Date(a.date),
                         );
                 }
             },
@@ -1360,22 +1385,39 @@
             // Data Retrieval Methods
             getProductsForTransaction(transactionId) {
                 return this.transactionProducts.filter(
-                    (p) => p.returnable_product_id === transactionId
+                    (p) => p.returnable_product_id === transactionId,
                 );
             },
 
             getProductsForReturn(transactionId) {
-                return this.getProductsForTransaction(transactionId).filter(
-                    (p) => p.quantity_given > (p.quantity_returned || 0)
+                const allProducts =
+                    this.getProductsForTransaction(transactionId);
+                const productsWithPendingQuantity = allProducts.filter((p) => {
+                    const quantityGiven = parseFloat(p.quantity_given) || 0;
+                    const quantityReturned =
+                        parseFloat(p.quantity_returned) || 0;
+                    const hasPending = quantityGiven > quantityReturned;
+
+                    console.log(
+                        `[v0] getProductsForReturn - Product ${p.id} (${this.getProductName(p.product_id)}): Given=${quantityGiven}, Returned=${quantityReturned}, Has Pending=${hasPending}`,
+                    );
+
+                    return hasPending;
+                });
+
+                console.log(
+                    `[v0] getProductsForReturn - Transaction ${transactionId}: ${productsWithPendingQuantity.length} products with pending returns out of ${allProducts.length} total`,
                 );
+
+                return productsWithPendingQuantity;
             },
 
             getReturnsForTransaction(transactionId) {
                 const productIds = this.getProductsForTransaction(
-                    transactionId
+                    transactionId,
                 ).map((p) => p.id);
                 return this.stockReturns.filter((r) =>
-                    productIds.includes(r.returnable_product_id)
+                    productIds.includes(r.returnable_product_id),
                 );
             },
 
@@ -1387,7 +1429,7 @@
                 return this.getProductsForTransaction(transactionId)
                     .reduce(
                         (sum, p) => sum + (parseFloat(p.quantity_given) || 0),
-                        0
+                        0,
                     )
                     .toFixed(2);
             },
@@ -1397,7 +1439,7 @@
                     .reduce(
                         (sum, p) =>
                             sum + (parseFloat(p.quantity_returned) || 0),
-                        0
+                        0,
                     )
                     .toFixed(2);
             },
@@ -1415,14 +1457,21 @@
                 if (!Array.isArray(this.allProducts)) {
                     console.error(
                         '[v0] allProducts is not an array:',
-                        this.allProducts
+                        this.allProducts,
                     );
                     return 'Produit inconnu';
                 }
                 const product = this.allProducts.find(
-                    (p) => p.id === productId
+                    (p) => p.id === productId,
                 );
-                return product ? product.name : 'Produit inconnu';
+
+                if (!product) {
+                    console.warn(
+                        `[v0] Product with ID ${productId} not found in allProducts`,
+                    );
+                }
+
+                return product ? product.name : `Produit #${productId} inconnu`;
             },
 
             // Status Methods
@@ -1578,18 +1627,44 @@
                 this.returnDate = new Date().toISOString().split('T')[0];
                 this.returnComment = '';
 
+                // Initialiser returnData avec tous les produits disponibles pour le retour
+                const productsForReturn = this.getProductsForReturn(
+                    transaction.id,
+                );
+                console.log(
+                    `[v0] openRecordReturnModal - Products available for return:`,
+                    productsForReturn,
+                );
+
                 const newReturnData = {};
-                this.getProductsForReturn(transaction.id).forEach((product) => {
+                productsForReturn.forEach((product) => {
                     if (product && product.id !== undefined) {
+                        const quantityGiven =
+                            parseFloat(product.quantity_given) || 0;
+                        const quantityReturned =
+                            parseFloat(product.quantity_returned) || 0;
+                        const maxQuantity = quantityGiven - quantityReturned;
+
                         newReturnData[product.id] = {
                             selected: false,
                             quantity: 0,
                             product_id: product.product_id,
+                            product_name: this.getProductName(
+                                product.product_id,
+                            ),
+                            max_quantity: maxQuantity,
+                            quantity_given: quantityGiven,
+                            quantity_returned: quantityReturned,
                         };
+
+                        console.log(
+                            `[v0]   - Product ${product.id} (${this.getProductName(product.product_id)}): Max returnable = ${maxQuantity}`,
+                        );
                     }
                 });
                 this.returnData = newReturnData;
 
+                console.log('[v0] Return data initialized:', this.returnData);
                 this.showReturnModal = true;
             },
 
@@ -1639,7 +1714,7 @@
                     this.filteredNewCustomers = this.customers.filter(
                         (c) =>
                             c.name.toLowerCase().includes(query) ||
-                            c.phone.includes(query)
+                            c.phone.includes(query),
                     );
                 }
                 this.showNewCustomerDropdown = true;
@@ -1681,7 +1756,7 @@
                             name: this.newCustomer.name,
                             phone: this.newCustomer.phone,
                             address: this.newCustomer.address,
-                        }
+                        },
                     );
 
                     if (response.data.success) {
@@ -1691,7 +1766,7 @@
                         const newClient = this.customers.find(
                             (c) =>
                                 c.name === this.newCustomer.name &&
-                                c.phone === this.newCustomer.phone
+                                c.phone === this.newCustomer.phone,
                         );
                         if (newClient) {
                             this.selectNewTransactionCustomer(newClient);
@@ -1701,14 +1776,14 @@
                     } else {
                         alert(
                             response.data.message ||
-                                'Erreur lors de la création du client'
+                                'Erreur lors de la création du client',
                         );
                     }
                 } catch (error) {
                     console.error('Error creating customer:', error);
                     alert(
                         'Erreur lors de la création du client: ' +
-                            (error.response?.data?.message || error.message)
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },
@@ -1735,7 +1810,7 @@
                     (p) =>
                         p.name.toLowerCase().includes(query) &&
                         !selectedProductIds.includes(p.id) &&
-                        p.isReturnable === 1
+                        p.isReturnable === 1,
                 );
             },
 
@@ -1810,7 +1885,7 @@
                 try {
                     const response = await axios.post(
                         `${this.BASE_URL}/returnable-products`,
-                        payload
+                        payload,
                     );
 
                     console.group('[RESPONSE REMISE]');
@@ -1833,37 +1908,49 @@
             async submitReturn() {
                 if (!this.canSubmitReturn) {
                     alert(
-                        'Veuillez sélectionner au moins un produit et entrer une quantité à retourner'
+                        'Veuillez sélectionner au moins un produit et entrer une quantité à retourner',
                     );
                     return;
                 }
 
-                const returnsData = Object.entries(this.returnData)
+                const selectedItems = Object.entries(this.returnData)
                     .filter(([_, data]) => data.selected && data.quantity > 0)
-                    .map(([transactionProductId, data]) => ({
-                        returnable_product_id: parseInt(transactionProductId),
-                        quantity_returned: data.quantity,
-                        date: this.returnDate,
-                        comment: this.returnComment,
-                    }));
+                    .map(([transactionProductId, data]) => {
+                        const product = this.getProductsForReturn(
+                            this.selectedTransaction.id,
+                        ).find((p) => p.id === parseInt(transactionProductId));
 
-                if (returnsData.length === 0) {
+                        // Récupérer le returnable_product_id (id de la ligne dans returnable_products_list)
+                        return {
+                            returnable_product_id: product.id,
+                            product_id: product.product_id,
+                            quantity_returned: data.quantity,
+                        };
+                    });
+
+                if (selectedItems.length === 0) {
                     alert('Aucune quantité à retourner sélectionnée.');
                     return;
                 }
 
-                try {
-                    for (const returnItem of returnsData) {
-                        const route = `${this.BASE_URL}/returnable-products-returns`;
-                        console.log('[v0] REQUEST: POST - Route:', route);
-                        console.log('[v0] PAYLOAD:', returnItem);
+                const payload = {
+                    returnable_product_id: this.selectedTransaction.id,
+                    date: this.returnDate,
+                    comment: this.returnComment,
+                    items: selectedItems,
+                };
 
-                        const response = await axios.post(route, returnItem);
-                        console.log('[v0] RESPONSE: Return recorded', {
-                            status: response.status,
-                            data: response.data,
-                        });
-                    }
+                try {
+                    const route = `${this.BASE_URL}/returnable-products-returns`;
+                    console.log('[v0] REQUEST: POST - Route:', route);
+                    console.log('[v0] PAYLOAD:', payload);
+
+                    const response = await axios.post(route, payload);
+
+                    console.log('[v0] RESPONSE: Return recorded', {
+                        status: response.status,
+                        data: response.data,
+                    });
 
                     alert('Retours enregistrés avec succès');
                     this.closeReturnModal();
@@ -1871,23 +1958,23 @@
                 } catch (error) {
                     console.error('[v0] ERROR submitting returns:', {
                         route: `${this.BASE_URL}/returnable-products-returns`,
-                        payload: returnsData,
+                        payload,
                         error: error.message,
                         response: error.response?.data,
                     });
+
                     alert(
                         "Erreur lors de l'enregistrement des retours: " +
-                            (error.response?.data?.message || error.message)
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },
-
             async deleteReturn() {
                 if (!this.returnToDelete) return;
 
                 try {
                     await axios.delete(
-                        `${this.BASE_URL}/returnable-products-returns/${this.returnToDelete.id}`
+                        `${this.BASE_URL}/returnable-products-returns/${this.returnToDelete.id}`,
                     );
                     alert('Retour supprimé avec succès');
                     this.closeDeleteReturnModal();
@@ -1896,7 +1983,7 @@
                     console.error('[v0] Error deleting return:', error);
                     alert(
                         'Erreur lors de la suppression: ' +
-                            (error.response?.data?.message || error.message)
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },
@@ -1906,7 +1993,7 @@
 
                 try {
                     await axios.delete(
-                        `${this.BASE_URL}/returnable-products-transactions/${this.transactionToDelete.id}`
+                        `${this.BASE_URL}/returnable-products-transactions/${this.transactionToDelete.id}`,
                     );
                     alert('Opération supprimée avec succès');
                     this.closeDeleteModal();
@@ -1915,7 +2002,7 @@
                     console.error('[v0] Error deleting transaction:', error);
                     alert(
                         'Erreur lors de la suppression: ' +
-                            (error.response?.data?.message || error.message)
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },

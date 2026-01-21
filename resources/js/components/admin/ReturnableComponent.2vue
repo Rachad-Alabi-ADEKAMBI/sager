@@ -119,7 +119,7 @@
                                     <span class="product-count-badge">
                                         {{
                                             getProductCountForTransaction(
-                                                transaction.id
+                                                transaction.id,
                                             )
                                         }}
                                         produit(s)
@@ -148,13 +148,13 @@
                                     <span
                                         :style="
                                             getTransactionStatusBadgeStyle(
-                                                transaction
+                                                transaction,
                                             )
                                         "
                                     >
                                         {{
                                             getTransactionStatusText(
-                                                transaction
+                                                transaction,
                                             )
                                         }}
                                     </span>
@@ -297,7 +297,7 @@
                                                 :key="client.id"
                                                 @click="
                                                     selectNewTransactionCustomer(
-                                                        client
+                                                        client,
                                                     )
                                                 "
                                                 class="customer-dropdown-item"
@@ -418,20 +418,20 @@
                                                     v-if="
                                                         line.showDropdown &&
                                                         getFilteredReturnableProducts(
-                                                            index
+                                                            index,
                                                         ).length > 0
                                                     "
                                                     class="product-dropdown"
                                                 >
                                                     <div
                                                         v-for="product in getFilteredReturnableProducts(
-                                                            index
+                                                            index,
                                                         )"
                                                         :key="product.id"
                                                         @click="
                                                             selectProductForLine(
                                                                 index,
-                                                                product
+                                                                product,
                                                             )
                                                         "
                                                         class="product-dropdown-item"
@@ -622,14 +622,14 @@
                                 <tbody>
                                     <tr
                                         v-for="product in getProductsForTransaction(
-                                            selectedTransaction.id
+                                            selectedTransaction.id,
                                         )"
                                         :key="product.id"
                                     >
                                         <td>
                                             {{
                                                 getProductName(
-                                                    product.product_id
+                                                    product.product_id,
                                                 )
                                             }}
                                         </td>
@@ -649,13 +649,13 @@
                                             <span
                                                 :style="
                                                     getProductStatusBadgeStyle(
-                                                        product
+                                                        product,
                                                     )
                                                 "
                                             >
                                                 {{
                                                     getProductStatusText(
-                                                        product
+                                                        product,
                                                     )
                                                 }}
                                             </span>
@@ -689,14 +689,14 @@
                                 <tbody>
                                     <tr
                                         v-for="returnItem in getReturnsForTransaction(
-                                            selectedTransaction.id
+                                            selectedTransaction.id,
                                         )"
                                         :key="returnItem.id"
                                     >
                                         <td>
                                             {{
                                                 getProductName(
-                                                    returnItem.product_id
+                                                    returnItem.product_id,
                                                 )
                                             }}
                                         </td>
@@ -711,7 +711,7 @@
                                             <button
                                                 @click="
                                                     openEditReturnModal(
-                                                        returnItem
+                                                        returnItem,
                                                     )
                                                 "
                                                 class="btn-small btn-action"
@@ -722,7 +722,7 @@
                                             <button
                                                 @click="
                                                     openDeleteReturnModal(
-                                                        returnItem
+                                                        returnItem,
                                                     )
                                                 "
                                                 class="btn-small btn-danger"
@@ -809,7 +809,7 @@
 
                             <div
                                 v-for="product in getProductsForReturn(
-                                    selectedTransaction.id
+                                    selectedTransaction.id,
                                 )"
                                 :key="product.id"
                                 class="return-product-item"
@@ -829,7 +829,7 @@
                                             "
                                             @change="
                                                 onProductSelectionChange(
-                                                    product.id
+                                                    product.id,
                                                 )
                                             "
                                         />
@@ -840,7 +840,7 @@
                                         <span class="product-name">
                                             {{
                                                 getProductName(
-                                                    product.product_id
+                                                    product.product_id,
                                                 )
                                             }}
                                         </span>
@@ -1097,40 +1097,35 @@
 </template>
 
 <script>
-    const axios = window.axios;
-
     export default {
         name: 'ReturnableProductsComponent',
         data() {
             return {
                 BASE_URL: 'http://127.0.0.1:8000',
-
-                // Data
-                customers: [],
-                products: [],
                 transactions: [],
                 transactionProducts: [],
                 stockReturns: [],
                 allProducts: [],
-
-                // Search & Filters
+                customers: [],
                 searchQuery: '',
                 filterClient: '',
                 filterStatus: '',
                 sortOption: 'Date (récent)',
                 currentPage: 1,
                 itemsPerPage: 10,
-
-                // Modal States
                 showCreateModal: false,
                 showDetailsModal: false,
                 showReturnModal: false,
-                showDeleteReturnModal: false,
                 showDeleteModal: false,
-                showNewCustomerDropdown: false,
+                showDeleteReturnModal: false,
                 showCreateCustomerModal: false,
-
-                // New Transaction Form
+                showNewCustomerDropdown: false,
+                selectedTransaction: null,
+                transactionToDelete: null,
+                returnToDelete: null,
+                returnDate: '',
+                returnComment: '',
+                returnData: {},
                 newTransaction: {
                     customerSearch: '',
                     selectedClient: null,
@@ -1139,212 +1134,187 @@
                             selectedProduct: null,
                             searchQuery: '',
                             showDropdown: false,
-                            quantity: 0,
+                            quantity: '',
                         },
                     ],
                     comment: '',
                 },
-
+                filteredNewCustomers: [],
                 newCustomer: {
                     name: '',
                     phone: '',
                     address: '',
                 },
-
-                // Selected Items
-                selectedTransaction: null,
-                transactionToDelete: null,
-                returnToDelete: null,
-
-                // Return Form
-                returnDate: new Date().toISOString().split('T')[0],
-                returnComment: '',
-                returnData: {},
-
-                // Filtered Data
-                filteredNewCustomers: [],
             };
         },
 
         computed: {
+            filteredTransactions() {
+                return this.getFilteredTransactions();
+            },
+
             paginatedTransactions() {
-                let filtered = this.getFilteredTransactions();
                 const start = (this.currentPage - 1) * this.itemsPerPage;
-                return filtered.slice(start, start + this.itemsPerPage);
+                const end = start + this.itemsPerPage;
+                return this.filteredTransactions.slice(start, end);
             },
 
             totalPages() {
                 return Math.ceil(
-                    this.getFilteredTransactions().length / this.itemsPerPage
+                    this.filteredTransactions.length / this.itemsPerPage,
                 );
             },
 
             uniqueClients() {
-                const uniqueClientsMap = new Map();
-                this.customers.forEach((client) => {
-                    if (!uniqueClientsMap.has(client.id)) {
-                        uniqueClientsMap.set(client.id, client);
+                const clientMap = new Map();
+                this.transactions.forEach((t) => {
+                    if (t.client_id && t.client_name) {
+                        clientMap.set(t.client_id, {
+                            id: t.client_id,
+                            name: t.client_name,
+                        });
                     }
                 });
-                return Array.from(uniqueClientsMap.values());
-            },
-
-            totalGiven() {
-                return this.transactionProducts
-                    .reduce(
-                        (sum, p) => sum + (parseFloat(p.quantity_given) || 0),
-                        0
-                    )
-                    .toFixed(2);
-            },
-
-            totalReturned() {
-                return this.stockReturns
-                    .reduce(
-                        (sum, r) =>
-                            sum + (parseFloat(r.quantity_returned) || 0),
-                        0
-                    )
-                    .toFixed(2);
-            },
-
-            totalPending() {
-                const given = parseFloat(this.totalGiven) || 0;
-                const returned = parseFloat(this.totalReturned) || 0;
-                return (given - returned).toFixed(2);
-            },
-
-            activeTransactions() {
-                return this.transactions.filter(
-                    (t) => parseFloat(this.getTotalQuantityPending(t.id)) > 0
-                ).length;
+                return Array.from(clientMap.values());
             },
 
             canSubmitNewTransaction() {
-                return (
-                    this.newTransaction.selectedClient &&
-                    this.newTransaction.productLines.some(
-                        (line) => line.selectedProduct && line.quantity > 0
-                    )
+                if (!this.newTransaction.selectedClient) return false;
+                const hasValidLines = this.newTransaction.productLines.some(
+                    (line) => line.selectedProduct && line.quantity > 0,
                 );
+                return hasValidLines;
             },
 
             canSubmitReturn() {
-                return (
-                    this.returnDate &&
-                    Object.values(this.returnData).some(
-                        (item) => item.selected && item.quantity > 0
-                    )
+                return Object.values(this.returnData).some(
+                    (data) => data.selected && data.quantity > 0,
                 );
             },
         },
 
-        mounted() {
-            this.fetchAllData();
+        async mounted() {
+            await this.fetchAllData();
         },
 
         methods: {
             async fetchAllData() {
                 try {
                     await Promise.all([
-                        this.fetchClients(),
-                        this.fetchProducts(),
                         this.fetchTransactions(),
                         this.fetchTransactionProducts(),
                         this.fetchStockReturns(),
+                        this.fetchAllProducts(),
+                        this.fetchClients(),
                     ]);
                     this.calculateReturnedQuantities();
                 } catch (error) {
-                    console.error('Error fetching data:', error);
-                    alert('Erreur lors du chargement des données');
-                }
-            },
-
-            async fetchClients() {
-                const route = `${this.BASE_URL}/clients`;
-                try {
-                    const response = await axios.get(route);
-                    this.customers = response.data;
-                } catch (error) {
-                    console.error('ERROR fetching clients:', {
-                        route: route,
-                        error: error.message,
-                        response: error.response?.data,
-                    });
-                }
-            },
-
-            async fetchProducts() {
-                const route = `${this.BASE_URL}/products`;
-                try {
-                    const response = await axios.get(route);
-                    // Ajouter le filtre pour n'afficher que les produits consignables
-                    this.allProducts = response.data.filter(p => p.isReturnable === 1);
-                } catch (error) {
-                    console.error('ERROR fetching products:', {
-                        route: route,
-                        error: error.message,
-                        response: error.response?.data,
-                    });
+                    console.error('[v0] Error fetching data:', error);
                 }
             },
 
             async fetchTransactions() {
                 try {
-                    const route = `${this.BASE_URL}/returnable-products-transactions`;
-                    const response = await axios.get(route);
+                    const response = await axios.get(
+                        `${this.BASE_URL}/returnable-products-transactions`,
+                    );
                     this.transactions = response.data;
+                    console.log(
+                        '[v0] Transactions fetched:',
+                        this.transactions,
+                    );
                 } catch (error) {
-                    console.error('ERROR fetching transactions:', {
-                        route: `${this.BASE_URL}/returnable-products-transactions`,
-                        error: error.message,
-                        response: error.response?.data,
-                    });
+                    console.error('[v0] Error fetching transactions:', error);
                 }
             },
 
             async fetchTransactionProducts() {
                 try {
-                    const route = `${this.BASE_URL}/returnable-products-list`;
-                    const response = await axios.get(route);
-                    this.transactionProducts = response.data.map(p => ({
-                        ...p,
-                        quantity_returned: 0
-                    }));
+                    const response = await axios.get(
+                        `${this.BASE_URL}/returnable-products-list`,
+                    );
+                    this.transactionProducts = response.data;
+                    console.log(
+                        '[v0] Transaction products fetched:',
+                        this.transactionProducts,
+                    );
                 } catch (error) {
-                    console.error('ERROR fetching transaction products:', {
-                        route: `${this.BASE_URL}/returnable-products-list`,
-                        error: error.message,
-                        response: error.response?.data,
-                    });
+                    console.error(
+                        '[v0] Error fetching transaction products:',
+                        error,
+                    );
                 }
             },
 
             async fetchStockReturns() {
                 try {
-                    const route = `${this.BASE_URL}/returnable-products-returns`;
-                    const response = await axios.get(route);
+                    const response = await axios.get(
+                        `${this.BASE_URL}/returnable-products-returns`,
+                    );
                     this.stockReturns = response.data;
                 } catch (error) {
-                    console.error('ERROR fetching stock returns:', {
-                        route: `${this.BASE_URL}/returnable-products-returns`,
-                        error: error.message,
-                        response: error.response?.data,
-                    });
+                    console.error('[v0] Error fetching stock returns:', error);
+                }
+            },
+
+            async fetchAllProducts() {
+                try {
+                    const response = await axios.get(
+                        `${this.BASE_URL}/productsList`,
+                    );
+                    console.log('[v0] Products fetched:', response.data);
+                    this.allProducts = Array.isArray(response.data)
+                        ? response.data
+                        : [];
+                } catch (error) {
+                    console.error('[v0] Error fetching products:', error);
+                    this.allProducts = [];
+                }
+            },
+
+            async fetchClients() {
+                try {
+                    const response = await axios.get(
+                        `${this.BASE_URL}/clientslist`,
+                    );
+                    this.customers = response.data;
+                } catch (error) {
+                    console.error('[v0] Error fetching clients:', error);
                 }
             },
 
             calculateReturnedQuantities() {
-                // Pour chaque ligne de produit, calculer la quantité retournée totale
-                this.transactionProducts.forEach(line => {
-                    const returns = this.stockReturns.filter(
-                        r => r.returnable_product_id === line.id
+                console.log('[v0] Calculating returned quantities...');
+                console.log(
+                    '[v0] Transaction products:',
+                    this.transactionProducts,
+                );
+                console.log('[v0] Stock returns:', this.stockReturns);
+
+                // Pour chaque produit de transaction, calculer la quantité totale retournée
+                this.transactionProducts.forEach((product) => {
+                    // Trouver tous les retours pour ce produit spécifique (ligne dans returnable_products_list)
+                    // IMPORTANT: filtrer par product.id (qui est l'id dans returnable_products_list)
+                    const returnsForThisProduct = this.stockReturns.filter(
+                        (r) => r.returnable_product_id === product.id,
                     );
-                    const totalReturned = returns.reduce(
-                        (sum, r) => sum + (parseFloat(r.quantity_returned) || 0),
-                        0
+
+                    const totalReturned = returnsForThisProduct.reduce(
+                        (sum, r) =>
+                            sum + (parseFloat(r.quantity_returned) || 0),
+                        0,
                     );
-                    line.quantity_returned = totalReturned;
+
+                    // Mettre à jour la quantité retournée dans l'objet product
+                    product.quantity_returned = totalReturned;
+
+                    console.log(
+                        `[v0] Product ID ${product.id} (${this.getProductName(product.product_id)}): Given=${product.quantity_given}, Returned=${totalReturned}, Pending=${product.quantity_given - totalReturned}`,
+                    );
+                    console.log(
+                        `[v0]   - Returns found for this product:`,
+                        returnsForThisProduct,
+                    );
                 });
             },
 
@@ -1361,20 +1331,21 @@
                             this.getProductsForTransaction(t.id).some((p) =>
                                 this.getProductName(p.product_id)
                                     .toLowerCase()
-                                    .includes(query)
-                            )
+                                    .includes(query),
+                            ),
                     );
                 }
 
                 if (this.filterClient) {
                     filtered = filtered.filter(
-                        (t) => t.client_id === parseInt(this.filterClient)
+                        (t) => t.client_id === parseInt(this.filterClient),
                     );
                 }
 
                 if (this.filterStatus) {
                     filtered = filtered.filter(
-                        (t) => this.getTransactionStatus(t) === this.filterStatus
+                        (t) =>
+                            this.getTransactionStatus(t) === this.filterStatus,
                     );
                 }
 
@@ -1386,27 +1357,27 @@
                 switch (this.sortOption) {
                     case 'Date (ancien)':
                         return sorted.sort(
-                            (a, b) => new Date(a.date) - new Date(b.date)
+                            (a, b) => new Date(a.date) - new Date(b.date),
                         );
                     case 'Client (A-Z)':
                         return sorted.sort((a, b) =>
-                            a.client_name.localeCompare(b.client_name)
+                            a.client_name.localeCompare(b.client_name),
                         );
                     case 'Quantité restante (croissant)':
                         return sorted.sort(
                             (a, b) =>
                                 parseFloat(this.getTotalQuantityPending(a.id)) -
-                                parseFloat(this.getTotalQuantityPending(b.id))
+                                parseFloat(this.getTotalQuantityPending(b.id)),
                         );
                     case 'Quantité restante (décroissant)':
                         return sorted.sort(
                             (a, b) =>
                                 parseFloat(this.getTotalQuantityPending(b.id)) -
-                                parseFloat(this.getTotalQuantityPending(a.id))
+                                parseFloat(this.getTotalQuantityPending(a.id)),
                         );
-                    default: // Date (récent)
+                    default:
                         return sorted.sort(
-                            (a, b) => new Date(b.date) - new Date(a.date)
+                            (a, b) => new Date(b.date) - new Date(a.date),
                         );
                 }
             },
@@ -1414,24 +1385,39 @@
             // Data Retrieval Methods
             getProductsForTransaction(transactionId) {
                 return this.transactionProducts.filter(
-                    (p) => p.returnable_product_id === transactionId
+                    (p) => p.returnable_product_id === transactionId,
                 );
             },
 
             getProductsForReturn(transactionId) {
-                return this.getProductsForTransaction(transactionId).filter(
-                    (p) => {
-                        const remaining = parseFloat(p.quantity_given) - parseFloat(p.quantity_returned || 0);
-                        return remaining > 0;
-                    }
+                const allProducts =
+                    this.getProductsForTransaction(transactionId);
+                const productsWithPendingQuantity = allProducts.filter((p) => {
+                    const quantityGiven = parseFloat(p.quantity_given) || 0;
+                    const quantityReturned =
+                        parseFloat(p.quantity_returned) || 0;
+                    const hasPending = quantityGiven > quantityReturned;
+
+                    console.log(
+                        `[v0] getProductsForReturn - Product ${p.id} (${this.getProductName(p.product_id)}): Given=${quantityGiven}, Returned=${quantityReturned}, Has Pending=${hasPending}`,
+                    );
+
+                    return hasPending;
+                });
+
+                console.log(
+                    `[v0] getProductsForReturn - Transaction ${transactionId}: ${productsWithPendingQuantity.length} products with pending returns out of ${allProducts.length} total`,
                 );
+
+                return productsWithPendingQuantity;
             },
 
             getReturnsForTransaction(transactionId) {
-                const productLines = this.getProductsForTransaction(transactionId);
-                const productLineIds = productLines.map(p => p.id);
-                return this.stockReturns.filter(
-                    (r) => productLineIds.includes(r.returnable_product_id)
+                const productIds = this.getProductsForTransaction(
+                    transactionId,
+                ).map((p) => p.id);
+                return this.stockReturns.filter((r) =>
+                    productIds.includes(r.returnable_product_id),
                 );
             },
 
@@ -1443,7 +1429,7 @@
                 return this.getProductsForTransaction(transactionId)
                     .reduce(
                         (sum, p) => sum + (parseFloat(p.quantity_given) || 0),
-                        0
+                        0,
                     )
                     .toFixed(2);
             },
@@ -1453,7 +1439,7 @@
                     .reduce(
                         (sum, p) =>
                             sum + (parseFloat(p.quantity_returned) || 0),
-                        0
+                        0,
                     )
                     .toFixed(2);
             },
@@ -1468,10 +1454,24 @@
             },
 
             getProductName(productId) {
+                if (!Array.isArray(this.allProducts)) {
+                    console.error(
+                        '[v0] allProducts is not an array:',
+                        this.allProducts,
+                    );
+                    return 'Produit inconnu';
+                }
                 const product = this.allProducts.find(
-                    (p) => p.id === productId
+                    (p) => p.id === productId,
                 );
-                return product ? product.name : 'Produit inconnu';
+
+                if (!product) {
+                    console.warn(
+                        `[v0] Product with ID ${productId} not found in allProducts`,
+                    );
+                }
+
+                return product ? product.name : `Produit #${productId} inconnu`;
             },
 
             // Status Methods
@@ -1540,18 +1540,17 @@
             },
 
             getProductStatusText(product) {
-                const quantityReturned = parseFloat(product.quantity_returned) || 0;
-                if (
-                    parseFloat(product.quantity_given) === quantityReturned
-                )
+                const quantityReturned =
+                    parseFloat(product.quantity_returned) || 0;
+                if (parseFloat(product.quantity_given) === quantityReturned)
                     return 'Complètement retourné';
-                if (quantityReturned > 0)
-                    return 'Partiellement retourné';
+                if (quantityReturned > 0) return 'Partiellement retourné';
                 return 'Non retourné';
             },
 
             getProductStatusBadgeStyle(product) {
-                const quantityReturned = parseFloat(product.quantity_returned) || 0;
+                const quantityReturned =
+                    parseFloat(product.quantity_returned) || 0;
                 const pending =
                     parseFloat(product.quantity_given) - quantityReturned;
                 const styles = {
@@ -1574,8 +1573,7 @@
 
                 let status = 'pending';
                 if (pending === 0) status = 'complete';
-                else if (quantityReturned > 0)
-                    status = 'partial';
+                else if (quantityReturned > 0) status = 'partial';
 
                 const style = styles[status];
                 return {
@@ -1599,7 +1597,7 @@
                             selectedProduct: null,
                             searchQuery: '',
                             showDropdown: false,
-                            quantity: 0,
+                            quantity: '',
                         },
                     ],
                     comment: '',
@@ -1628,18 +1626,45 @@
                 this.selectedTransaction = transaction;
                 this.returnDate = new Date().toISOString().split('T')[0];
                 this.returnComment = '';
-                this.returnData = {};
-                
-                this.getProductsForReturn(transaction.id).forEach((product) => {
+
+                // Initialiser returnData avec tous les produits disponibles pour le retour
+                const productsForReturn = this.getProductsForReturn(
+                    transaction.id,
+                );
+                console.log(
+                    `[v0] openRecordReturnModal - Products available for return:`,
+                    productsForReturn,
+                );
+
+                const newReturnData = {};
+                productsForReturn.forEach((product) => {
                     if (product && product.id !== undefined) {
-                        this.returnData[product.id] = {
+                        const quantityGiven =
+                            parseFloat(product.quantity_given) || 0;
+                        const quantityReturned =
+                            parseFloat(product.quantity_returned) || 0;
+                        const maxQuantity = quantityGiven - quantityReturned;
+
+                        newReturnData[product.id] = {
                             selected: false,
                             quantity: 0,
                             product_id: product.product_id,
+                            product_name: this.getProductName(
+                                product.product_id,
+                            ),
+                            max_quantity: maxQuantity,
+                            quantity_given: quantityGiven,
+                            quantity_returned: quantityReturned,
                         };
+
+                        console.log(
+                            `[v0]   - Product ${product.id} (${this.getProductName(product.product_id)}): Max returnable = ${maxQuantity}`,
+                        );
                     }
                 });
+                this.returnData = newReturnData;
 
+                console.log('[v0] Return data initialized:', this.returnData);
                 this.showReturnModal = true;
             },
 
@@ -1689,7 +1714,7 @@
                     this.filteredNewCustomers = this.customers.filter(
                         (c) =>
                             c.name.toLowerCase().includes(query) ||
-                            c.phone.includes(query)
+                            c.phone.includes(query),
                     );
                 }
                 this.showNewCustomerDropdown = true;
@@ -1724,13 +1749,15 @@
                     return;
                 }
 
-                const route = `${this.BASE_URL}/clients`;
                 try {
-                    const response = await axios.post(route, {
-                        name: this.newCustomer.name,
-                        phone: this.newCustomer.phone,
-                        address: this.newCustomer.address,
-                    });
+                    const response = await axios.post(
+                        `${this.BASE_URL}/clients`,
+                        {
+                            name: this.newCustomer.name,
+                            phone: this.newCustomer.phone,
+                            address: this.newCustomer.address,
+                        },
+                    );
 
                     if (response.data.success) {
                         alert('Client créé avec succès');
@@ -1739,7 +1766,7 @@
                         const newClient = this.customers.find(
                             (c) =>
                                 c.name === this.newCustomer.name &&
-                                c.phone === this.newCustomer.phone
+                                c.phone === this.newCustomer.phone,
                         );
                         if (newClient) {
                             this.selectNewTransactionCustomer(newClient);
@@ -1749,14 +1776,14 @@
                     } else {
                         alert(
                             response.data.message ||
-                                'Erreur lors de la création du client'
+                                'Erreur lors de la création du client',
                         );
                     }
                 } catch (error) {
                     console.error('Error creating customer:', error);
                     alert(
                         'Erreur lors de la création du client: ' +
-                            (error.response?.data?.message || error.message)
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },
@@ -1775,11 +1802,15 @@
                     .filter((_, i) => i !== index && _.selectedProduct)
                     .map((line) => line.selectedProduct.id);
 
+                if (!Array.isArray(this.allProducts)) {
+                    return [];
+                }
+
                 return this.allProducts.filter(
                     (p) =>
                         p.name.toLowerCase().includes(query) &&
                         !selectedProductIds.includes(p.id) &&
-                        p.isReturnable === 1
+                        p.isReturnable === 1,
                 );
             },
 
@@ -1854,7 +1885,7 @@
                 try {
                     const response = await axios.post(
                         `${this.BASE_URL}/returnable-products`,
-                        payload
+                        payload,
                     );
 
                     console.group('[RESPONSE REMISE]');
@@ -1877,64 +1908,82 @@
             async submitReturn() {
                 if (!this.canSubmitReturn) {
                     alert(
-                        'Veuillez sélectionner au moins un produit et entrer une quantité à retourner'
+                        'Veuillez sélectionner au moins un produit et entrer une quantité à retourner',
                     );
                     return;
                 }
 
-                const returnsData = Object.entries(this.returnData)
+                const selectedItems = Object.entries(this.returnData)
                     .filter(([_, data]) => data.selected && data.quantity > 0)
-                    .map(([transactionProductId, data]) => ({
-                        returnable_product_id: parseInt(transactionProductId),
-                        quantity_returned: data.quantity,
-                        date: this.returnDate,
-                        comment: this.returnComment,
-                        product_id: data.product_id,
-                    }));
+                    .map(([transactionProductId, data]) => {
+                        const product = this.getProductsForReturn(
+                            this.selectedTransaction.id,
+                        ).find((p) => p.id === parseInt(transactionProductId));
+
+                        // Récupérer le returnable_product_id (id de la ligne dans returnable_products_list)
+                        return {
+                            returnable_product_id: product.id,
+                            product_id: product.product_id,
+                            quantity_returned: data.quantity,
+                        };
+                    });
+
+                if (selectedItems.length === 0) {
+                    alert('Aucune quantité à retourner sélectionnée.');
+                    return;
+                }
+
+                const payload = {
+                    returnable_product_id: this.selectedTransaction.id,
+                    date: this.returnDate,
+                    comment: this.returnComment,
+                    items: selectedItems,
+                };
 
                 try {
-                    const response = await axios.post(
-                        `${this.BASE_URL}/returnable-products-returns/bulk`,
-                        { returns: returnsData }
-                    );
+                    const route = `${this.BASE_URL}/returnable-products-returns`;
+                    console.log('[v0] REQUEST: POST - Route:', route);
+                    console.log('[v0] PAYLOAD:', payload);
 
-                    if (response.data.success) {
-                        alert('Retour enregistré avec succès');
-                        this.closeReturnModal();
-                        await this.fetchAllData();
-                    } else {
-                        alert(
-                            response.data.message ||
-                                "Erreur lors de l'enregistrement du retour"
-                        );
-                    }
+                    const response = await axios.post(route, payload);
+
+                    console.log('[v0] RESPONSE: Return recorded', {
+                        status: response.status,
+                        data: response.data,
+                    });
+
+                    alert('Retours enregistrés avec succès');
+                    this.closeReturnModal();
+                    await this.fetchAllData();
                 } catch (error) {
-                    console.error('Error submitting return:', error);
+                    console.error('[v0] ERROR submitting returns:', {
+                        route: `${this.BASE_URL}/returnable-products-returns`,
+                        payload,
+                        error: error.message,
+                        response: error.response?.data,
+                    });
+
                     alert(
-                        "Erreur lors de l'enregistrement du retour: " +
-                            (error.response?.data?.message || error.message)
+                        "Erreur lors de l'enregistrement des retours: " +
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },
-
             async deleteReturn() {
                 if (!this.returnToDelete) return;
 
-                const route = `${this.BASE_URL}/returnable-products-returns/${this.returnToDelete.id}`;
                 try {
-                    await axios.delete(route);
+                    await axios.delete(
+                        `${this.BASE_URL}/returnable-products-returns/${this.returnToDelete.id}`,
+                    );
                     alert('Retour supprimé avec succès');
                     this.closeDeleteReturnModal();
                     await this.fetchAllData();
                 } catch (error) {
-                    console.error('Error deleting return:', {
-                        route: route,
-                        error: error.message,
-                        response: error.response?.data,
-                    });
+                    console.error('[v0] Error deleting return:', error);
                     alert(
                         'Erreur lors de la suppression: ' +
-                            (error.response?.data?.message || error.message)
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },
@@ -1942,414 +1991,204 @@
             async deleteTransaction() {
                 if (!this.transactionToDelete) return;
 
-                const route = `${this.BASE_URL}/returnable-products-transactions/${this.transactionToDelete.id}`;
                 try {
-                    await axios.delete(route);
+                    await axios.delete(
+                        `${this.BASE_URL}/returnable-products-transactions/${this.transactionToDelete.id}`,
+                    );
                     alert('Opération supprimée avec succès');
                     this.closeDeleteModal();
                     await this.fetchAllData();
                 } catch (error) {
-                    console.error('Error deleting transaction:', {
-                        route: route,
-                        error: error.message,
-                        response: error.response?.data,
-                    });
+                    console.error('[v0] Error deleting transaction:', error);
                     alert(
                         'Erreur lors de la suppression: ' +
-                            (error.response?.data?.message || error.message)
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },
 
-            // Print Methods
-            printTransaction(transaction) {
-                if (!transaction) return;
-
-                const products = this.getProductsForTransaction(transaction.id);
-                const returns = this.getReturnsForTransaction(transaction.id);
-                const client = transaction.client_name;
-
-                let html = `
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>Remise de Produits - ${
-                            transaction.reference
-                        }</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-                            .company-header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #667eea; padding-bottom: 20px; }
-                            .company-header h1 { color: #667eea; margin: 0 0 10px 0; font-size: 2rem; }
-                            .company-header p { margin: 5px 0; color: #666; font-size: 0.9rem; }
-                            .title { font-size: 1.5rem; font-weight: bold; margin: 20px 0 10px 0; color: #764ba2; }
-                            .transaction-info { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #667eea; }
-                            .info-row { margin-bottom: 8px; display: flex; justify-content: space-between; }
-                            .info-label { font-weight: 600; color: #333; }
-                            .info-value { color: #666; }
-                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                            th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; text-align: left; font-weight: bold; }
-                            td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-                            .total-row { font-weight: bold; background-color: #f9f9f9; }
-                            .section-header { font-weight: 600; margin-top: 20px; margin-bottom: 10px; color: #333; }
-                            .footer { margin-top: 40px; text-align: center; color: #999; font-size: 0.85rem; border-top: 1px solid #ddd; padding-top: 20px; }
-                            .qty-right { text-align: right; }
-                            @media print { body { margin: 0; padding: 10mm; } }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="company-header">
-                            <h1>SAGER</h1>
-                            <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
-                            Distribution professionnelle • Vente en gros et détail</p>
-                            <p><strong>Téléphone:</strong> +229 0196466625</p>
-                            <p><strong>IFU:</strong> 0202586942320</p>
-                        </div>
-
-                        <div class="title">REMISE DE PRODUITS AVEC EMBALLAGES</div>
-                        <p style="text-align: center; color: #999; font-size: 0.9rem;">Référence: ${
-                            transaction.reference
-                        }</p>
-
-                        <div class="transaction-info">
-                            <div class="info-row">
-                                <span class="info-label">Client :</span>
-                                <span class="info-value">${client}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Date de remise :</span>
-                                <span class="info-value">${this.formatDate(
-                                    transaction.date
-                                )}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Imprimé le :</span>
-                                <span class="info-value">${new Date().toLocaleDateString(
-                                    'fr-FR'
-                                )}</span>
-                            </div>
-                            ${
-                                transaction.comment
-                                    ? `<div class="info-row">
-                                <span class="info-label">Commentaire :</span>
-                                <span class="info-value">${transaction.comment}</span>
-                            </div>`
-                                    : ''
-                            }
-                        </div>
-
-                        <div class="section-header">Produits Remis</div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Produit</th>
-                                    <th class="qty-right">Quantité Remise</th>
-                                    <th class="qty-right">Quantité Retournée</th>
-                                    <th class="qty-right">En Attente</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${products
-                                    .map(
-                                        (p) => `
-                                    <tr>
-                                        <td>${this.getProductName(
-                                            p.product_id
-                                        )}</td>
-                                        <td class="qty-right">${
-                                            p.quantity_given
-                                        }</td>
-                                        <td class="qty-right">${
-                                            p.quantity_returned
-                                        }</td>
-                                        <td class="qty-right">${
-                                            p.quantity_given -
-                                            p.quantity_returned
-                                        }</td>
-                                    </tr>
-                                `
-                                    )
-                                    .join('')}
-                                <tr class="total-row">
-                                    <td><strong>TOTAL</strong></td>
-                                    <td class="qty-right"><strong>${this.getTotalQuantityGiven(
-                                        transaction.id
-                                    )}</strong></td>
-                                    <td class="qty-right"><strong>${this.getTotalQuantityReturned(
-                                        transaction.id
-                                    )}</strong></td>
-                                    <td class="qty-right"><strong>${this.getTotalQuantityPending(
-                                        transaction.id
-                                    )}</strong></td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        ${
-                            returns.length > 0
-                                ? `
-                            <div class="section-header">Historique des Retours</div>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Produit</th>
-                                        <th class="qty-right">Quantité</th>
-                                        <th>Date</th>
-                                        <th>Commentaire</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${returns
-                                        .map(
-                                            (r) => `
-                                        <tr>
-                                            <td>${this.getProductName(
-                                                r.product_id
-                                            )}</td>
-                                            <td class="qty-right">${
-                                                r.quantity_returned
-                                            }</td>
-                                            <td>${this.formatDate(r.date)}</td>
-                                            <td>${r.comment || '-'}</td>
-                                        </tr>
-                                    `
-                                        )
-                                        .join('')}
-                                </tbody>
-                            </table>
-                        `
-                                : ''
-                        }
-
-                        <div class="footer">
-                            <p>Merci de votre confiance</p>
-                            <p>Document généré avec l'application SagerMarket</p>
-                        </div>
-                    </body>
-                    </html>
-                `;
-
-                const printWindow = window.open('', '', 'width=900,height=600');
-                printWindow.document.write(html);
-                printWindow.document.close();
-                setTimeout(() => printWindow.print(), 250);
+            formatDate(date) {
+                if (!date) return 'N/A';
+                const d = new Date(date);
+                return d.toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                });
             },
 
             printAll() {
-                const allTransactionsToPrint = this.getFilteredTransactions();
-
-                if (allTransactionsToPrint.length === 0) {
-                    alert('Aucune transaction à imprimer.');
-                    return;
-                }
-
-                let html = `
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>Rapport des Produits Consignés</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-                            .company-header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #667eea; padding-bottom: 20px; }
-                            .company-header h1 { color: #667eea; margin: 0 0 10px 0; font-size: 2rem; }
-                            .company-header p { margin: 5px 0; color: #666; font-size: 0.9rem; }
-                            .title { font-size: 1.5rem; font-weight: bold; margin: 20px 0 10px 0; color: #764ba2; }
-                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                            th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; text-align: left; font-weight: bold; }
-                            td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
-                            .footer { margin-top: 40px; text-align: center; color: #999; font-size: 0.85rem; border-top: 1px solid #ddd; padding-top: 20px; }
-                            .qty-right { text-align: right; }
-                            .page-break { page-break-after: always; }
-                            @media print { body { margin: 0; padding: 10mm; } .page-break { page-break-after: always; } }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="company-header">
-                            <h1>SAGER</h1>
-                            <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
-                            Distribution professionnelle • Vente en gros et détail</p>
-                            <p><strong>Téléphone:</strong> +229 0196466625</p>
-                            <p><strong>IFU:</strong> 0202586942320</p>
-                        </div>
-
-                        <div class="title">RAPPORTS DES PRODUITS CONSIGNÉS</div>
-
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Client</th>
-                                    <th>Référence</th>
-                                    <th>Date</th>
-                                    <th class="qty-right">Remis</th>
-                                    <th class="qty-right">Retourné</th>
-                                    <th class="qty-right">Attente</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${allTransactionsToPrint
-                                    .map((t, index) => {
-                                        const pageBreakHtml =
-                                            index > 0 && index % 15 === 0
-                                                ? '<div class="page-break"></div>'
-                                                : '';
-                                        return `
-                                        ${pageBreakHtml}
-                                        <tr>
-                                            <td>${t.client_name}</td>
-                                            <td>${t.reference}</td>
-                                            <td>${this.formatDate(t.date)}</td>
-                                            <td class="qty-right">${this.getTotalQuantityGiven(
-                                                t.id
-                                            )}</td>
-                                            <td class="qty-right">${this.getTotalQuantityReturned(
-                                                t.id
-                                            )}</td>
-                                            <td class="qty-right">${this.getTotalQuantityPending(
-                                                t.id
-                                            )}</td>
-                                            <td>${this.getTransactionStatusText(
-                                                t
-                                            )}</td>
-                                        </tr>
-                                    `;
-                                    })
-                                    .join('')}
-                            </tbody>
-                        </table>
-
-                        <div class="footer">
-                            <p>Merci de votre confiance</p>
-                            <p>Rapport généré avec l\'application SagerMarket</p>
-                        </div>
-                    </body>
-                    </html>
-                `;
-
-                const printWindow = window.open('', '', 'width=900,height=600');
-                printWindow.document.write(html);
-                printWindow.document.close();
-                setTimeout(() => printWindow.print(), 250);
+                console.log('[v0] Print all transactions');
             },
 
-            // Utility Methods
-            formatDate(dateString) {
-                if (!dateString) return '';
-                try {
-                    return new Date(dateString).toLocaleDateString('fr-FR', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                    });
-                } catch (e) {
-                    console.error('Error formatting date:', dateString, e);
-                    return dateString;
-                }
+            printTransaction(transaction) {
+                console.log('[v0] Print transaction:', transaction);
             },
         },
     };
 </script>
 
 <style scoped>
-    /* Base Styles */
+    /* Reset global pour éliminer le défilement horizontal */
     * {
         box-sizing: border-box;
     }
 
-    .main-content {
-        padding: 20px;
-        background: #f5f7fa;
-        min-height: 100vh;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-            'Helvetica Neue', Arial, sans-serif;
+    /* Button Styles */
+    .btn-eye {
+        background: #17a2b8;
+        color: white;
     }
 
+    .btn-eye:hover {
+        background: #138496;
+    }
+
+    .btn-reply {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-reply:hover {
+        background: #218838;
+    }
+
+    .btn-print {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-print:hover {
+        background: #5a6268;
+    }
+
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background: #c82333;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    .btn-action {
+        background: #ffc107;
+        color: #333;
+    }
+
+    .btn-action:hover {
+        background: #e0a800;
+    }
+
+    /* Correction du layout principal - suppression de l'espace à gauche */
+    .main-content {
+        width: 100%;
+        max-width: 100%;
+        background: #f5f5f5;
+        min-height: 100vh;
+        padding: 20px;
+        margin: 0;
+        overflow-x: hidden;
+    }
+
+    /* Centrage correct du contenu sans espace à gauche */
     .returnables-content {
+        width: 100%;
         max-width: 1400px;
         margin: 0 auto;
+        padding: 0;
     }
 
     /* Header Section */
     .header-section {
         background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+        padding: 20px;
         margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .section-header {
+        margin-bottom: 0;
     }
 
     .section-header h2 {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         font-size: 24px;
+        flex-wrap: wrap;
     }
 
     /* Controls Section */
     .controls-section {
         background: white;
+        border-radius: 8px;
         padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     .search-filters {
         display: flex;
+        flex-direction: column;
         gap: 15px;
-        margin-bottom: 15px;
-        flex-wrap: wrap;
+        width: 100%;
     }
 
     .search-box {
         position: relative;
-        flex: 1;
-        min-width: 250px;
+        display: flex;
+        align-items: center;
+        width: 100%;
     }
 
     .search-input {
         width: 100%;
         padding: 10px 40px 10px 15px;
         border: 1px solid #ddd;
-        border-radius: 8px;
+        border-radius: 6px;
         font-size: 14px;
-        transition: all 0.2s;
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
     .search-box i {
         position: absolute;
         right: 15px;
-        top: 50%;
-        transform: translateY(-50%);
         color: #999;
+        pointer-events: none;
     }
 
     .filters-group {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 10px;
-        flex: 2;
+        width: 100%;
     }
 
     .select-filter {
-        padding: 10px 15px;
+        padding: 10px 12px;
         border: 1px solid #ddd;
-        border-radius: 8px;
+        border-radius: 6px;
         font-size: 14px;
         background: white;
         cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .select-filter:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        width: 100%;
     }
 
     .action-buttons {
@@ -2362,9 +2201,9 @@
     .btn-secondary {
         padding: 10px 20px;
         border: none;
-        border-radius: 8px;
+        border-radius: 6px;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 500;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -2373,49 +2212,34 @@
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #667eea;
         color: white;
     }
 
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    .btn-primary:hover:not(:disabled) {
+        background: #5568d3;
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     .btn-secondary {
-        background: white;
-        color: #667eea;
-        border: 2px solid #667eea;
+        background: #f0f0f0;
+        color: #333;
+        border: 1px solid #ddd;
     }
 
     .btn-secondary:hover {
-        background: #f0f7ff;
+        background: #e8e8e8;
     }
 
-    .btn-danger {
-        background: #dc3545;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.2s;
-    }
-
-    .btn-danger:hover {
-        background: #c82333;
-    }
-
-    /* Table Container */
+    /* Table Section - correction du overflow */
     .table-container {
         background: white;
-        padding: 20px;
-        border-radius: 12px;
+        border-radius: 8px;
+        padding: 15px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         overflow: hidden;
         width: 100%;
@@ -2431,7 +2255,6 @@
         width: 100%;
         border-collapse: collapse;
         table-layout: auto;
-        min-width: 900px;
     }
 
     .products-table thead {
@@ -2440,7 +2263,7 @@
     }
 
     .products-table th {
-        padding: 14px 12px;
+        padding: 12px 8px;
         text-align: left;
         font-weight: 600;
         font-size: 13px;
@@ -2448,7 +2271,7 @@
     }
 
     .products-table td {
-        padding: 14px 12px;
+        padding: 12px 8px;
         border-bottom: 1px solid #f0f0f0;
         font-size: 13px;
     }
@@ -2475,7 +2298,6 @@
 
     .qty-center {
         text-align: center !important;
-        font-weight: 600;
     }
 
     .pending-qty {
@@ -2484,7 +2306,7 @@
     }
 
     .reference {
-        font-family: 'Courier New', monospace;
+        font-family: monospace;
         font-size: 12px;
         color: #666;
     }
@@ -2492,70 +2314,28 @@
     .product-count-badge {
         background: #e7f3ff;
         color: #0066cc;
-        padding: 5px 10px;
+        padding: 4px 8px;
         border-radius: 12px;
         font-size: 12px;
         font-weight: 600;
         white-space: nowrap;
-        display: inline-block;
     }
 
     .actions-cell {
         display: flex;
-        gap: 6px;
+        gap: 5px;
         flex-wrap: wrap;
         justify-content: center;
-        align-items: center;
     }
 
     .btn-small {
-        padding: 7px 11px;
+        padding: 6px 10px;
         border: none;
-        border-radius: 6px;
+        border-radius: 4px;
         cursor: pointer;
-        font-size: 13px;
+        font-size: 12px;
         transition: all 0.2s;
         white-space: nowrap;
-    }
-
-    .btn-eye {
-        background: #e7f3ff;
-        color: #0066cc;
-    }
-
-    .btn-eye:hover {
-        background: #0066cc;
-        color: white;
-    }
-
-    .btn-reply {
-        background: #fff3e0;
-        color: #f57c00;
-    }
-
-    .btn-reply:hover {
-        background: #f57c00;
-        color: white;
-    }
-
-    .btn-print {
-        background: #e8f5e9;
-        color: #388e3c;
-    }
-
-    .btn-print:hover {
-        background: #388e3c;
-        color: white;
-    }
-
-    .btn-delete {
-        background: #ffebee;
-        color: #c62828;
-    }
-
-    .btn-delete:hover {
-        background: #c62828;
-        color: white;
     }
 
     .empty-row {
@@ -2575,35 +2355,57 @@
     }
 
     .btn-pagination {
-        padding: 10px 18px;
-        border: 2px solid #667eea;
+        padding: 8px 16px;
+        border: 1px solid #667eea;
         background: white;
         color: #667eea;
-        border-radius: 8px;
+        border-radius: 6px;
         cursor: pointer;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 500;
         transition: all 0.2s;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
 
     .btn-pagination:hover:not(:disabled) {
         background: #667eea;
         color: white;
-        transform: translateY(-1px);
     }
 
     .btn-pagination:disabled {
-        opacity: 0.4;
+        opacity: 0.5;
         cursor: not-allowed;
     }
 
     .pagination-info {
         color: #666;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 500;
+    }
+
+    /* Button create customer */
+    .btn-create-customer {
+        margin-top: 10px;
+        padding: 10px 15px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-create-customer:hover {
+        background: #5568d3;
     }
 
     /* Modal Styles */
@@ -2613,7 +2415,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.6);
+        background: rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2623,28 +2425,24 @@
 
     .modal-container {
         background: white;
-        border-radius: 12px;
+        border-radius: 8px;
         width: 100%;
         max-width: 600px;
         max-height: 90vh;
         overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     }
 
     .modal-large {
         max-width: 900px;
     }
 
-    .modal-confirm {
-        max-width: 450px;
-    }
-
     .modal-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 24px;
-        border-bottom: 2px solid #f0f0f0;
+        padding: 20px;
+        border-bottom: 1px solid #ddd;
         position: sticky;
         top: 0;
         background: white;
@@ -2654,44 +2452,37 @@
     .modal-header h5 {
         margin: 0;
         color: #333;
-        font-size: 20px;
-        font-weight: 700;
+        font-size: 18px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
     }
 
     .modal-close {
         background: none;
         border: none;
-        font-size: 26px;
+        font-size: 24px;
         cursor: pointer;
         color: #999;
         padding: 0;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 6px;
-        transition: all 0.2s;
+        width: 30px;
+        height: 30px;
     }
 
     .modal-close:hover {
         color: #333;
-        background: #f5f5f5;
     }
 
     .modal-body {
-        padding: 24px;
+        padding: 20px;
     }
 
     .modal-footer {
         display: flex;
-        gap: 12px;
+        gap: 10px;
         justify-content: flex-end;
-        padding: 20px 24px;
-        border-top: 2px solid #f0f0f0;
+        padding: 20px;
+        border-top: 1px solid #ddd;
         position: sticky;
         bottom: 0;
         background: white;
@@ -2700,8 +2491,8 @@
     /* Form Styles */
     .form-section {
         margin-bottom: 30px;
-        padding-bottom: 24px;
-        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
     }
 
     .form-section:last-child {
@@ -2711,26 +2502,25 @@
     }
 
     .form-group {
-        margin-bottom: 18px;
+        margin-bottom: 15px;
     }
 
     .form-group label {
         display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
+        margin-bottom: 6px;
+        font-weight: 500;
         color: #333;
         font-size: 14px;
     }
 
     .form-control {
         width: 100%;
-        padding: 11px 14px;
-        border: 2px solid #ddd;
-        border-radius: 8px;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
         font-size: 14px;
         font-family: inherit;
         box-sizing: border-box;
-        transition: all 0.2s;
     }
 
     .form-control:focus {
@@ -2741,72 +2531,64 @@
 
     textarea.form-control {
         resize: vertical;
-        min-height: 90px;
+        min-height: 80px;
     }
 
-    /* Customer & Product Search */
-    .customer-search-container,
-    .product-search-container {
+    .customer-search-container {
         position: relative;
     }
 
-    .customer-dropdown,
-    .product-dropdown {
+    .customer-dropdown {
         position: absolute;
         top: 100%;
         left: 0;
         right: 0;
         background: white;
-        border: 2px solid #ddd;
+        border: 1px solid #ddd;
         border-top: none;
-        border-radius: 0 0 8px 8px;
-        max-height: 280px;
+        border-radius: 0 0 6px 6px;
+        max-height: 250px;
         overflow-y: auto;
         z-index: 100;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
-    .customer-dropdown-item,
-    .product-dropdown-item {
-        padding: 14px;
+    .customer-dropdown-item {
+        padding: 12px;
         cursor: pointer;
         border-bottom: 1px solid #f0f0f0;
         transition: background 0.2s;
     }
 
-    .customer-dropdown-item:hover,
-    .product-dropdown-item:hover {
+    .customer-dropdown-item:hover {
         background: #f9f9f9;
     }
 
-    .customer-item-name,
-    .product-item-name {
+    .customer-item-name {
         font-weight: 600;
         color: #333;
-        margin-bottom: 4px;
     }
 
-    .customer-item-phone,
-    .product-item-stock {
+    .customer-item-phone {
         font-size: 12px;
         color: #999;
+        margin-top: 2px;
     }
 
     .selected-client-info {
         background: #f0f7ff;
-        padding: 16px;
-        border-radius: 8px;
-        margin-top: 12px;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 10px;
         border-left: 4px solid #667eea;
     }
 
     .info-item {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         font-size: 14px;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 5px;
     }
 
     .info-label {
@@ -2821,17 +2603,16 @@
     /* Product Lines */
     .products-list {
         background: #fafafa;
-        padding: 18px;
-        border-radius: 8px;
-        margin-bottom: 18px;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 15px;
     }
 
     .product-line-form {
         background: white;
-        padding: 18px;
-        border-radius: 8px;
-        margin-bottom: 16px;
-        border: 2px solid #f0f0f0;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 15px;
     }
 
     .product-line-form:last-child {
@@ -2842,112 +2623,207 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
-        padding-bottom: 12px;
-        border-bottom: 2px solid #f0f0f0;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f0f0f0;
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 10px;
     }
 
     .line-number {
-        font-weight: 700;
+        font-weight: 600;
         color: #333;
-        font-size: 15px;
     }
 
     .btn-remove-line {
-        padding: 7px 14px;
+        padding: 6px 12px;
         background: #ffe7e7;
         color: #dc3545;
         border: none;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 600;
+        border-radius: 4px;
+        font-size: 12px;
         cursor: pointer;
-        transition: all 0.2s;
     }
 
     .btn-remove-line:hover {
-        background: #dc3545;
-        color: white;
+        background: #ffcccc;
+    }
+
+    .product-search-container {
+        position: relative;
+    }
+
+    .product-search-input {
+        width: 100%;
+    }
+
+    .product-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 100;
+    }
+
+    .product-dropdown-item {
+        padding: 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s;
+    }
+
+    .product-dropdown-item:hover {
+        background: #f9f9f9;
+    }
+
+    .product-item-name {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .product-item-stock {
+        font-size: 12px;
+        color: #0066cc;
+        margin-top: 2px;
+    }
+
+    .quantity-input-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .quantity-input {
+        flex: 1;
+        min-width: 100px;
+    }
+
+    .quantity-info {
+        font-size: 12px;
+        color: #999;
+        white-space: nowrap;
     }
 
     .btn-add-line {
-        padding: 12px 24px;
+        padding: 10px 20px;
         background: #e7f3ff;
         color: #0066cc;
-        border: 2px solid #cce5ff;
-        border-radius: 8px;
+        border: 1px solid #cce5ff;
+        border-radius: 6px;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 500;
         cursor: pointer;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         transition: all 0.2s;
-        width: 100%;
-        justify-content: center;
     }
 
     .btn-add-line:hover {
-        background: #0066cc;
-        color: white;
+        background: #cce5ff;
     }
 
-    .btn-create-customer {
-        margin-top: 12px;
-        padding: 12px 18px;
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
+    /* Details Modal */
+    .details-header {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    .detail-group {
         display: flex;
-        align-items: center;
+        flex-direction: column;
         gap: 10px;
-        transition: all 0.2s;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #333;
+        font-size: 13px;
+    }
+
+    .detail-value {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .details-table-section {
+        margin-bottom: 30px;
+        overflow-x: auto;
+    }
+
+    .details-table {
         width: 100%;
-        justify-content: center;
+        border-collapse: collapse;
+        min-width: 400px;
     }
 
-    .btn-create-customer:hover {
-        background: #5568d3;
+    .details-table thead {
+        background: #f9f9f9;
     }
 
-    /* Return Modal Specific Styles */
+    .details-table th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 1px solid #ddd;
+        white-space: nowrap;
+    }
+
+    .details-table td {
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* Styles améliorés pour le modal de retour */
     .return-info-section {
         background: #f0f7ff;
-        padding: 18px;
-        border-radius: 8px;
-        margin-bottom: 24px;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
         border-left: 4px solid #667eea;
     }
 
     .products-for-return {
-        margin-bottom: 24px;
+        margin-bottom: 20px;
     }
 
     .no-products-message {
         text-align: center;
-        padding: 40px;
+        padding: 30px;
         color: #28a745;
         background: #e8f5e9;
-        border-radius: 8px;
+        border-radius: 6px;
     }
 
     .no-products-message i {
-        font-size: 3rem;
-        margin-bottom: 12px;
+        font-size: 2rem;
+        margin-bottom: 10px;
         display: block;
     }
 
     .return-product-item {
         background: #fafafa;
-        padding: 18px;
-        border-radius: 8px;
-        margin-bottom: 16px;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 15px;
         border: 2px solid transparent;
         transition: all 0.2s;
     }
@@ -2960,9 +2836,10 @@
     .product-selection-row {
         display: flex;
         align-items: flex-start;
-        gap: 16px;
+        gap: 15px;
     }
 
+    /* Checkbox custom styles */
     .checkbox-container {
         display: flex;
         align-items: center;
@@ -2981,11 +2858,11 @@
     }
 
     .checkmark {
-        height: 24px;
-        width: 24px;
+        height: 22px;
+        width: 22px;
         background-color: #fff;
         border: 2px solid #ddd;
-        border-radius: 6px;
+        border-radius: 4px;
         transition: all 0.2s;
     }
 
@@ -3011,10 +2888,10 @@
     .checkbox-container .checkmark:after {
         left: 8px;
         top: 4px;
-        width: 6px;
-        height: 11px;
+        width: 5px;
+        height: 10px;
         border: solid white;
-        border-width: 0 3px 3px 0;
+        border-width: 0 2px 2px 0;
         transform: rotate(45deg);
     }
 
@@ -3023,25 +2900,24 @@
     }
 
     .product-name {
-        font-weight: 700;
+        font-weight: 600;
         color: #333;
-        font-size: 16px;
+        font-size: 15px;
         display: block;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .product-quantities {
         display: flex;
-        gap: 12px;
+        gap: 10px;
         flex-wrap: wrap;
-        margin-bottom: 4px;
     }
 
     .qty-badge {
-        padding: 5px 12px;
+        padding: 4px 10px;
         border-radius: 12px;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 500;
     }
 
     .qty-given {
@@ -3060,17 +2936,17 @@
     }
 
     .quantity-input-section {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 2px dashed #ddd;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px dashed #ddd;
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 15px;
         flex-wrap: wrap;
     }
 
     .quantity-label {
-        font-weight: 600;
+        font-weight: 500;
         color: #333;
         font-size: 14px;
         white-space: nowrap;
@@ -3079,14 +2955,14 @@
     .quantity-input-wrapper {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         flex: 1;
-        min-width: 220px;
+        min-width: 200px;
     }
 
     .quantity-field {
-        width: 130px;
-        padding: 10px 14px;
+        width: 120px;
+        padding: 8px 12px;
     }
 
     .max-quantity-hint {
@@ -3095,93 +2971,53 @@
         white-space: nowrap;
     }
 
-    /* Details Modal */
-    .details-header {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 24px;
-        background: #f9f9f9;
-        padding: 18px;
-        border-radius: 8px;
-        margin-bottom: 24px;
+    /* Confirmation Modal */
+    .modal-confirm {
+        max-width: 400px;
     }
 
-    .detail-group {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
+    .modal-confirm .modal-body {
+        padding: 30px;
+        text-align: center;
     }
 
-    .detail-item {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .detail-label {
-        font-weight: 600;
-        color: #333;
-        font-size: 13px;
-    }
-
-    .detail-value {
+    .modal-confirm p {
+        margin-bottom: 10px;
         color: #666;
-        font-size: 14px;
     }
 
-    .details-table-section {
-        margin-bottom: 30px;
-        overflow-x: auto;
+    .modal-confirm strong {
+        color: #333;
     }
 
-    .details-table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 500px;
-    }
-
-    .details-table thead {
-        background: #f9f9f9;
-    }
-
-    .details-table th {
-        padding: 14px;
-        text-align: left;
-        font-weight: 600;
-        border-bottom: 2px solid #ddd;
-        white-space: nowrap;
-    }
-
-    .details-table td {
-        padding: 14px;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    /* Responsive Design */
+    /* Responsive amélioré */
     @media (max-width: 1024px) {
         .products-table th,
         .products-table td {
-            padding: 12px 8px;
+            padding: 10px 6px;
             font-size: 12px;
         }
 
         .filters-group {
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         }
     }
 
     @media (max-width: 768px) {
         .main-content {
-            padding: 12px;
+            padding: 10px;
         }
 
-        .header-section,
-        .controls-section {
-            padding: 16px;
+        .header-section {
+            padding: 15px;
         }
 
         .section-header h2 {
-            font-size: 20px;
+            font-size: 18px;
+        }
+
+        .controls-section {
+            padding: 15px;
         }
 
         .filters-group {
@@ -3199,21 +3035,22 @@
         }
 
         .table-container {
-            padding: 12px;
+            padding: 10px;
         }
 
         .products-table th,
         .products-table td {
-            padding: 10px 6px;
+            padding: 8px 4px;
             font-size: 11px;
         }
 
         .actions-cell {
-            gap: 4px;
+            flex-direction: row;
+            gap: 3px;
         }
 
         .btn-small {
-            padding: 6px 9px;
+            padding: 5px 8px;
             font-size: 11px;
         }
 
@@ -3231,7 +3068,7 @@
 
         .pagination {
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
         }
 
         .pagination-info {
@@ -3246,7 +3083,11 @@
 
         .product-selection-row {
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
+        }
+
+        .checkbox-container {
+            order: -1;
         }
 
         .quantity-input-section {
@@ -3261,6 +3102,11 @@
         .quantity-field {
             flex: 1;
             width: 100%;
+        }
+
+        .product-quantities {
+            flex-direction: column;
+            gap: 5px;
         }
     }
 </style>

@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\StocksReturnableProduct;
-use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+use App\Models\Product;
+use App\Models\StocksReturnableProduct;
+use App\Models\ReturnableProductsList;
 
 class StocksReturnableProductController extends Controller
 {
@@ -38,28 +41,56 @@ class StocksReturnableProductController extends Controller
             'comment' => 'nullable|string',
         ]);
 
-        $rows = [];
         $date = $data['date'] ?? now()->toDateString();
+        $rows = [];
 
-        foreach ($data['items'] as $item) {
-            $product = Product::findOrFail($item['product_id']);
+        DB::beginTransaction();
 
-            // Vérifier que le produit est returnable
-            if (!$product->isReturnable) continue;
+        try {
+            foreach ($data['items'] as $item) {
 
-            $rows[] = StocksReturnableProduct::create([
-                'returnable_product_id' => $data['returnable_product_id'],
-                'product_id' => $item['product_id'],
-                'quantity_returned' => round($item['quantity_returned'], 2),
-                'date' => $date,
-                'comment' => $data['comment'] ?? null,
-            ]);
+                // Ligne produit dans returnable_products_list
+                $returnableProduct = ReturnableProductsList::where(
+                    'returnable_product_id',
+                    $data['returnable_product_id']
+                )
+                    ->where('product_id', $item['product_id'])
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $qtyToReturn = round($item['quantity_returned'], 2);
+                $qtyAvailable =
+                    $returnableProduct->quantity_given
+                    - $returnableProduct->quantity_returned;
+
+                // Sécurité quantité
+                if ($qtyToReturn > $qtyAvailable) {
+                    abort(422, 'Quantité retournée supérieure à la quantité disponible');
+                }
+
+                // 1️⃣ Enregistrer le retour (historique)
+                $rows[] = StocksReturnableProduct::create([
+                    'returnable_product_id' => $data['returnable_product_id'],
+                    'product_id' => $item['product_id'],
+                    'quantity_returned' => $qtyToReturn,
+                    'date' => $date,
+                    'comment' => $data['comment'] ?? null,
+                ]);
+
+                // 2️⃣ Mettre à jour la quantité retournée
+                $returnableProduct->increment('quantity_returned', $qtyToReturn);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Retours enregistrés avec succès',
+                'data' => $rows,
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Retours enregistrés avec succès',
-            'data' => $rows,
-        ], 201);
     }
 }

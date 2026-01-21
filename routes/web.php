@@ -184,28 +184,40 @@ Route::post('/expenses/delete/{id}', [ExpenseController::class, 'destroy'])
 
 
 //route pour les returnable products
+//accès à la page
 Route::get('/returnableProducts', [ReturnableProductController::class, 'index'])->name('returnableProducts');
 
+//noubvelle operation de remise au client
 Route::post('/returnable-products', [ReturnableProductController::class, 'store']);
 
+//enregistrement dans l'historique lors de la remise
 Route::post('/stocks-returnable-products', [
     StocksReturnableProductController::class,
     'store'
 ]);
 
+//enregistrementde chaque produits remis lors de la remise dans l'historique
 Route::post('/returnable-products/items', [
     ReturnableProductsListController::class,
     'store'
 ]);
-
+    
+//consulter la liste des remises aux clients
 Route::get('/returnable-products-transactions', [ReturnableProductController::class, 'getReturnableProductsTransactions'])
     ->name('returnableProductsTransactions');;
 
+//consulter la liste des produits remis aux clients avec le returnable id correspondant
 Route::get('/returnable-products-list', [ReturnableProductsListController::class, 'index'])
     ->name('returnableProductsList.index');
 
+//consulter la liste des retours     
 Route::get('/returnable-products-returns', [StocksReturnableProductController::class, 'index'])
     ->name('stocksReturnableProducts.index');
+
+//enregistrer un retour
+Route::post('/returnable-products-returns', [StocksReturnableProductController::class, 'store'])
+    ->name('stocksReturnableProducts.store');
+
 
 //proformas
 Route::get('/proformas', function () {
