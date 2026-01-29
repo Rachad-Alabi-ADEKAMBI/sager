@@ -64,6 +64,33 @@
                             <option>Quantité restante (décroissant)</option>
                         </select>
                     </div>
+
+                    <div class="date-filters-group">
+                        <label class="date-filter-label">
+                            Filtrer par date:
+                        </label>
+                        <input
+                            type="date"
+                            v-model="filterDateStart"
+                            class="date-input"
+                            placeholder="Date début"
+                        />
+                        <span class="date-separator">à</span>
+                        <input
+                            type="date"
+                            v-model="filterDateEnd"
+                            class="date-input"
+                            placeholder="Date fin"
+                        />
+                        <button
+                            v-if="filterDateStart || filterDateEnd"
+                            @click="clearDateFilters"
+                            class="btn-clear-dates"
+                            title="Effacer les dates"
+                        >
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="action-buttons">
@@ -171,11 +198,13 @@
                                         @click="
                                             openRecordReturnModal(transaction)
                                         "
+                                        v-if="transaction.status === 'Fait'"
                                         class="btn-small btn-reply"
                                         title="Enregistrer retour"
                                     >
                                         <i class="fas fa-reply"></i>
                                     </button>
+
                                     <button
                                         @click="printTransaction(transaction)"
                                         class="btn-small btn-print"
@@ -184,11 +213,12 @@
                                         <i class="fas fa-print"></i>
                                     </button>
                                     <button
+                                        v-if="transaction.status != `Annulé`"
                                         @click="openDeleteModal(transaction)"
                                         class="btn-small btn-delete"
-                                        title="Supprimer"
+                                        title="Annuler"
                                     >
-                                        <i class="fas fa-trash"></i>
+                                        <i class="fas fa-times"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -992,13 +1022,13 @@
                     <div class="modal-header">
                         <h5>
                             <i class="fas fa-exclamation-triangle"></i>
-                            Confirmer la suppression
+                            Confirmer l'annulation
                         </h5>
                     </div>
                     <div class="modal-body">
                         <p>
-                            Êtes-vous sûr de vouloir supprimer cette opération
-                            de remise ?
+                            Êtes-vous sûr de vouloir annuler cette opération de
+                            remise ?
                         </p>
                         <p v-if="transactionToDelete">
                             <strong>Client :</strong>
@@ -1011,11 +1041,11 @@
                     <div class="modal-footer">
                         <button @click="closeDeleteModal" class="btn-secondary">
                             <i class="fas fa-times"></i>
-                            Annuler
+                            Retour
                         </button>
-                        <button @click="deleteTransaction" class="btn-danger">
-                            <i class="fas fa-trash"></i>
-                            Supprimer
+                        <button @click="cancelTransaction" class="btn-danger">
+                            <i class="fas fa-times"></i>
+                            Oui, Annuler
                         </button>
                     </div>
                 </div>
@@ -1101,7 +1131,6 @@
         name: 'ReturnableProductsComponent',
         data() {
             return {
-                BASE_URL: 'http://127.0.0.1:8000',
                 transactions: [],
                 transactionProducts: [],
                 stockReturns: [],
@@ -1110,6 +1139,8 @@
                 searchQuery: '',
                 filterClient: '',
                 filterStatus: '',
+                filterDateStart: '',
+                filterDateEnd: '',
                 sortOption: 'Date (récent)',
                 currentPage: 1,
                 itemsPerPage: 10,
@@ -1207,7 +1238,7 @@
                         this.fetchAllProducts(),
                         this.fetchClients(),
                     ]);
-                    this.calculateReturnedQuantities();
+                    console.log('[v0] All data fetched successfully');
                 } catch (error) {
                     console.error('[v0] Error fetching data:', error);
                 }
@@ -1216,13 +1247,10 @@
             async fetchTransactions() {
                 try {
                     const response = await axios.get(
-                        `${this.BASE_URL}/returnable-products-transactions`,
+                        `/returnable-products-transactions`,
                     );
                     this.transactions = response.data;
-                    console.log(
-                        '[v0] Transactions fetched:',
-                        this.transactions,
-                    );
+                    console.log('[v0] Transactions loaded:', this.transactions);
                 } catch (error) {
                     console.error('[v0] Error fetching transactions:', error);
                 }
@@ -1231,11 +1259,11 @@
             async fetchTransactionProducts() {
                 try {
                     const response = await axios.get(
-                        `${this.BASE_URL}/returnable-products-list`,
+                        `/returnable-products-list`,
                     );
                     this.transactionProducts = response.data;
                     console.log(
-                        '[v0] Transaction products fetched:',
+                        '[v0] Transaction products loaded (with quantity_given and quantity_returned from API):',
                         this.transactionProducts,
                     );
                 } catch (error) {
@@ -1249,9 +1277,13 @@
             async fetchStockReturns() {
                 try {
                     const response = await axios.get(
-                        `${this.BASE_URL}/returnable-products-returns`,
+                        `/returnable-products-returns`,
                     );
                     this.stockReturns = response.data;
+                    console.log(
+                        '[v0] Stock returns loaded:',
+                        this.stockReturns,
+                    );
                 } catch (error) {
                     console.error('[v0] Error fetching stock returns:', error);
                 }
@@ -1259,9 +1291,7 @@
 
             async fetchAllProducts() {
                 try {
-                    const response = await axios.get(
-                        `${this.BASE_URL}/productsList`,
-                    );
+                    const response = await axios.get(`/productsList`);
                     console.log('[v0] Products fetched:', response.data);
                     this.allProducts = Array.isArray(response.data)
                         ? response.data
@@ -1274,48 +1304,11 @@
 
             async fetchClients() {
                 try {
-                    const response = await axios.get(
-                        `${this.BASE_URL}/clientslist`,
-                    );
+                    const response = await axios.get(`/clientslist`);
                     this.customers = response.data;
                 } catch (error) {
                     console.error('[v0] Error fetching clients:', error);
                 }
-            },
-
-            calculateReturnedQuantities() {
-                console.log('[v0] Calculating returned quantities...');
-                console.log(
-                    '[v0] Transaction products:',
-                    this.transactionProducts,
-                );
-                console.log('[v0] Stock returns:', this.stockReturns);
-
-                // Pour chaque produit de transaction, calculer la quantité totale retournée
-                this.transactionProducts.forEach((product) => {
-                    // Trouver tous les retours pour ce produit spécifique (ligne dans returnable_products_list)
-                    // IMPORTANT: filtrer par product.id (qui est l'id dans returnable_products_list)
-                    const returnsForThisProduct = this.stockReturns.filter(
-                        (r) => r.returnable_product_id === product.id,
-                    );
-
-                    const totalReturned = returnsForThisProduct.reduce(
-                        (sum, r) =>
-                            sum + (parseFloat(r.quantity_returned) || 0),
-                        0,
-                    );
-
-                    // Mettre à jour la quantité retournée dans l'objet product
-                    product.quantity_returned = totalReturned;
-
-                    console.log(
-                        `[v0] Product ID ${product.id} (${this.getProductName(product.product_id)}): Given=${product.quantity_given}, Returned=${totalReturned}, Pending=${product.quantity_given - totalReturned}`,
-                    );
-                    console.log(
-                        `[v0]   - Returns found for this product:`,
-                        returnsForThisProduct,
-                    );
-                });
             },
 
             // Filter & Search Methods
@@ -1349,7 +1342,36 @@
                     );
                 }
 
+                if (this.filterDateStart || this.filterDateEnd) {
+                    filtered = filtered.filter((t) => {
+                        const transactionDate = new Date(t.date);
+                        const startDate = this.filterDateStart
+                            ? new Date(this.filterDateStart)
+                            : null;
+                        const endDate = this.filterDateEnd
+                            ? new Date(this.filterDateEnd)
+                            : null;
+
+                        if (startDate && endDate) {
+                            return (
+                                transactionDate >= startDate &&
+                                transactionDate <= endDate
+                            );
+                        } else if (startDate) {
+                            return transactionDate >= startDate;
+                        } else if (endDate) {
+                            return transactionDate <= endDate;
+                        }
+                        return true;
+                    });
+                }
+
                 return this.sortTransactions(filtered);
+            },
+
+            clearDateFilters() {
+                this.filterDateStart = '';
+                this.filterDateEnd = '';
             },
 
             sortTransactions(transactions) {
@@ -1750,14 +1772,11 @@
                 }
 
                 try {
-                    const response = await axios.post(
-                        `${this.BASE_URL}/clients`,
-                        {
-                            name: this.newCustomer.name,
-                            phone: this.newCustomer.phone,
-                            address: this.newCustomer.address,
-                        },
-                    );
+                    const response = await axios.post(`/clients`, {
+                        name: this.newCustomer.name,
+                        phone: this.newCustomer.phone,
+                        address: this.newCustomer.address,
+                    });
 
                     if (response.data.success) {
                         alert('Client créé avec succès');
@@ -1877,20 +1896,11 @@
                     items: products,
                 };
 
-                console.group('[SUBMIT REMISE]');
-                console.log('Route:', `${this.BASE_URL}/returnable-products`);
-                console.log('Payload:', payload);
-                console.groupEnd();
-
                 try {
                     const response = await axios.post(
-                        `${this.BASE_URL}/returnable-products`,
+                        `/returnable-products`,
                         payload,
                     );
-
-                    console.group('[RESPONSE REMISE]');
-                    console.log(response.data);
-                    console.groupEnd();
 
                     if (response.data.success) {
                         alert('Remise enregistrée');
@@ -1941,7 +1951,7 @@
                 };
 
                 try {
-                    const route = `${this.BASE_URL}/returnable-products-returns`;
+                    const route = `/returnable-products-returns`;
                     console.log('[v0] REQUEST: POST - Route:', route);
                     console.log('[v0] PAYLOAD:', payload);
 
@@ -1957,7 +1967,7 @@
                     await this.fetchAllData();
                 } catch (error) {
                     console.error('[v0] ERROR submitting returns:', {
-                        route: `${this.BASE_URL}/returnable-products-returns`,
+                        route: `/returnable-products-returns`,
                         payload,
                         error: error.message,
                         response: error.response?.data,
@@ -1973,8 +1983,8 @@
                 if (!this.returnToDelete) return;
 
                 try {
-                    await axios.delete(
-                        `${this.BASE_URL}/returnable-products-returns/${this.returnToDelete.id}`,
+                    await axios.post(
+                        `/returnable-products-delete-return/${this.returnToDelete.id}`,
                     );
                     alert('Retour supprimé avec succès');
                     this.closeDeleteReturnModal();
@@ -1988,41 +1998,342 @@
                 }
             },
 
-            async deleteTransaction() {
+            async cancelTransaction() {
                 if (!this.transactionToDelete) return;
 
                 try {
-                    await axios.delete(
-                        `${this.BASE_URL}/returnable-products-transactions/${this.transactionToDelete.id}`,
+                    await axios.post(
+                        `/returnable-products-cancel/${this.transactionToDelete.id}`,
                     );
-                    alert('Opération supprimée avec succès');
+
+                    alert('Opération annulée avec succès');
                     this.closeDeleteModal();
                     await this.fetchAllData();
                 } catch (error) {
-                    console.error('[v0] Error deleting transaction:', error);
+                    console.error('[v0] Error cancelling transaction:', error);
+
                     alert(
-                        'Erreur lors de la suppression: ' +
+                        'Erreur lors de l’annulation: ' +
                             (error.response?.data?.message || error.message),
                     );
                 }
             },
-
             formatDate(date) {
                 if (!date) return 'N/A';
                 const d = new Date(date);
-                return d.toLocaleDateString('fr-FR', {
+                return d.toLocaleString('fr-FR', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
                 });
             },
 
             printAll() {
-                console.log('[v0] Print all transactions');
+                const printWindow = window.open('', '', 'height=600,width=900');
+                const transactionsHtml = this.generatePrintHtml(
+                    this.paginatedTransactions,
+                );
+                printWindow.document.write(transactionsHtml);
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 250);
             },
 
             printTransaction(transaction) {
-                console.log('[v0] Print transaction:', transaction);
+                const products = this.getProductsForTransaction(transaction.id);
+                const printWindow = window.open('', '', 'height=600,width=900');
+                const html = this.generateTransactionPrintHtml(
+                    transaction,
+                    products,
+                );
+                printWindow.document.write(html);
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 250);
+            },
+
+            generatePrintHtml(transactions) {
+                let html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Produits avec Emballages - Impression</title>
+                        <style>
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            h1 { text-align: center; margin-bottom: 20px; color: #333; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                            th { background: #667eea; color: white; font-weight: bold; }
+                            tr:hover { background: #f5f5f5; }
+                            .status-badge { 
+                                padding: 4px 8px; 
+                                border-radius: 4px; 
+                                font-size: 12px; 
+                                font-weight: bold;
+                            }
+                            .status-pending { background: #fff3cd; color: #856404; }
+                            .status-partial { background: #cfe2ff; color: #084298; }
+                            .status-complete { background: #d1e7dd; color: #0f5132; }
+                            .qty-center { text-align: center; }
+                            @media print {
+                                body { padding: 10px; }
+                                table { page-break-inside: avoid; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>📦 Gestion des Produits avec Emballages</h1>
+                        <p style="text-align: center; margin-bottom: 20px;">
+                            Remise et retour des produits consignés - ${new Date().toLocaleDateString('fr-FR')}
+                        </p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Référence</th>
+                                    <th>Date Remise</th>
+                                    <th>Produits</th>
+                                    <th class="qty-center">Qté Remise</th>
+                                    <th class="qty-center">Qté Retournée</th>
+                                    <th class="qty-center">En Attente</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                transactions.forEach((trans) => {
+                    const status = this.getTransactionStatusText(trans);
+                    const statusClass = status.includes('Non')
+                        ? 'status-pending'
+                        : status.includes('Partiellement')
+                          ? 'status-partial'
+                          : 'status-complete';
+                    html += `
+                        <tr>
+                            <td><strong>${trans.client_name}</strong></td>
+                            <td>${trans.reference}</td>
+                            <td>${this.formatDate(trans.date)}</td>
+                            <td>${this.getProductCountForTransaction(trans.id)} produit(s)</td>
+                            <td class="qty-center">${this.getTotalQuantityGiven(trans.id)}</td>
+                            <td class="qty-center">${this.getTotalQuantityReturned(trans.id)}</td>
+                            <td class="qty-center">${this.getTotalQuantityPending(trans.id)}</td>
+                            <td><span class="status-badge ${statusClass}">${status}</span></td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </body>
+                    </html>
+                `;
+                return html;
+            },
+
+            generateTransactionPrintHtml(transaction, products) {
+                const now = new Date().toLocaleString('fr-FR');
+                let html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Remise Emballages - ${transaction.reference}</title>
+                        <style>
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                padding: 20px; 
+                                background: #f8f9fa;
+                                color: #333;
+                            }
+                            .company-header {
+                                text-align: center;
+                                margin-bottom: 30px;
+                                border-bottom: 3px solid #667eea;
+                                padding-bottom: 20px;
+                            }
+                            .company-header h1 {
+                                color: #667eea;
+                                margin: 0;
+                                font-size: 2rem;
+                            }
+                            .company-header p {
+                                margin: 5px 0;
+                                color: #666;
+                            }
+                            .transaction-card {
+                                background: white;
+                                border-radius: 12px;
+                                padding: 30px;
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                                max-width: 900px;
+                                margin: 0 auto 20px;
+                            }
+                            h2 {
+                                color: #667eea;
+                                margin-bottom: 15px;
+                                text-align: center;
+                                font-size: 1.5rem;
+                            }
+                            .info-grid {
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 15px;
+                                margin-bottom: 25px;
+                                padding: 15px;
+                                background: #f8f9fa;
+                                border-radius: 8px;
+                            }
+                            .info-item {
+                                display: flex;
+                                gap: 10px;
+                            }
+                            .info-label {
+                                font-weight: bold;
+                                color: #667eea;
+                            }
+                            .info-value {
+                                color: #333;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin: 20px 0;
+                            }
+                            th {
+                                background: #667eea;
+                                color: white;
+                                padding: 12px;
+                                text-align: left;
+                                font-weight: bold;
+                            }
+                            td {
+                                padding: 12px;
+                                border-bottom: 1px solid #ddd;
+                            }
+                            .qty-column {
+                                text-align: center;
+                                font-weight: bold;
+                            }
+                            .total-row {
+                                background: #f0f0f0;
+                                font-weight: bold;
+                                font-size: 1.1rem;
+                            }
+                            .total-row td {
+                                border-top: 2px solid #667eea;
+                                padding: 15px 12px;
+                            }
+                            .print-date {
+                                text-align: center;
+                                color: #666;
+                                margin-top: 20px;
+                                font-size: 0.9rem;
+                            }
+                            .footer {
+                                margin-top: 40px;
+                                text-align: center;
+                                color: #666;
+                                font-size: 0.9rem;
+                                border-top: 2px solid #667eea;
+                                padding-top: 20px;
+                            }
+                            @media print {
+                                body { padding: 10mm; background: white; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="company-header">
+                            <h1>SAGER</h1>
+                            <p>Votre partenaire de confiance pour tous vos besoins en boissons et gaz domestique<br>
+                            Distribution professionnelle • Vente en gros et détail</p>
+                            <p><strong>Téléphone:</strong> +229 0196466625</p>
+                            <p><strong>IFU:</strong> 0202586942320</p>
+                        </div>
+
+                        <div class="transaction-card">
+                            <h2>REMISE DE PRODUITS AVEC EMBALLAGES</h2>
+                            
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Client:</span>
+                                    <span class="info-value">${transaction.client_name}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Référence:</span>
+                                    <span class="info-value">${transaction.reference}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Date de remise:</span>
+                                    <span class="info-value">${this.formatDate(transaction.date)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Date d'impression:</span>
+                                    <span class="info-value">${now}</span>
+                                </div>
+                            </div>
+
+                            <h3 style="color: #333; margin-bottom: 10px;">Détails des Produits</h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th class="qty-column">Qté Remise</th>
+                                        <th class="qty-column">Qté Retournée</th>
+                                        <th class="qty-column">En Attente</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                let totalGiven = 0;
+                let totalReturned = 0;
+
+                products.forEach((product) => {
+                    const pending =
+                        parseFloat(product.quantity_given) -
+                        parseFloat(product.quantity_returned);
+                    totalGiven += parseFloat(product.quantity_given);
+                    totalReturned += parseFloat(product.quantity_returned);
+
+                    html += `
+                        <tr>
+                            <td>${product.product_name}</td>
+                            <td class="qty-column">${product.quantity_given}</td>
+                            <td class="qty-column">${product.quantity_returned}</td>
+                            <td class="qty-column">${pending.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+
+                const totalPending = (totalGiven - totalReturned).toFixed(2);
+                html += `
+                        <tr class="total-row">
+                            <td>TOTAL</td>
+                            <td class="qty-column">${totalGiven.toFixed(2)}</td>
+                            <td class="qty-column">${totalReturned.toFixed(2)}</td>
+                            <td class="qty-column">${totalPending}</td>
+                        </tr>
+                            </tbody>
+                        </table>
+                        </div>
+
+                        <div class="footer">
+                            <p>Merci de votre confiance</p>
+                            <p>Rapport généré avec l'application SagerMarket</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                return html;
             },
         },
     };
@@ -2191,6 +2502,52 @@
         width: 100%;
     }
 
+    .date-filters-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 10px 0;
+    }
+
+    .date-filter-label {
+        font-weight: 500;
+        color: #333;
+        font-size: 14px;
+    }
+
+    .date-input {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+    }
+
+    .date-separator {
+        color: #666;
+        font-weight: 500;
+    }
+
+    .btn-clear-dates {
+        padding: 8px 12px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 14px;
+        transition: background 0.2s;
+    }
+
+    .btn-clear-dates:hover {
+        background: #c82333;
+    }
+
     .action-buttons {
         display: flex;
         gap: 10px;
@@ -2258,7 +2615,7 @@
     }
 
     .products-table thead {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #667eea;
         color: white;
     }
 
@@ -3038,20 +3395,100 @@
             padding: 10px;
         }
 
-        .products-table th,
+        .products-table {
+            font-size: 12px;
+        }
+
+        .products-table th {
+            display: none;
+        }
+
+        .products-table tbody tr {
+            display: block;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
         .products-table td {
-            padding: 8px 4px;
+            display: block;
+            text-align: right;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+            padding-left: 50%;
+        }
+
+        .products-table td[data-label]:before {
+            content: attr(data-label);
+            position: absolute;
+            left: 10px;
+            font-weight: 600;
+            color: #667eea;
+            text-align: left;
+        }
+
+        .products-table td:first-child {
+            background: #f9f9f9;
+            font-weight: 600;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .products-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .row-complete {
+            border-left: none;
+            border-top: 4px solid #28a745;
+        }
+
+        .row-partial {
+            border-left: none;
+            border-top: 4px solid #ffc107;
+        }
+
+        .row-pending {
+            border-left: none;
+            border-top: 4px solid #dc3545;
+        }
+
+        .qty-center {
+            text-align: right !important;
+        }
+
+        .pending-qty {
+            font-weight: bold;
+            color: #dc3545;
+        }
+
+        .reference {
+            font-family: monospace;
             font-size: 11px;
         }
 
         .actions-cell {
+            display: flex;
             flex-direction: row;
-            gap: 3px;
+            gap: 5px;
+            text-align: right;
+            padding-left: 50%;
+        }
+
+        .actions-cell[data-label]:before {
+            left: 10px;
         }
 
         .btn-small {
             padding: 5px 8px;
-            font-size: 11px;
+            font-size: 10px;
+            flex: 1;
+            min-width: 40px;
+        }
+
+        .product-count-badge {
+            display: inline-block;
         }
 
         .modal-container {
@@ -3098,15 +3535,104 @@
         .quantity-input-wrapper {
             width: 100%;
         }
+    }
 
-        .quantity-field {
-            flex: 1;
+    @media (max-width: 480px) {
+        .main-content {
+            padding: 8px;
+        }
+
+        .header-section {
+            padding: 12px;
+        }
+
+        .section-header h2 {
+            font-size: 16px;
+        }
+
+        .controls-section {
+            padding: 12px;
+        }
+
+        .search-filters {
+            gap: 10px;
+        }
+
+        .search-input {
+            padding: 8px 35px 8px 12px;
+            font-size: 13px;
+        }
+
+        .select-filter {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .products-table {
+            font-size: 11px;
+        }
+
+        .products-table td {
+            padding: 8px;
+            padding-left: 45%;
+        }
+
+        .products-table td[data-label]:before {
+            font-size: 11px;
+            left: 8px;
+        }
+
+        .btn-small {
+            padding: 4px 6px;
+            font-size: 9px;
+            min-width: 35px;
+        }
+
+        .modal-header h5 {
+            font-size: 16px;
+        }
+
+        .modal-body {
+            padding: 15px;
+        }
+
+        .modal-footer {
+            gap: 8px;
+            padding: 15px;
+            flex-direction: column;
+        }
+
+        .modal-footer button {
             width: 100%;
         }
 
+        .form-control {
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+
+        .product-line-header {
+            gap: 8px;
+        }
+
         .product-quantities {
-            flex-direction: column;
+            flex-wrap: wrap;
             gap: 5px;
         }
+
+        .qty-badge {
+            padding: 3px 8px;
+            font-size: 11px;
+        }
+    }
+
+    .quantity-field {
+        flex: 1;
+        width: 100%;
+    }
+
+    .product-quantities {
+        flex-direction: column;
+        gap: 5px;
     }
 </style>

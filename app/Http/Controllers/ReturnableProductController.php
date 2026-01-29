@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Client;
 use Illuminate\Support\Facades\DB;
+use App\Models\Notification;
+use App\Models\Product;
+use App\Models\Stock;
 
 
 class ReturnableProductController extends Controller
@@ -24,6 +27,7 @@ class ReturnableProductController extends Controller
     }
 
 
+    //enregistrer une remise
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -38,21 +42,58 @@ class ReturnableProductController extends Controller
         DB::beginTransaction();
 
         try {
+            // Client
+            $client = Client::findOrFail($data['client_id']);
+
             // 1️⃣ Création de la remise
             $operation = ReturnableProduct::create([
                 'client_id' => $data['client_id'],
-                'date' => $data['date'],
-                'comment' => $data['comment'] ?? null,
+                'date'      => $data['date'],
+                'comment'   => $data['comment'] ?? null,
+                'status'    => 'Fait', // ✅ ajout du statut
             ]);
 
-            // 2️⃣ Enregistrement des produits remis
+            $notifications = [];
+
+            // 2️⃣ Produits remis au client
             foreach ($data['items'] as $item) {
+
+                $product  = Product::lockForUpdate()->findOrFail($item['product_id']);
+                $quantity = round($item['quantity_given'], 2);
+
+                // Table pivot métier
                 ReturnableProductsList::create([
                     'returnable_product_id' => $operation->id,
-                    'product_id' => $item['product_id'],
-                    'quantity_given' => round($item['quantity_given'], 2),
+                    'product_id'           => $product->id,
+                    'quantity_given'       => $quantity, // remis au client
+                    'quantity_returned'    => 0,         // rien encore retourné
                 ]);
+
+                // Mise à jour stock
+                $initialStock = $product->quantity;
+                $product->quantity -= $quantity;
+                $product->save();
+
+                // Mouvement de stock
+                Stock::create([
+                    'date'          => now()->toDateString(),
+                    'initial_stock' => $initialStock,
+                    'label'         => 'Remise produits retournables – client ' . $client->name,
+                    'quantity'      => $quantity,
+                    'final_stock'   => $product->quantity,
+                    'product_id'    => $product->id,
+                    'product_name'  => $product->name,
+                ]);
+
+                $notifications[] = $product->name . ' (+' . $quantity . ')';
             }
+
+            // 3️⃣ Notification
+            Notification::create([
+                'description' =>
+                'Remise produits retournables – Client : ' . $client->name . ' : ' .
+                    implode(', ', $notifications),
+            ]);
 
             DB::commit();
 
@@ -72,6 +113,87 @@ class ReturnableProductController extends Controller
         }
     }
 
+    //Annuler une remise
+    public function cancel($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $operation = ReturnableProduct::with(['client'])
+                ->lockForUpdate()
+                ->findOrFail($id);
+
+            if ($operation->status === 'Annulé') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cette remise est déjà annulée'
+                ], 400);
+            }
+
+            $client = $operation->client;
+            $notifications = [];
+
+            // 🔥 On récupère les lignes métier directement
+            $items = ReturnableProductsList::where('returnable_product_id', $operation->id)->get();
+
+            foreach ($items as $item) {
+
+                $given    = (float) $item->quantity_given;
+                $returned = (float) $item->quantity_returned;
+
+                $correction = round($given - $returned, 2);
+
+                if ($correction > 0) {
+
+                    $product = Product::lockForUpdate()->findOrFail($item->product_id);
+
+                    $initialStock = $product->quantity;
+                    $product->quantity += $correction;
+                    $product->save();
+
+                    Stock::create([
+                        'date'          => now()->toDateString(),
+                        'initial_stock' => $initialStock,
+                        'label'         => 'Annulation remise produits retournables – client ' . $client->name,
+                        'quantity'      => $correction,
+                        'final_stock'   => $product->quantity,
+                        'product_id'    => $product->id,
+                        'product_name'  => $product->name,
+                    ]);
+
+                    $notifications[] = $product->name . ' (+' . $correction . ')';
+                }
+            }
+
+            // ✅ Mise à jour du statut
+            $operation->status = 'Annulé';
+            $operation->save();
+
+            // Notification
+            Notification::create([
+                'description' =>
+                'Annulation remise produits retournables – Client : ' . $client->name .
+                    (!empty($notifications) ? ' : ' . implode(', ', $notifications) : ''),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Remise annulée avec succès'
+            ]);
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l’annulation',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
 
     public function getReturnableProductsTransactions()
@@ -83,6 +205,7 @@ class ReturnableProductController extends Controller
                 'client_id',
                 'date',
                 'reference',
+                'status',
                 'comment',
                 'created_at',
                 'updated_at'
@@ -95,6 +218,11 @@ class ReturnableProductController extends Controller
             return $item;
         });
 
-        return response()->json($transactions);
+        return response()->json(
+            $transactions,
+            200,
+            [],
+            JSON_UNESCAPED_UNICODE
+        );
     }
 }

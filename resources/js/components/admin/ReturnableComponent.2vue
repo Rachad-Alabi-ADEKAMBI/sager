@@ -1207,7 +1207,7 @@
                         this.fetchAllProducts(),
                         this.fetchClients(),
                     ]);
-                    this.calculateReturnedQuantities();
+                    console.log('[v0] All data fetched successfully');
                 } catch (error) {
                     console.error('[v0] Error fetching data:', error);
                 }
@@ -1219,10 +1219,7 @@
                         `${this.BASE_URL}/returnable-products-transactions`,
                     );
                     this.transactions = response.data;
-                    console.log(
-                        '[v0] Transactions fetched:',
-                        this.transactions,
-                    );
+                    console.log('[v0] Transactions loaded:', this.transactions);
                 } catch (error) {
                     console.error('[v0] Error fetching transactions:', error);
                 }
@@ -1235,7 +1232,7 @@
                     );
                     this.transactionProducts = response.data;
                     console.log(
-                        '[v0] Transaction products fetched:',
+                        '[v0] Transaction products loaded (with quantity_given and quantity_returned from API):',
                         this.transactionProducts,
                     );
                 } catch (error) {
@@ -1252,6 +1249,10 @@
                         `${this.BASE_URL}/returnable-products-returns`,
                     );
                     this.stockReturns = response.data;
+                    console.log(
+                        '[v0] Stock returns loaded:',
+                        this.stockReturns,
+                    );
                 } catch (error) {
                     console.error('[v0] Error fetching stock returns:', error);
                 }
@@ -1281,41 +1282,6 @@
                 } catch (error) {
                     console.error('[v0] Error fetching clients:', error);
                 }
-            },
-
-            calculateReturnedQuantities() {
-                console.log('[v0] Calculating returned quantities...');
-                console.log(
-                    '[v0] Transaction products:',
-                    this.transactionProducts,
-                );
-                console.log('[v0] Stock returns:', this.stockReturns);
-
-                // Pour chaque produit de transaction, calculer la quantité totale retournée
-                this.transactionProducts.forEach((product) => {
-                    // Trouver tous les retours pour ce produit spécifique (ligne dans returnable_products_list)
-                    // IMPORTANT: filtrer par product.id (qui est l'id dans returnable_products_list)
-                    const returnsForThisProduct = this.stockReturns.filter(
-                        (r) => r.returnable_product_id === product.id,
-                    );
-
-                    const totalReturned = returnsForThisProduct.reduce(
-                        (sum, r) =>
-                            sum + (parseFloat(r.quantity_returned) || 0),
-                        0,
-                    );
-
-                    // Mettre à jour la quantité retournée dans l'objet product
-                    product.quantity_returned = totalReturned;
-
-                    console.log(
-                        `[v0] Product ID ${product.id} (${this.getProductName(product.product_id)}): Given=${product.quantity_given}, Returned=${totalReturned}, Pending=${product.quantity_given - totalReturned}`,
-                    );
-                    console.log(
-                        `[v0]   - Returns found for this product:`,
-                        returnsForThisProduct,
-                    );
-                });
             },
 
             // Filter & Search Methods
@@ -1877,10 +1843,15 @@
                     items: products,
                 };
 
-                console.group('[SUBMIT REMISE]');
-                console.log('Route:', `${this.BASE_URL}/returnable-products`);
-                console.log('Payload:', payload);
-                console.groupEnd();
+                // 🔹 LOG de débogage
+                console.log(
+                    '[DEBUG] Route:',
+                    `${this.BASE_URL}/returnable-products`,
+                );
+                console.log(
+                    '[DEBUG] Payload envoyé:',
+                    JSON.stringify(payload, null, 2),
+                );
 
                 try {
                     const response = await axios.post(
@@ -1888,9 +1859,8 @@
                         payload,
                     );
 
-                    console.group('[RESPONSE REMISE]');
-                    console.log(response.data);
-                    console.groupEnd();
+                    // 🔹 LOG de la réponse
+                    console.log('[DEBUG] Réponse API:', response.data);
 
                     if (response.data.success) {
                         alert('Remise enregistrée');
@@ -1900,11 +1870,13 @@
                         alert(response.data.message || 'Erreur serveur');
                     }
                 } catch (error) {
-                    console.error('[ERROR REMISE]', error.response || error);
+                    console.error(
+                        '[ERROR REMISE]',
+                        error.response?.data || error,
+                    );
                     alert(error.response?.data?.message || error.message);
                 }
             },
-
             async submitReturn() {
                 if (!this.canSubmitReturn) {
                     alert(
@@ -2018,11 +1990,231 @@
             },
 
             printAll() {
-                console.log('[v0] Print all transactions');
+                const printWindow = window.open('', '', 'height=600,width=900');
+                const transactionsHtml = this.generatePrintHtml(
+                    this.paginatedTransactions,
+                );
+                printWindow.document.write(transactionsHtml);
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 250);
             },
 
             printTransaction(transaction) {
-                console.log('[v0] Print transaction:', transaction);
+                const products = this.getProductsForTransaction(transaction.id);
+                const printWindow = window.open('', '', 'height=600,width=900');
+                const html = this.generateTransactionPrintHtml(
+                    transaction,
+                    products,
+                );
+                printWindow.document.write(html);
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 250);
+            },
+
+            generatePrintHtml(transactions) {
+                let html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Produits avec Emballages - Impression</title>
+                        <style>
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            h1 { text-align: center; margin-bottom: 20px; color: #333; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                            th { background: #667eea; color: white; font-weight: bold; }
+                            tr:hover { background: #f5f5f5; }
+                            .status-badge { 
+                                padding: 4px 8px; 
+                                border-radius: 4px; 
+                                font-size: 12px; 
+                                font-weight: bold;
+                            }
+                            .status-pending { background: #fff3cd; color: #856404; }
+                            .status-partial { background: #cfe2ff; color: #084298; }
+                            .status-complete { background: #d1e7dd; color: #0f5132; }
+                            .qty-center { text-align: center; }
+                            @media print {
+                                body { padding: 10px; }
+                                table { page-break-inside: avoid; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>📦 Gestion des Produits avec Emballages</h1>
+                        <p style="text-align: center; margin-bottom: 20px;">
+                            Remise et retour des produits consignés - ${new Date().toLocaleDateString('fr-FR')}
+                        </p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Référence</th>
+                                    <th>Date Remise</th>
+                                    <th>Produits</th>
+                                    <th class="qty-center">Qté Remise</th>
+                                    <th class="qty-center">Qté Retournée</th>
+                                    <th class="qty-center">En Attente</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                transactions.forEach((trans) => {
+                    const status = this.getTransactionStatusText(trans);
+                    const statusClass = status.includes('Non')
+                        ? 'status-pending'
+                        : status.includes('Partiellement')
+                          ? 'status-partial'
+                          : 'status-complete';
+                    html += `
+                        <tr>
+                            <td><strong>${trans.client_name}</strong></td>
+                            <td>${trans.reference}</td>
+                            <td>${this.formatDate(trans.date)}</td>
+                            <td>${this.getProductCountForTransaction(trans.id)} produit(s)</td>
+                            <td class="qty-center">${this.getTotalQuantityGiven(trans.id)}</td>
+                            <td class="qty-center">${this.getTotalQuantityReturned(trans.id)}</td>
+                            <td class="qty-center">${this.getTotalQuantityPending(trans.id)}</td>
+                            <td><span class="status-badge ${statusClass}">${status}</span></td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </body>
+                    </html>
+                `;
+                return html;
+            },
+
+            generateTransactionPrintHtml(transaction, products) {
+                const now = new Date().toLocaleDateString('fr-FR');
+                let html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Détail Remise - ${transaction.reference}</title>
+                        <style>
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            .header { 
+                                display: flex; 
+                                justify-content: space-between; 
+                                margin-bottom: 30px;
+                                border-bottom: 2px solid #667eea;
+                                padding-bottom: 15px;
+                            }
+                            .company-info { }
+                            .transaction-info { text-align: right; }
+                            h1 { color: #333; margin-bottom: 10px; }
+                            h2 { color: #667eea; margin-top: 20px; margin-bottom: 10px; font-size: 16px; }
+                            .info-row { 
+                                display: flex; 
+                                margin-bottom: 8px;
+                                gap: 20px;
+                            }
+                            .info-label { font-weight: bold; min-width: 120px; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; margin-top: 10px; }
+                            th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+                            th { background: #667eea; color: white; font-weight: bold; }
+                            tr:hover { background: #f9f9f9; }
+                            .qty-column { text-align: center; }
+                            .total-row { font-weight: bold; background: #f0f0f0; }
+                            .print-note { 
+                                margin-top: 20px; 
+                                padding: 10px; 
+                                background: #f5f5f5; 
+                                border-left: 4px solid #667eea;
+                                font-size: 12px;
+                            }
+                            @media print {
+                                body { padding: 10px; }
+                                .header { page-break-inside: avoid; }
+                                table { page-break-inside: avoid; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <div class="company-info">
+                                <h1>📦 Remise de Produits</h1>
+                                <p>Gestion des produits consignés</p>
+                            </div>
+                            <div class="transaction-info">
+                                <p><strong>Date d'impression:</strong> ${now}</p>
+                            </div>
+                        </div>
+
+                        <h2>Informations de la Transaction</h2>
+                        <div class="info-row">
+                            <div><span class="info-label">Client:</span> <strong>${transaction.client_name}</strong></div>
+                            <div><span class="info-label">Référence:</span> <strong>${transaction.reference}</strong></div>
+                        </div>
+                        <div class="info-row">
+                            <div><span class="info-label">Date remise:</span> <strong>${this.formatDate(transaction.date)}</strong></div>
+                        </div>
+
+                        <h2>Détails des Produits</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th class="qty-column">Quantité Remise</th>
+                                    <th class="qty-column">Quantité Retournée</th>
+                                    <th class="qty-column">En Attente</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                let totalGiven = 0;
+                let totalReturned = 0;
+
+                products.forEach((product) => {
+                    const pending =
+                        parseFloat(product.quantity_given) -
+                        parseFloat(product.quantity_returned);
+                    totalGiven += parseFloat(product.quantity_given);
+                    totalReturned += parseFloat(product.quantity_returned);
+
+                    html += `
+                        <tr>
+                            <td>${product.product_name}</td>
+                            <td class="qty-column">${product.quantity_given}</td>
+                            <td class="qty-column">${product.quantity_returned}</td>
+                            <td class="qty-column">${pending.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+
+                const totalPending = (totalGiven - totalReturned).toFixed(2);
+                html += `
+                        <tr class="total-row">
+                            <td>TOTAL</td>
+                            <td class="qty-column">${totalGiven.toFixed(2)}</td>
+                            <td class="qty-column">${totalReturned.toFixed(2)}</td>
+                            <td class="qty-column">${totalPending}</td>
+                        </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="print-note">
+                            <p><strong>Note:</strong> Ce document a été généré depuis le système de gestion des produits consignés.</p>
+                            <p>Assurez-vous que tous les produits sont correctement enregistrés avant d'imprimer.</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                return html;
             },
         },
     };
@@ -3038,20 +3230,100 @@
             padding: 10px;
         }
 
-        .products-table th,
+        .products-table {
+            font-size: 12px;
+        }
+
+        .products-table th {
+            display: none;
+        }
+
+        .products-table tbody tr {
+            display: block;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
         .products-table td {
-            padding: 8px 4px;
+            display: block;
+            text-align: right;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+            padding-left: 50%;
+        }
+
+        .products-table td[data-label]:before {
+            content: attr(data-label);
+            position: absolute;
+            left: 10px;
+            font-weight: 600;
+            color: #667eea;
+            text-align: left;
+        }
+
+        .products-table td:first-child {
+            background: #f9f9f9;
+            font-weight: 600;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .products-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .row-complete {
+            border-left: none;
+            border-top: 4px solid #28a745;
+        }
+
+        .row-partial {
+            border-left: none;
+            border-top: 4px solid #ffc107;
+        }
+
+        .row-pending {
+            border-left: none;
+            border-top: 4px solid #dc3545;
+        }
+
+        .qty-center {
+            text-align: right !important;
+        }
+
+        .pending-qty {
+            font-weight: bold;
+            color: #dc3545;
+        }
+
+        .reference {
+            font-family: monospace;
             font-size: 11px;
         }
 
         .actions-cell {
+            display: flex;
             flex-direction: row;
-            gap: 3px;
+            gap: 5px;
+            text-align: right;
+            padding-left: 50%;
+        }
+
+        .actions-cell[data-label]:before {
+            left: 10px;
         }
 
         .btn-small {
             padding: 5px 8px;
-            font-size: 11px;
+            font-size: 10px;
+            flex: 1;
+            min-width: 40px;
+        }
+
+        .product-count-badge {
+            display: inline-block;
         }
 
         .modal-container {
@@ -3098,15 +3370,104 @@
         .quantity-input-wrapper {
             width: 100%;
         }
+    }
 
-        .quantity-field {
-            flex: 1;
+    @media (max-width: 480px) {
+        .main-content {
+            padding: 8px;
+        }
+
+        .header-section {
+            padding: 12px;
+        }
+
+        .section-header h2 {
+            font-size: 16px;
+        }
+
+        .controls-section {
+            padding: 12px;
+        }
+
+        .search-filters {
+            gap: 10px;
+        }
+
+        .search-input {
+            padding: 8px 35px 8px 12px;
+            font-size: 13px;
+        }
+
+        .select-filter {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .products-table {
+            font-size: 11px;
+        }
+
+        .products-table td {
+            padding: 8px;
+            padding-left: 45%;
+        }
+
+        .products-table td[data-label]:before {
+            font-size: 11px;
+            left: 8px;
+        }
+
+        .btn-small {
+            padding: 4px 6px;
+            font-size: 9px;
+            min-width: 35px;
+        }
+
+        .modal-header h5 {
+            font-size: 16px;
+        }
+
+        .modal-body {
+            padding: 15px;
+        }
+
+        .modal-footer {
+            gap: 8px;
+            padding: 15px;
+            flex-direction: column;
+        }
+
+        .modal-footer button {
             width: 100%;
         }
 
+        .form-control {
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+
+        .product-line-header {
+            gap: 8px;
+        }
+
         .product-quantities {
-            flex-direction: column;
+            flex-wrap: wrap;
             gap: 5px;
         }
+
+        .qty-badge {
+            padding: 3px 8px;
+            font-size: 11px;
+        }
+    }
+
+    .quantity-field {
+        flex: 1;
+        width: 100%;
+    }
+
+    .product-quantities {
+        flex-direction: column;
+        gap: 5px;
     }
 </style>

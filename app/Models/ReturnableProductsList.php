@@ -2,29 +2,29 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ReturnableProductsList extends Model
 {
-    protected $table = 'returnable_products_list';
+    use HasFactory;
+
+    protected $table = 'returnable_products_list'; // attention au pluriel
 
     protected $fillable = [
         'returnable_product_id',
         'product_id',
         'quantity_given',
+        'quantity_returned',
     ];
-
-    protected $casts = [
-        'quantity_given' => 'decimal:2',
-    ];
-
-    public function operation()
-    {
-        return $this->belongsTo(\App\Models\ReturnableProduct::class, 'returnable_product_id');
-    }
 
     public function product()
     {
-        return $this->belongsTo(\App\Models\Product::class);
+        return $this->belongsTo(Product::class);
+    }
+
+    public function returnableProduct()
+    {
+        return $this->belongsTo(ReturnableProduct::class);
     }
 }

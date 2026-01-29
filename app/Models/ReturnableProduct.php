@@ -11,6 +11,7 @@ class ReturnableProduct extends Model
         'client_id',
         'date',
         'comment',
+        'status'
     ];
 
     protected static function booted()

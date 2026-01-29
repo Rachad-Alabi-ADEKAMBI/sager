@@ -191,17 +191,21 @@ Route::get('/returnableProducts', [ReturnableProductController::class, 'index'])
 Route::post('/returnable-products', [ReturnableProductController::class, 'store']);
 
 //enregistrement dans l'historique lors de la remise
+/*
 Route::post('/stocks-returnable-products', [
     StocksReturnableProductController::class,
     'store'
 ]);
+
 
 //enregistrementde chaque produits remis lors de la remise dans l'historique
 Route::post('/returnable-products/items', [
     ReturnableProductsListController::class,
     'store'
 ]);
-    
+
+*/
+
 //consulter la liste des remises aux clients
 Route::get('/returnable-products-transactions', [ReturnableProductController::class, 'getReturnableProductsTransactions'])
     ->name('returnableProductsTransactions');;
@@ -217,6 +221,10 @@ Route::get('/returnable-products-returns', [StocksReturnableProductController::c
 //enregistrer un retour
 Route::post('/returnable-products-returns', [StocksReturnableProductController::class, 'store'])
     ->name('stocksReturnableProducts.store');
+
+//annuler une remise
+Route::post('/returnable-products-cancel/{id}', [ReturnableProductController::class, 'cancel'])
+    ->name('returnableProducts.cancel');
 
 
 //proformas

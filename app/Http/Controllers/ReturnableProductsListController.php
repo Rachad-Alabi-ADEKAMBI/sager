@@ -57,14 +57,22 @@ class ReturnableProductsListController extends Controller
     public function index()
     {
         $list = ReturnableProductsList::query()
-            ->orderBy('created_at', 'desc')
+            ->join(
+                'products',
+                'products.id',
+                '=',
+                'returnable_products_list.product_id'
+            )
+            ->orderBy('returnable_products_list.created_at', 'desc')
             ->get([
-                'id',
-                'returnable_product_id',
-                'product_id',
-                'quantity_given',
-                'created_at',
-                'updated_at'
+                'returnable_products_list.id',
+                'returnable_products_list.returnable_product_id',
+                'returnable_products_list.product_id',
+                'products.name as product_name',
+                'returnable_products_list.quantity_given',
+                'returnable_products_list.quantity_returned',
+                'returnable_products_list.created_at',
+                'returnable_products_list.updated_at',
             ]);
 
         return response()->json($list);
