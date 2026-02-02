@@ -23,6 +23,13 @@
          </li>
 
          <li>
+             <a href="{{ url('/proformas') }}" class="{{ request()->is('proformas') ? 'active' : '' }}">
+                 <i class="fas fa-file-invoice"></i> Factures Proformas
+             </a>
+         </li>
+
+
+         <li>
              <a href="{{ route('deposits') }}" class="{{ request()->routeIs('deposits.*') ? 'active' : '' }}">
                  <i class="fas fa-warehouse"></i> Consignations
              </a>
@@ -34,11 +41,6 @@
              </a>
          </li>
 
-         <li>
-             <a href="{{ url('/proformas') }}" class="{{ request()->is('proformas') ? 'active' : '' }}">
-                 <i class="fas fa-file-invoice"></i> Factures Proformas
-             </a>
-         </li>
 
          <li>
              <a href="{{ route('products') }}" class="{{ request()->routeIs('products') ? 'active' : '' }}">

@@ -3,7 +3,7 @@
         <div class="claims-header">
             <h2>Gestion des Créances</h2>
 
-            <!-- Improved responsive statistics section -->
+            <!-- Improved responsive statistics section  -->
             <div class="statistics-section">
                 <div class="stat-card">
                     <!-- Afficher uniquement le total des créances en cours (non soldées) -->
@@ -147,7 +147,7 @@
                                     {{
                                         formatAmount(
                                             claim.debt_amount -
-                                                getClaimPaidAmount(claim.id)
+                                                getClaimPaidAmount(claim.id),
                                         )
                                     }}
                                     FCFA
@@ -166,25 +166,25 @@
                                             claim.debt_amount
                                                 ? '#d4edda'
                                                 : getClaimPaidAmount(claim.id) >
-                                                  0
-                                                ? '#fff3cd'
-                                                : '#f8d7da',
+                                                    0
+                                                  ? '#fff3cd'
+                                                  : '#f8d7da',
                                         color:
                                             getClaimPaidAmount(claim.id) >=
                                             claim.debt_amount
                                                 ? '#155724'
                                                 : getClaimPaidAmount(claim.id) >
-                                                  0
-                                                ? '#856404'
-                                                : '#721c24',
+                                                    0
+                                                  ? '#856404'
+                                                  : '#721c24',
                                         border:
                                             getClaimPaidAmount(claim.id) >=
                                             claim.debt_amount
                                                 ? '1px solid #c3e6cb'
                                                 : getClaimPaidAmount(claim.id) >
-                                                  0
-                                                ? '1px solid #ffeaa7'
-                                                : '1px solid #f5c6cb',
+                                                    0
+                                                  ? '1px solid #ffeaa7'
+                                                  : '1px solid #f5c6cb',
                                     }"
                                 >
                                     {{
@@ -192,8 +192,8 @@
                                         claim.debt_amount
                                             ? 'Soldé'
                                             : getClaimPaidAmount(claim.id) > 0
-                                            ? 'Partiel'
-                                            : 'Impayé'
+                                              ? 'Partiel'
+                                              : 'Impayé'
                                     }}
                                 </span>
                             </td>
@@ -316,7 +316,7 @@
                                     {{
                                         formatAmount(
                                             claim.debt_amount -
-                                                getClaimPaidAmount(claim.id)
+                                                getClaimPaidAmount(claim.id),
                                         )
                                     }}
                                     FCFA
@@ -335,25 +335,25 @@
                                             claim.debt_amount
                                                 ? '#d4edda'
                                                 : getClaimPaidAmount(claim.id) >
-                                                  0
-                                                ? '#fff3cd'
-                                                : '#f8d7da',
+                                                    0
+                                                  ? '#fff3cd'
+                                                  : '#f8d7da',
                                         color:
                                             getClaimPaidAmount(claim.id) >=
                                             claim.debt_amount
                                                 ? '#155724'
                                                 : getClaimPaidAmount(claim.id) >
-                                                  0
-                                                ? '#856404'
-                                                : '#721c24',
+                                                    0
+                                                  ? '#856404'
+                                                  : '#721c24',
                                         border:
                                             getClaimPaidAmount(claim.id) >=
                                             claim.debt_amount
                                                 ? '1px solid #c3e6cb'
                                                 : getClaimPaidAmount(claim.id) >
-                                                  0
-                                                ? '1px solid #ffeaa7'
-                                                : '1px solid #f5c6cb',
+                                                    0
+                                                  ? '1px solid #ffeaa7'
+                                                  : '1px solid #f5c6cb',
                                     }"
                                 >
                                     {{
@@ -361,8 +361,8 @@
                                         claim.debt_amount
                                             ? 'Soldé'
                                             : getClaimPaidAmount(claim.id) > 0
-                                            ? 'Partiel'
-                                            : 'Impayé'
+                                              ? 'Partiel'
+                                              : 'Impayé'
                                     }}
                                 </span>
                             </td>
@@ -453,7 +453,7 @@
                             Payé:
                             {{
                                 formatAmount(
-                                    getClaimPaidAmount(selectedClaim.id)
+                                    getClaimPaidAmount(selectedClaim.id),
                                 )
                             }}
                             FCFA
@@ -463,7 +463,7 @@
                             {{
                                 formatAmount(
                                     selectedClaim.debt_amount -
-                                        getClaimPaidAmount(selectedClaim.id)
+                                        getClaimPaidAmount(selectedClaim.id),
                                 )
                             }}
                             FCFA
@@ -493,7 +493,7 @@
                     <tbody>
                         <tr
                             v-for="(payment, index) in getPaymentsForClaim(
-                                selectedClaim.id
+                                selectedClaim.id,
                             )"
                             :key="payment.id"
                         >
@@ -963,7 +963,7 @@
                     console.error('[v0] Erreur lors du chargement:', error);
                     alert(
                         'Erreur lors du chargement des données: ' +
-                            error.message
+                            error.message,
                     );
                     this.showClaims = false;
                 }
@@ -995,7 +995,7 @@
 
                 const total = claimPayments.reduce(
                     (sum, p) => sum + parseFloat(p.amount),
-                    0
+                    0,
                 );
 
                 if (claimPayments.length > 0) {
@@ -1019,12 +1019,12 @@
             getPaymentsForClaim(claimId) {
                 const normalizedClaimId = Number(claimId);
                 const payments = this.payments.filter(
-                    (p) => Number(p.claim_id) === normalizedClaimId
+                    (p) => Number(p.claim_id) === normalizedClaimId,
                 );
 
                 console.log(
                     `[v0] Récupération paiements pour créance ${normalizedClaimId}:`,
-                    payments.length
+                    payments.length,
                 );
 
                 return payments;
@@ -1044,7 +1044,7 @@
 
             openAddClaimModal() {
                 console.log(
-                    `[v0] Action: Ouverture du modal d'ajout de créance`
+                    `[v0] Action: Ouverture du modal d'ajout de créance`,
                 );
                 this.showAddClaimModal = true;
             },
@@ -1060,7 +1060,7 @@
 
             openAddClientModal() {
                 console.log(
-                    `[v0] Action: Ouverture du modal d'ajout de client`
+                    `[v0] Action: Ouverture du modal d'ajout de client`,
                 );
                 this.showAddClientModal = true;
             },
@@ -1076,7 +1076,7 @@
             async addClientForm() {
                 console.log("[v0] === AJOUT D'UN CLIENT ===");
                 console.log(
-                    "[v0] Action: Soumission du formulaire d'ajout de client"
+                    "[v0] Action: Soumission du formulaire d'ajout de client",
                 );
                 try {
                     const API_BASE = window.location.origin;
@@ -1089,7 +1089,7 @@
 
                     const response = await axios.post(
                         `${API_BASE}/clients`,
-                        clientData
+                        clientData,
                     );
                     console.log('[v0] Réponse:', response.data);
 
@@ -1102,7 +1102,7 @@
                     console.error('[v0] Erreur ajout client:', error);
                     alert(
                         "Erreur lors de l'ajout du client: " +
-                            (error.response?.data?.message || error.message)
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },
@@ -1110,7 +1110,7 @@
             async addClaimForm() {
                 console.log("[v0] === AJOUT D'UNE CRÉANCE ===");
                 console.log(
-                    "[v0] Action: Soumission du formulaire d'ajout de créance"
+                    "[v0] Action: Soumission du formulaire d'ajout de créance",
                 );
                 try {
                     const API_BASE = window.location.origin;
@@ -1125,7 +1125,7 @@
 
                     const response = await axios.post(
                         `${API_BASE}/claims/add`,
-                        claimData
+                        claimData,
                     );
                     console.log('[v0] Réponse:', response.data);
 
@@ -1138,14 +1138,14 @@
                     console.error('[v0] Erreur ajout créance:', error);
                     alert(
                         "Erreur lors de l'ajout de la créance: " +
-                            (error.response?.data?.message || error.message)
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },
 
             openAddPaymentModal(claim) {
                 console.log(
-                    `[v0] Action: Ouverture du modal d'ajout de paiement`
+                    `[v0] Action: Ouverture du modal d'ajout de paiement`,
                 );
                 console.log(`[v0] Créance sélectionnée:`, claim);
                 this.selectedClaim = claim;
@@ -1165,7 +1165,7 @@
             async addPaymentForm() {
                 console.log("[v0] === AJOUT D'UN PAIEMENT ===");
                 console.log(
-                    "[v0] Action: Soumission du formulaire d'ajout de paiement"
+                    "[v0] Action: Soumission du formulaire d'ajout de paiement",
                 );
                 console.log('[v0] Créance sélectionnée:', this.selectedClaim);
                 console.log('[v0] Données du paiement:', this.newPayment);
@@ -1184,7 +1184,7 @@
 
                     const response = await axios.post(
                         `${API_BASE}/claims/pay`,
-                        paymentData
+                        paymentData,
                     );
 
                     console.log('[v0] Réponse du serveur:', response.data);
@@ -1197,26 +1197,26 @@
                     await new Promise((resolve) => setTimeout(resolve, 300));
 
                     console.log(
-                        '[v0] Rechargement des données après ajout du paiement...'
+                        '[v0] Rechargement des données après ajout du paiement...',
                     );
                     await this.fetchAllData();
 
                     console.log(
-                        '[v0] Paiement ajouté et données rechargées avec succès'
+                        '[v0] Paiement ajouté et données rechargées avec succès',
                     );
                 } catch (error) {
                     console.error('[v0] === ERREUR AJOUT PAIEMENT ===');
                     console.error('[v0] Détails erreur:', error);
                     alert(
                         "Erreur lors de l'ajout du paiement: " +
-                            (error.response?.data?.message || error.message)
+                            (error.response?.data?.message || error.message),
                     );
                 }
             },
 
             viewPaymentHistory(claim) {
                 console.log(
-                    `[v0] Action: Ouverture de l'historique des paiements`
+                    `[v0] Action: Ouverture de l'historique des paiements`,
                 );
                 console.log(`[v0] Créance sélectionnée:`, claim);
                 this.selectedClaim = claim;
@@ -1232,7 +1232,7 @@
 
             openDeleteClaimModal(claim) {
                 console.log(
-                    `[v0] Action: Ouverture du modal de suppression de créance`
+                    `[v0] Action: Ouverture du modal de suppression de créance`,
                 );
                 console.log(`[v0] Créance à supprimer:`, claim);
                 this.currentClaim = claim;
@@ -1247,7 +1247,7 @@
             async deleteClaim() {
                 console.log(`[v0] === SUPPRESSION D'UNE CRÉANCE ===`);
                 console.log(
-                    `[v0] Action: Confirmation de suppression de créance`
+                    `[v0] Action: Confirmation de suppression de créance`,
                 );
                 try {
                     const API_BASE = window.location.origin;
@@ -1273,7 +1273,7 @@
                 console.log(`[v0] Action: Impression de la liste des créances`);
                 console.log(
                     `[v0] Nombre de créances à imprimer:`,
-                    this.filteredClaims.length
+                    this.filteredClaims.length,
                 );
                 console.log(`[v0] Mode groupé:`, this.groupByClient);
 
@@ -1281,11 +1281,11 @@
 
                 const totalDebt = this.filteredClaims.reduce(
                     (sum, claim) => sum + parseFloat(claim.debt_amount),
-                    0
+                    0,
                 );
                 const totalPaid = this.filteredClaims.reduce(
                     (sum, claim) => sum + this.getClaimPaidAmount(claim.id),
-                    0
+                    0,
                 );
                 const totalRemaining = totalDebt - totalPaid;
 
@@ -1303,32 +1303,32 @@
 
                         client.claims.forEach((claim) => {
                             const paidAmount = this.getClaimPaidAmount(
-                                claim.id
+                                claim.id,
                             );
                             const remaining = claim.debt_amount - paidAmount;
                             const status =
                                 paidAmount >= claim.debt_amount
                                     ? 'Soldé'
                                     : paidAmount > 0
-                                    ? 'Partiel'
-                                    : 'Impayé';
+                                      ? 'Partiel'
+                                      : 'Impayé';
 
                             tableRows += `
                             <tr>
                                 <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDateTime(
-                                    claim.created_at
+                                    claim.created_at,
                                 )}</td>
                                 <td style="padding: 12px; border: 1px solid #ddd;">${
                                     claim.comment
                                 }</td>
                                 <td style="padding: 12px; border: 1px solid #ddd; text-align: right;"><strong>${this.formatAmount(
-                                    claim.debt_amount
+                                    claim.debt_amount,
                                 )} FCFA</strong></td>
                                 <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                    paidAmount
+                                    paidAmount,
                                 )} FCFA</td>
                                 <td style="padding: 12px; border: 1px solid #ddd; text-align: right;"><strong>${this.formatAmount(
-                                    remaining
+                                    remaining,
                                 )} FCFA</strong></td>
                                 <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${status}</td>
                             </tr>
@@ -1343,8 +1343,8 @@
                             paidAmount >= claim.debt_amount
                                 ? 'Soldé'
                                 : paidAmount > 0
-                                ? 'Partiel'
-                                : 'Impayé';
+                                  ? 'Partiel'
+                                  : 'Impayé';
 
                         tableRows += `
                         <tr>
@@ -1352,7 +1352,7 @@
                                 index + 1
                             }</td>
                             <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDateTime(
-                                claim.created_at
+                                claim.created_at,
                             )}</td>
                             <td style="padding: 12px; border: 1px solid #ddd;"><strong>${
                                 claim.client_name
@@ -1361,13 +1361,13 @@
                                 claim.comment
                             }</td>
                             <td style="padding: 12px; border: 1px solid #ddd; text-align: right;"><strong>${this.formatAmount(
-                                claim.debt_amount
+                                claim.debt_amount,
                             )} FCFA</strong></td>
                             <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                paidAmount
+                                paidAmount,
                             )} FCFA</td>
                             <td style="padding: 12px; border: 1px solid #ddd; text-align: right;"><strong>${this.formatAmount(
-                                remaining
+                                remaining,
                             )} FCFA</strong></td>
                             <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${status}</td>
                         </tr>
@@ -1409,7 +1409,7 @@
 
                     <div class="info">
                         <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
-                            'fr-FR'
+                            'fr-FR',
                         )}</p>
                         <p><strong>Nombre total de créances:</strong> ${
                             this.filteredClaims.length
@@ -1436,13 +1436,13 @@
                                     this.groupByClient ? '2' : '3'
                                 }" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAUX:</td>
                                 <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                    totalDebt
+                                    totalDebt,
                                 )} FCFA</td>
                                 <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                    totalPaid
+                                    totalPaid,
                                 )} FCFA</td>
                                 <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                    totalRemaining
+                                    totalRemaining,
                                 )} FCFA</td>
                                 <td style="padding: 12px; border: 1px solid #ddd;"></td>
                             </tr>
@@ -1464,7 +1464,7 @@
 
             printClientHistory(client) {
                 console.log(
-                    `[v0] Action: Impression de l'historique du client`
+                    `[v0] Action: Impression de l'historique du client`,
                 );
                 console.log(`[v0] Client:`, client.client_name);
                 console.log(`[v0] Nombre de créances:`, client.claims.length);
@@ -1483,20 +1483,20 @@
                             index + 1
                         }</td>
                         <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDateTime(
-                            claim.created_at
+                            claim.created_at,
                         )}</td>
                         <td style="padding: 12px; border: 1px solid #ddd;">${
                             claim.comment || '-'
                         }</td>
                         <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                            claim.debt_amount
+                            claim.debt_amount,
                         )} FCFA</td>
                         <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                            this.getClaimPaidAmount(claim.id)
+                            this.getClaimPaidAmount(claim.id),
                         )} FCFA</td>
                         <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
                             claim.debt_amount -
-                                this.getClaimPaidAmount(claim.id)
+                                this.getClaimPaidAmount(claim.id),
                         )} FCFA</td>
                         <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
                             ${
@@ -1504,12 +1504,12 @@
                                 claim.debt_amount
                                     ? '<span style="color: #155724; font-weight: 600;">Soldé</span>'
                                     : this.getClaimPaidAmount(claim.id) > 0
-                                    ? '<span style="color: #856404; font-weight: 600;">Partiel</span>'
-                                    : '<span style="color: #721c24; font-weight: 600;">Impayé</span>'
+                                      ? '<span style="color: #856404; font-weight: 600;">Partiel</span>'
+                                      : '<span style="color: #721c24; font-weight: 600;">Impayé</span>'
                             }
                         </td>
                     </tr>
-                `
+                `,
                     )
                     .join('');
 
@@ -1566,7 +1566,7 @@
                                 client.client_phone
                             }</p>
                             <p><strong>Date d'impression:</strong> ${new Date().toLocaleString(
-                                'fr-FR'
+                                'fr-FR',
                             )}</p>
                             <p><strong>Nombre de créances:</strong> ${
                                 client.claims.length
@@ -1577,19 +1577,19 @@
                             <div class="stat-box">
                                 <div class="stat-label">Total des Créances</div>
                                 <div class="stat-value">${this.formatAmount(
-                                    totalDebt
+                                    totalDebt,
                                 )} FCFA</div>
                             </div>
                             <div class="stat-box paid">
                                 <div class="stat-label">Total Payé</div>
                                 <div class="stat-value">${this.formatAmount(
-                                    totalPaid
+                                    totalPaid,
                                 )} FCFA</div>
                             </div>
                             <div class="stat-box remaining">
                                 <div class="stat-label">Total Restant</div>
                                 <div class="stat-value">${this.formatAmount(
-                                    totalRemaining
+                                    totalRemaining,
                                 )} FCFA</div>
                             </div>
                         </div>
@@ -1611,13 +1611,13 @@
                                 <tr class="total-row">
                                     <td colspan="3" style="padding: 12px; border: 1px solid #ddd; text-align: right;">TOTAUX:</td>
                                     <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                        totalDebt
+                                        totalDebt,
                                     )} FCFA</td>
                                     <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                        totalPaid
+                                        totalPaid,
                                     )} FCFA</td>
                                     <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                        totalRemaining
+                                        totalRemaining,
                                     )} FCFA</td>
                                     <td style="padding: 12px; border: 1px solid #ddd;"></td>
                                 </tr>
@@ -1642,12 +1642,12 @@
 
             printPaymentHistory() {
                 console.log(
-                    `[v0] Action: Impression de l'historique des paiements`
+                    `[v0] Action: Impression de l'historique des paiements`,
                 );
                 console.log(`[v0] Créance:`, this.selectedClaim);
 
                 const claimPayments = this.payments.filter(
-                    (p) => Number(p.claim_id) === Number(this.selectedClaim.id)
+                    (p) => Number(p.claim_id) === Number(this.selectedClaim.id),
                 );
 
                 console.log(`[v0] Nombre de paiements:`, claimPayments.length);
@@ -1656,7 +1656,7 @@
 
                 const totalPaid = claimPayments.reduce(
                     (sum, p) => sum + parseFloat(p.amount),
-                    0
+                    0,
                 );
 
                 const tableRows = claimPayments
@@ -1667,10 +1667,10 @@
                             index + 1
                         }</td>
                         <td style="padding: 12px; border: 1px solid #ddd;">${this.formatDateTime(
-                            payment.created_at
+                            payment.created_at,
                         )}</td>
                         <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                            payment.amount
+                            payment.amount,
                         )} FCFA</td>
                         <td style="padding: 12px; border: 1px solid #ddd;">${
                             payment.payment_method
@@ -1679,7 +1679,7 @@
                             payment.comment || '-'
                         }</td>
                     </tr>
-                `
+                `,
                     )
                     .join('');
 
@@ -1716,13 +1716,13 @@
                         
                         <div class="claim-info">
                             <p><strong>Montant de la créance:</strong> ${this.formatAmount(
-                                this.selectedClaim.debt_amount
+                                this.selectedClaim.debt_amount,
                             )} FCFA</p>
                             <p><strong>Montant payé:</strong> ${this.formatAmount(
-                                totalPaid
+                                totalPaid,
                             )} FCFA</p>
                             <p><strong>Reste à payer:</strong> ${this.formatAmount(
-                                this.selectedClaim.debt_amount - totalPaid
+                                this.selectedClaim.debt_amount - totalPaid,
                             )} FCFA</p>
                             <p><strong>Commentaire:</strong> ${
                                 this.selectedClaim.comment || '-'
@@ -1744,7 +1744,7 @@
                                 <tr class="total-row">
                                     <td colspan="2" style="text-align: right; padding: 12px; border: 1px solid #ddd;">Total payé:</td>
                                     <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${this.formatAmount(
-                                        totalPaid
+                                        totalPaid,
                                     )} FCFA</td>
                                     <td colspan="2" style="padding: 12px; border: 1px solid #ddd;"></td>
                                 </tr>
@@ -1753,7 +1753,7 @@
 
                         <div class="footer">
                             <p>Document imprimé le ${new Date().toLocaleString(
-                                'fr-FR'
+                                'fr-FR',
                             )}</p>
                         </div>
 
@@ -1809,21 +1809,21 @@
                     })
                     .reduce(
                         (sum, claim) => sum + parseFloat(claim.debt_amount),
-                        0
+                        0,
                     );
             },
 
             totalDebtAmount() {
                 return this.filteredClaims.reduce(
                     (sum, claim) => sum + parseFloat(claim.debt_amount),
-                    0
+                    0,
                 );
             },
 
             totalPaidAmount() {
                 return this.filteredClaims.reduce(
                     (sum, claim) => sum + this.getClaimPaidAmount(claim.id),
-                    0
+                    0,
                 );
             },
 
@@ -1835,13 +1835,13 @@
                 if (this.groupByClient) {
                     return (
                         Math.ceil(
-                            this.groupedClaims.length / this.itemsPerPage
+                            this.groupedClaims.length / this.itemsPerPage,
                         ) || 1
                     );
                 } else {
                     return (
                         Math.ceil(
-                            this.filteredClaims.length / this.itemsPerPage
+                            this.filteredClaims.length / this.itemsPerPage,
                         ) || 1
                     );
                 }
@@ -1869,7 +1869,7 @@
                             c.client_name.toLowerCase().includes(query) ||
                             c.client_phone.includes(query) ||
                             (c.comment &&
-                                c.comment.toLowerCase().includes(query))
+                                c.comment.toLowerCase().includes(query)),
                     );
 
                     // Log pour la recherche
@@ -1883,12 +1883,12 @@
                 switch (this.sortOption) {
                     case 'Client (A-Z)':
                         filtered.sort((a, b) =>
-                            a.client_name.localeCompare(b.client_name)
+                            a.client_name.localeCompare(b.client_name),
                         );
                         break;
                     case 'Client (Z-A)':
                         filtered.sort((a, b) =>
-                            b.client_name.localeCompare(a.client_name)
+                            b.client_name.localeCompare(a.client_name),
                         );
                         break;
                     case 'Montant (croissant)':
@@ -1900,13 +1900,13 @@
                     case 'Date (récent)':
                         filtered.sort(
                             (a, b) =>
-                                new Date(b.created_at) - new Date(a.created_at)
+                                new Date(b.created_at) - new Date(a.created_at),
                         );
                         break;
                     case 'Date (ancien)':
                         filtered.sort(
                             (a, b) =>
-                                new Date(a.created_at) - new Date(b.created_at)
+                                new Date(a.created_at) - new Date(b.created_at),
                         );
                         break;
                     default:
@@ -1937,10 +1937,10 @@
 
                     grouped[clientId].claims.push(claim);
                     grouped[clientId].total_debt += parseFloat(
-                        claim.debt_amount
+                        claim.debt_amount,
                     );
                     grouped[clientId].total_paid += this.getClaimPaidAmount(
-                        claim.id
+                        claim.id,
                     );
                 });
 

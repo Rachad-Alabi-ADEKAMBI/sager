@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 
 @include('pages.back.admin.sidebar')

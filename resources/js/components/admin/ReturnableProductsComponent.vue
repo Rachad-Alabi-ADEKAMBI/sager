@@ -656,26 +656,29 @@
                                         )"
                                         :key="product.id"
                                     >
-                                        <td>
+                                        <td data-label="Produit">
                                             {{
                                                 getProductName(
                                                     product.product_id,
                                                 )
                                             }}
                                         </td>
-                                        <td class="qty-center">
+                                        <td data-label="Remis" class="">
                                             {{ product.quantity_given }}
                                         </td>
-                                        <td class="qty-center">
+                                        <td data-label="Retourné" class="">
                                             {{ product.quantity_returned }}
                                         </td>
-                                        <td class="qty-center pending-qty">
+                                        <td
+                                            data-label="En Attente"
+                                            class="pending-qty"
+                                        >
                                             {{
                                                 product.quantity_given -
                                                 product.quantity_returned
                                             }}
                                         </td>
-                                        <td>
+                                        <td data-label="Statut">
                                             <span
                                                 :style="
                                                     getProductStatusBadgeStyle(
@@ -713,7 +716,6 @@
                                         <th>Quantité Retournée</th>
                                         <th>Date de Retour</th>
                                         <th>Commentaire</th>
-                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -723,64 +725,26 @@
                                         )"
                                         :key="returnItem.id"
                                     >
-                                        <td>
+                                        <td data-label="Produit">
                                             {{
                                                 getProductName(
                                                     returnItem.product_id,
                                                 )
                                             }}
                                         </td>
-                                        <td class="qty-center">
+                                        <td data-label="Qte">
                                             {{ returnItem.quantity_returned }}
                                         </td>
-                                        <td>
+                                        <td data-label="Date de Retour">
                                             {{ formatDate(returnItem.date) }}
                                         </td>
-                                        <td>{{ returnItem.comment || '-' }}</td>
-                                        <td class="actions-cell">
-                                            <button
-                                                @click="
-                                                    openEditReturnModal(
-                                                        returnItem,
-                                                    )
-                                                "
-                                                class="btn-small btn-action"
-                                                title="Modifier"
-                                            >
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button
-                                                @click="
-                                                    openDeleteReturnModal(
-                                                        returnItem,
-                                                    )
-                                                "
-                                                class="btn-small btn-danger"
-                                                title="Supprimer"
-                                            >
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                        <td data-label="Commentaire">
+                                            {{ returnItem.comment || '-' }}
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button
-                            @click="closeDetailsModal"
-                            class="btn-secondary"
-                        >
-                            <i class="fas fa-times"></i>
-                            Fermer
-                        </button>
-                        <button
-                            @click="printTransaction(selectedTransaction)"
-                            class="btn-primary"
-                        >
-                            <i class="fas fa-print"></i>
-                            Imprimer
-                        </button>
                     </div>
                 </div>
             </div>
@@ -1261,10 +1225,23 @@
                     const response = await axios.get(
                         `/returnable-products-list`,
                     );
-                    this.transactionProducts = response.data;
+
+                    // Normalize quantity_given and quantity_returned to numbers
+                    this.transactionProducts = response.data.map((product) => ({
+                        ...product,
+                        quantity_given: parseFloat(product.quantity_given) || 0,
+                        quantity_returned:
+                            parseFloat(product.quantity_returned) || 0,
+                    }));
+
                     console.log(
-                        '[v0] Transaction products loaded (with quantity_given and quantity_returned from API):',
-                        this.transactionProducts,
+                        '[v0] Transaction products loaded and normalized:',
+                        this.transactionProducts.slice(0, 3).map((p) => ({
+                            name: this.getProductName(p.product_id),
+                            quantity_given: p.quantity_given,
+                            quantity_returned: p.quantity_returned,
+                            types: `given: ${typeof p.quantity_given}, returned: ${typeof p.quantity_returned}`,
+                        })),
                     );
                 } catch (error) {
                     console.error(
@@ -1279,10 +1256,20 @@
                     const response = await axios.get(
                         `/returnable-products-returns`,
                     );
-                    this.stockReturns = response.data;
+
+                    // Normalize quantity_returned to numbers
+                    this.stockReturns = response.data.map((returnItem) => ({
+                        ...returnItem,
+                        quantity_returned:
+                            parseFloat(returnItem.quantity_returned) || 0,
+                    }));
+
                     console.log(
-                        '[v0] Stock returns loaded:',
-                        this.stockReturns,
+                        '[v0] Stock returns loaded and normalized:',
+                        this.stockReturns.slice(0, 3).map((r) => ({
+                            quantity_returned: r.quantity_returned,
+                            type: typeof r.quantity_returned,
+                        })),
                     );
                 } catch (error) {
                     console.error('[v0] Error fetching stock returns:', error);
@@ -1292,12 +1279,59 @@
             async fetchAllProducts() {
                 try {
                     const response = await axios.get(`/productsList`);
-                    console.log('[v0] Products fetched:', response.data);
-                    this.allProducts = Array.isArray(response.data)
-                        ? response.data
-                        : [];
+                    console.log(
+                        '[v0] Products fetched - Total count:',
+                        response.data?.length,
+                    );
+                    console.log(
+                        '[v0] Products response type:',
+                        typeof response.data,
+                    );
+                    console.log(
+                        '[v0] Is array?:',
+                        Array.isArray(response.data),
+                    );
+
+                    if (Array.isArray(response.data)) {
+                        this.allProducts = response.data;
+                        const returnableCount = response.data.filter(
+                            (p) =>
+                                p.isReturnable === 1 ||
+                                p.isReturnable === '1' ||
+                                p.isReturnable === true,
+                        ).length;
+                        console.log(
+                            '[v0] Returnable products count:',
+                            returnableCount,
+                        );
+                        console.log(
+                            '[v0] Sample returnable products:',
+                            response.data
+                                .filter(
+                                    (p) =>
+                                        p.isReturnable === 1 ||
+                                        p.isReturnable === '1' ||
+                                        p.isReturnable === true,
+                                )
+                                .slice(0, 3)
+                                .map((p) => ({
+                                    name: p.name,
+                                    isReturnable: p.isReturnable,
+                                    type: typeof p.isReturnable,
+                                })),
+                        );
+                    } else {
+                        console.error(
+                            '[v0] Products response is not an array!',
+                        );
+                        this.allProducts = [];
+                    }
                 } catch (error) {
                     console.error('[v0] Error fetching products:', error);
+                    console.error(
+                        '[v0] Error details:',
+                        error.response || error.message,
+                    );
                     this.allProducts = [];
                 }
             },
@@ -1822,15 +1856,37 @@
                     .map((line) => line.selectedProduct.id);
 
                 if (!Array.isArray(this.allProducts)) {
+                    console.warn(
+                        '[v0] allProducts is not an array:',
+                        this.allProducts,
+                    );
                     return [];
                 }
 
-                return this.allProducts.filter(
+                console.log('[v0] Total products:', this.allProducts.length);
+                console.log(
+                    '[v0] Sample product isReturnable values:',
+                    this.allProducts.slice(0, 3).map((p) => ({
+                        name: p.name,
+                        isReturnable: p.isReturnable,
+                        type: typeof p.isReturnable,
+                    })),
+                );
+
+                const filtered = this.allProducts.filter(
                     (p) =>
                         p.name.toLowerCase().includes(query) &&
                         !selectedProductIds.includes(p.id) &&
-                        p.isReturnable === 1,
+                        (p.isReturnable === 1 ||
+                            p.isReturnable === '1' ||
+                            p.isReturnable === true),
                 );
+
+                console.log(
+                    '[v0] Filtered returnable products:',
+                    filtered.length,
+                );
+                return filtered;
             },
 
             selectProductForLine(index, product) {
@@ -1934,7 +1990,7 @@
                         return {
                             returnable_product_id: product.id,
                             product_id: product.product_id,
-                            quantity_returned: data.quantity,
+                            quantity_returned: parseFloat(data.quantity) || 0,
                         };
                     });
 
