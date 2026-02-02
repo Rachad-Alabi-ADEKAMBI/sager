@@ -3,7 +3,7 @@
         <div class="claims-header">
             <h2>Gestion des Créances</h2>
 
-            <!-- Improved responsive statistics section  -->
+            <!-- Improved responsive statistics section -->
             <div class="statistics-section">
                 <div class="stat-card">
                     <!-- Afficher uniquement le total des créances en cours (non soldées) -->
@@ -79,10 +79,211 @@
                 <strong>Aucun client trouvé pour "{{ searchQuery }}"</strong>
             </div>
 
+            <!-- Vue Mobile: Cartes clients extensibles -->
+            <div class="clients-cards-mobile" v-if="isMobileView">
+                <div
+                    class="client-card"
+                    v-for="client in paginatedGroupedClaims"
+                    :key="client.client_id"
+                >
+                    <!-- En-tête de la carte (toujours visible) -->
+                    <div
+                        class="client-card-header"
+                        @click="toggleClientExpanded(client.client_id)"
+                    >
+                        <div class="client-header-info">
+                            <h4 class="client-name">
+                                {{ client.client_name }}
+                            </h4>
+                            <p class="client-phone">
+                                {{ client.client_phone }}
+                            </p>
+                        </div>
+                        <div class="client-amounts">
+                            <span class="amount-badge">
+                                {{ formatAmount(client.remaining) }} FCFA
+                            </span>
+                        </div>
+                        <button
+                            class="expand-btn"
+                            :class="{
+                                rotated: isClientExpanded(client.client_id),
+                            }"
+                            aria-label="Afficher/Masquer les créances du client"
+                            type="button"
+                        >
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+
+                    <!-- Contenu extensible (caché par défaut en mobile) -->
+                    <div
+                        class="client-card-content"
+                        :class="{
+                            expanded: isClientExpanded(client.client_id),
+                        }"
+                    >
+                        <!-- Statistiques du client -->
+                        <div class="client-stats">
+                            <div class="stat-line">
+                                <span class="stat-label">Total dû:</span>
+                                <span class="stat-value">
+                                    {{ formatAmount(client.total_debt) }} FCFA
+                                </span>
+                            </div>
+                            <div class="stat-line">
+                                <span class="stat-label">Payé:</span>
+                                <span class="stat-value paid">
+                                    {{ formatAmount(client.total_paid) }} FCFA
+                                </span>
+                            </div>
+                            <div class="stat-line">
+                                <span class="stat-label">Reste:</span>
+                                <span class="stat-value remaining">
+                                    {{ formatAmount(client.remaining) }} FCFA
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Liste des créances en mobile -->
+                        <div class="claims-list-mobile">
+                            <div
+                                class="claim-item"
+                                v-for="claim in client.claims"
+                                :key="claim.id"
+                            >
+                                <div class="claim-header">
+                                    <div class="claim-info">
+                                        <span class="claim-date">
+                                            {{
+                                                formatDateTime(claim.created_at)
+                                            }}
+                                        </span>
+                                        <span class="claim-amount">
+                                            <strong>
+                                                {{
+                                                    formatAmount(
+                                                        claim.debt_amount,
+                                                    )
+                                                }}
+                                                FCFA
+                                            </strong>
+                                        </span>
+                                        <span
+                                            class="claim-status"
+                                            :style="{
+                                                backgroundColor:
+                                                    getClaimPaidAmount(
+                                                        claim.id,
+                                                    ) >= claim.debt_amount
+                                                        ? '#d4edda'
+                                                        : getClaimPaidAmount(
+                                                                claim.id,
+                                                            ) > 0
+                                                          ? '#fff3cd'
+                                                          : '#f8d7da',
+                                                color:
+                                                    getClaimPaidAmount(
+                                                        claim.id,
+                                                    ) >= claim.debt_amount
+                                                        ? '#155724'
+                                                        : getClaimPaidAmount(
+                                                                claim.id,
+                                                            ) > 0
+                                                          ? '#856404'
+                                                          : '#721c24',
+                                            }"
+                                        >
+                                            {{
+                                                getClaimPaidAmount(claim.id) >=
+                                                claim.debt_amount
+                                                    ? 'Soldé'
+                                                    : getClaimPaidAmount(
+                                                            claim.id,
+                                                        ) > 0
+                                                      ? 'Partiel'
+                                                      : 'Impayé'
+                                            }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="claim-actions">
+                                    <button
+                                        class="btn-sm"
+                                        style="
+                                            background-color: #28a745;
+                                            color: white;
+                                        "
+                                        title="Ajouter un paiement"
+                                        @click="openAddPaymentModal(claim)"
+                                    >
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </button>
+                                    <button
+                                        class="btn-sm btn-edit"
+                                        title="Historique des paiements"
+                                        @click="viewPaymentHistory(claim)"
+                                    >
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                    <button
+                                        class="btn-sm btn-delete"
+                                        title="Supprimer"
+                                        @click="openDeleteClaimModal(claim)"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bouton d'impression pour le client -->
+                        <div class="card-footer">
+                            <button
+                                @click="printClientHistory(client)"
+                                class="btn-print-client"
+                                title="Imprimer l'historique du client"
+                            >
+                                <i class="fas fa-print"></i>
+                                Imprimer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination Mobile -->
+                <div class="pagination-mobile" v-if="totalPagesMobile > 1">
+                    <button
+                        @click="currentPage = Math.max(1, currentPage - 1)"
+                        :disabled="currentPage === 1"
+                        class="pagination-btn"
+                    >
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="pagination-info">
+                        {{ currentPage }} / {{ totalPagesMobile }}
+                    </span>
+                    <button
+                        @click="
+                            currentPage = Math.min(
+                                totalPagesMobile,
+                                currentPage + 1,
+                            )
+                        "
+                        :disabled="currentPage === totalPagesMobile"
+                        class="pagination-btn"
+                    >
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Vue Desktop: Tableau traditionnel -->
             <div
-                class="table-container"
+                class="table-container desktop-view"
                 v-for="client in paginatedGroupedClaims"
                 :key="client.client_id"
+                v-if="!isMobileView"
             >
                 <div class="table-header">
                     <div class="header-info">
@@ -731,15 +932,68 @@
                     {{ formatAmount(selectedClaim.debt_amount) }} FCFA
                 </div>
 
+                <!-- Afficher le montant restant dû -->
+                <div
+                    style="
+                        margin-bottom: 1.5rem;
+                        padding: 1rem;
+                        background: #e7f3ff;
+                        border-radius: 4px;
+                        border-left: 4px solid #667eea;
+                    "
+                >
+                    <strong>Montant restant à payer:</strong>
+                    <span
+                        style="
+                            font-size: 1.2rem;
+                            color: #667eea;
+                            font-weight: bold;
+                            display: block;
+                            margin-top: 0.5rem;
+                        "
+                    >
+                        {{
+                            formatAmount(
+                                getRemainingAmountForClaim(selectedClaim),
+                            )
+                        }}
+                        FCFA
+                    </span>
+                </div>
+
                 <div class="form-group">
-                    <label for="paymentAmount">Montant du paiement</label>
+                    <label for="paymentAmount">
+                        Montant du paiement (maximum:
+                        {{
+                            formatAmount(
+                                getRemainingAmountForClaim(selectedClaim),
+                            )
+                        }}
+                        FCFA)
+                    </label>
                     <input
                         id="paymentAmount"
-                        v-model="newPayment.amount"
+                        v-model.number="newPayment.amount"
                         type="number"
                         class="form-control"
+                        :max="getRemainingAmountForClaim(selectedClaim)"
+                        step="0.01"
+                        min="0.01"
                         required
                     />
+                    <small
+                        v-if="
+                            newPayment.amount >
+                            getRemainingAmountForClaim(selectedClaim)
+                        "
+                        style="
+                            color: #dc3545;
+                            display: block;
+                            margin-top: 0.5rem;
+                        "
+                    >
+                        Le montant ne peut pas dépasser le montant restant dû
+                    </small>
                 </div>
 
                 <div class="form-group">
@@ -782,7 +1036,32 @@
                     >
                         Annuler
                     </button>
-                    <button type="submit" class="btn btn-primary">
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                        :disabled="
+                            !newPayment.amount ||
+                            parseFloat(newPayment.amount) <= 0 ||
+                            parseFloat(newPayment.amount) >
+                                getRemainingAmountForClaim(selectedClaim)
+                        "
+                        :style="{
+                            opacity:
+                                !newPayment.amount ||
+                                parseFloat(newPayment.amount) <= 0 ||
+                                parseFloat(newPayment.amount) >
+                                    getRemainingAmountForClaim(selectedClaim)
+                                    ? 0.5
+                                    : 1,
+                            cursor:
+                                !newPayment.amount ||
+                                parseFloat(newPayment.amount) <= 0 ||
+                                parseFloat(newPayment.amount) >
+                                    getRemainingAmountForClaim(selectedClaim)
+                                    ? 'not-allowed'
+                                    : 'pointer',
+                        }"
+                    >
                         Ajouter le paiement
                     </button>
                 </div>
@@ -877,6 +1156,9 @@
 
                 currentPage: 1,
                 itemsPerPage: 10,
+                isMobileView: false,
+                itemsPerPageMobile: 5, // Nombre de cartes par page en mobile
+                expandedClients: {}, // { client_id: boolean } pour gérer l'état des cartes extensibles
 
                 newClient: {
                     name: '',
@@ -899,6 +1181,12 @@
 
         mounted() {
             this.fetchAllData();
+            this.checkMobileView();
+            window.addEventListener('resize', this.checkMobileView);
+        },
+
+        beforeUnmount() {
+            window.removeEventListener('resize', this.checkMobileView);
         },
 
         methods: {
@@ -1162,6 +1450,15 @@
                 };
             },
 
+            getRemainingAmountForClaim(claim) {
+                if (!claim || !claim.id) return 0;
+
+                const totalPaid = this.getClaimPaidAmount(claim.id) || 0;
+                const remaining = claim.debt_amount - totalPaid;
+
+                return Math.max(0, remaining);
+            },
+
             async addPaymentForm() {
                 console.log("[v0] === AJOUT D'UN PAIEMENT ===");
                 console.log(
@@ -1170,11 +1467,29 @@
                 console.log('[v0] Créance sélectionnée:', this.selectedClaim);
                 console.log('[v0] Données du paiement:', this.newPayment);
 
+                // Validation du montant
+                const paymentAmount = parseFloat(this.newPayment.amount);
+                const remainingAmount = this.getRemainingAmountForClaim(
+                    this.selectedClaim,
+                );
+
+                if (paymentAmount <= 0) {
+                    alert('Le montant du paiement doit être supérieur à 0.');
+                    return;
+                }
+
+                if (paymentAmount > remainingAmount) {
+                    alert(
+                        `Le montant du paiement (${this.formatAmount(paymentAmount)} FCFA) ne peut pas dépasser le montant restant dû (${this.formatAmount(remainingAmount)} FCFA).`,
+                    );
+                    return;
+                }
+
                 try {
                     const API_BASE = window.location.origin;
                     const paymentData = {
                         claim_id: Number(this.selectedClaim.id),
-                        amount: parseFloat(this.newPayment.amount),
+                        amount: paymentAmount,
                         payment_method: this.newPayment.payment_method,
                         comment: this.newPayment.comment,
                     };
@@ -1798,6 +2113,27 @@
                     alert('Erreur lors de la suppression: ' + error.message);
                 }
             },
+
+            // Méthodes pour gérer l'affichage mobile
+            checkMobileView() {
+                this.isMobileView = window.innerWidth < 769;
+            },
+
+            toggleClientExpanded(clientId) {
+                // Vue 3 - pas besoin de $set
+                if (this.expandedClients[clientId] === undefined) {
+                    this.expandedClients[clientId] = false;
+                }
+                this.expandedClients[clientId] =
+                    !this.expandedClients[clientId];
+                console.log(
+                    `[v0] Client ${clientId} toggled. Expanded: ${this.expandedClients[clientId]}`,
+                );
+            },
+
+            isClientExpanded(clientId) {
+                return this.expandedClients[clientId] || false;
+            },
         },
 
         computed: {
@@ -1847,6 +2183,18 @@
                 }
             },
 
+            totalPagesMobile() {
+                // Pagination mobile basée sur le nombre de cartes à afficher
+                if (this.groupByClient && this.isMobileView) {
+                    return (
+                        Math.ceil(
+                            this.groupedClaims.length / this.itemsPerPageMobile,
+                        ) || 1
+                    );
+                }
+                return this.totalPages;
+            },
+
             paginatedClaims() {
                 const start = (this.currentPage - 1) * this.itemsPerPage;
                 const end = start + this.itemsPerPage;
@@ -1854,8 +2202,12 @@
             },
 
             paginatedGroupedClaims() {
-                const start = (this.currentPage - 1) * this.itemsPerPage;
-                const end = start + this.itemsPerPage;
+                // Déterminer le nombre d'items par page selon la vue
+                const itemsPerPage = this.isMobileView
+                    ? this.itemsPerPageMobile
+                    : this.itemsPerPage;
+                const start = (this.currentPage - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
                 return this.groupedClaims.slice(start, end);
             },
 
@@ -2428,5 +2780,299 @@
         margin: 0;
         color: #333;
         font-size: 1.25rem;
+    }
+
+    /* Mobile Card Styles */
+    .clients-cards-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .client-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+    }
+
+    .client-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .client-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .client-header-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .client-name {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        word-break: break-word;
+    }
+
+    .client-phone {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+
+    .client-amounts {
+        flex-shrink: 0;
+        margin: 0 1rem;
+        text-align: right;
+    }
+
+    .amount-badge {
+        display: inline-block;
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .expand-btn {
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        padding: 0;
+    }
+
+    .expand-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.1);
+    }
+
+    .expand-btn i {
+        transition: transform 0.3s ease;
+    }
+
+    .expand-btn.rotated i {
+        transform: rotate(180deg);
+    }
+
+    .client-card-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .client-card-content.expanded {
+        max-height: 1500px;
+    }
+
+    .client-stats {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .stat-line {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        font-size: 0.95rem;
+    }
+
+    .stat-label {
+        color: #666;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .stat-value.paid {
+        color: #28a745;
+    }
+
+    .stat-value.remaining {
+        color: #dc3545;
+    }
+
+    .claims-list-mobile {
+        padding: 1rem;
+        background: white;
+    }
+
+    .claim-item {
+        padding: 1rem;
+        border: 1px solid #f0f0f0;
+        border-radius: 6px;
+        margin-bottom: 0.75rem;
+        background: #fafafa;
+    }
+
+    .claim-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .claim-header {
+        margin-bottom: 0.75rem;
+    }
+
+    .claim-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .claim-date {
+        color: #888;
+        font-size: 0.85rem;
+    }
+
+    .claim-amount {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .claim-status {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        width: fit-content;
+    }
+
+    .claim-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .card-footer {
+        padding: 1rem;
+        border-top: 1px solid #e0e0e0;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: center;
+    }
+
+    .desktop-view {
+        display: block;
+    }
+
+    /* Hide desktop view in mobile */
+    @media (max-width: 768px) {
+        .desktop-view {
+            display: none;
+        }
+
+        .clients-cards-mobile {
+            gap: 0.75rem;
+        }
+
+        .client-card-header {
+            padding: 1rem;
+        }
+
+        .client-name {
+            font-size: 0.95rem;
+        }
+
+        .amount-badge {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.6rem;
+        }
+
+        .claim-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.6rem !important;
+            font-size: 0.8rem !important;
+        }
+    }
+
+    /* Pagination Mobile Styles */
+    .pagination-mobile {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e0e0e0;
+        margin-top: 0;
+    }
+
+    .pagination-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        background: #764ba2;
+        transform: scale(1.1);
+    }
+
+    .pagination-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .pagination-info {
+        font-weight: 600;
+        color: #666;
+        min-width: 60px;
+        text-align: center;
+        font-size: 0.95rem;
+    }
+
+    /* Show desktop view in desktop and hide mobile cards */
+    @media (min-width: 769px) {
+        .clients-cards-mobile {
+            display: none;
+        }
+
+        .pagination-mobile {
+            display: none;
+        }
+
+        .desktop-view {
+            display: block;
+        }
     }
 </style>
