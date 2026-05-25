@@ -35,6 +35,13 @@
                 <div class="page-header">
                     <div class="header-content">
                         <div class="header-filters">
+                            <input
+                                type="text"
+                                v-model="searchQuery"
+                                class="filter-search"
+                                placeholder="Rechercher client, vendeur, facture..."
+                            />
+
                             <select
                                 v-model="filterPeriod"
                                 class="filter-select"
@@ -46,6 +53,25 @@
                                 <option>Toutes les ventes</option>
                                 <option>À une date précise</option>
                                 <option>Entre deux dates</option>
+                            </select>
+
+                            <select v-model="sortOption" class="filter-select">
+                                <option value="date_desc">Date (récent)</option>
+                                <option value="date_asc">Date (ancien)</option>
+                                <option value="amount_desc">
+                                    Montant (décroissant)
+                                </option>
+                                <option value="amount_asc">
+                                    Montant (croissant)
+                                </option>
+                                <option value="client_asc">Client (A-Z)</option>
+                                <option value="client_desc">Client (Z-A)</option>
+                                <option value="seller_asc">
+                                    Vendeur (A-Z)
+                                </option>
+                                <option value="seller_desc">
+                                    Vendeur (Z-A)
+                                </option>
                             </select>
 
                             <select
@@ -385,8 +411,10 @@
                 showSaleModal: false,
                 filterPeriod: 'Toutes les ventes',
                 filterStatus: '',
+                searchQuery: '',
+                sortOption: 'date_desc',
                 currentPage: 1,
-                perPage: 10,
+                perPage: 20,
             };
         },
 
@@ -856,9 +884,27 @@
             filteredSales() {
                 const now = new Date();
                 this.currentPage = 1;
+                const search = this.searchQuery.trim().toLowerCase();
 
-                return this.sales.filter((sale) => {
+                const filtered = this.sales.filter((sale) => {
                     const saleDate = new Date(sale.created_at);
+
+                    if (search) {
+                        const searchable = [
+                            sale.id,
+                            sale.buyer_name,
+                            sale.seller_name,
+                            sale.total,
+                            sale.status,
+                        ]
+                            .filter((value) => value !== null && value !== undefined)
+                            .join(' ')
+                            .toLowerCase();
+
+                        if (!searchable.includes(search)) {
+                            return false;
+                        }
+                    }
 
                     if (
                         this.filterStatus &&
@@ -934,6 +980,37 @@
                             return true;
                     }
                 });
+
+                return filtered.sort((a, b) => {
+                    const dateA = new Date(a.created_at);
+                    const dateB = new Date(b.created_at);
+                    const totalA = Number(a.total) || 0;
+                    const totalB = Number(b.total) || 0;
+                    const clientA = (a.buyer_name || '').toLowerCase();
+                    const clientB = (b.buyer_name || '').toLowerCase();
+                    const sellerA = (a.seller_name || '').toLowerCase();
+                    const sellerB = (b.seller_name || '').toLowerCase();
+
+                    switch (this.sortOption) {
+                        case 'date_asc':
+                            return dateA - dateB;
+                        case 'amount_desc':
+                            return totalB - totalA;
+                        case 'amount_asc':
+                            return totalA - totalB;
+                        case 'client_asc':
+                            return clientA.localeCompare(clientB);
+                        case 'client_desc':
+                            return clientB.localeCompare(clientA);
+                        case 'seller_asc':
+                            return sellerA.localeCompare(sellerB);
+                        case 'seller_desc':
+                            return sellerB.localeCompare(sellerA);
+                        case 'date_desc':
+                        default:
+                            return dateB - dateA;
+                    }
+                });
             },
 
             totalPages() {
@@ -982,7 +1059,7 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 1.5rem;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
     }
 
     .stat-card {
@@ -1312,6 +1389,7 @@
         border-radius: 15px;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         overflow: hidden;
+        margin-top: 0;
     }
 
     .table {
@@ -1933,7 +2011,7 @@
 
     .page-header {
         background: white;
-        padding: 1.5rem 2rem;
+        padding: 1rem 2rem;
         border-radius: 15px 15px 0 0;
         border-bottom: 1px solid #eee;
     }
@@ -1953,16 +2031,25 @@
         flex-wrap: wrap;
     }
 
+    .filter-search,
     .filter-select {
         padding: 0.6rem 1rem;
         border: 2px solid #e1e5e9;
         border-radius: 8px;
         font-size: 0.95rem;
         background: white;
-        cursor: pointer;
         transition: border-color 0.3s ease;
     }
 
+    .filter-search {
+        min-width: 260px;
+    }
+
+    .filter-select {
+        cursor: pointer;
+    }
+
+    .filter-search:focus,
     .filter-select:focus {
         outline: none;
         border-color: #667eea;
@@ -2072,6 +2159,7 @@
             gap: 10px;
         }
 
+        .filter-search,
         .filter-select {
             flex: 1;
             min-width: 150px;
@@ -2352,7 +2440,50 @@
 
     @media (max-width: 768px) {
         .statistics-section {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding-top: 0.75rem;
+        }
+
+        .stat-card {
+            min-height: 136px;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 0.55rem;
+            padding: 0.95rem;
+            overflow: visible;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            font-size: 1.35rem;
+        }
+
+        .stat-info {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .stat-label {
+            margin-bottom: 0.25rem;
+            font-size: 0.8rem;
+            line-height: 1.2;
+        }
+
+        .stat-value {
+            max-width: 100%;
+            font-size: 1.25rem;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .page-header {
+            padding: 0.85rem;
         }
 
         .desktop-only {
@@ -2373,6 +2504,7 @@
             width: 100%;
         }
 
+        .filter-search,
         .filter-select,
         .date-picker {
             width: 100%;

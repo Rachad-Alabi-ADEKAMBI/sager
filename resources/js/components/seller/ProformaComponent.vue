@@ -539,7 +539,7 @@
                 productLines: [],
                 total: 0,
                 sales: [],
-                salesPerPage: 5,
+                salesPerPage: 20,
                 currentPage: 1,
                 showSaleModal: false,
                 selectedSale: null,

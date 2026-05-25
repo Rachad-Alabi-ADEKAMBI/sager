@@ -31,7 +31,7 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended('/dashboardAdmin');
         }
 
-        return redirect()->intended('/dashboard');
+        return redirect()->intended('/sale');
     }
 
 

@@ -402,7 +402,7 @@
                 showSaleModal: false,
                 filterPeriod: 'Toutes les ventes',
                 currentPage: 1,
-                perPage: 10,
+                perPage: 20,
                 dateFilterMode: '',
                 filterDateStart: '',
                 filterDateEnd: '',

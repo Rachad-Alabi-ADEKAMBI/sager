@@ -404,7 +404,7 @@
                 filterDateEnd: '',
                 sortOption: 'Date (récent)',
                 currentPage: 1,
-                itemsPerPage: 10,
+                itemsPerPage: 20,
                 newExpense: {
                     type: '',
                     description: '',
@@ -964,8 +964,25 @@
     }
 
     .stat-icon {
-        font-size: 2.5rem;
+        width: 58px;
+        height: 58px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 14px;
+        font-size: 1.55rem;
+        background: rgba(102, 126, 234, 0.12);
         color: #667eea;
+    }
+
+    .stat-card-2 .stat-icon {
+        background: rgba(40, 167, 69, 0.12);
+        color: #28a745;
+    }
+
+    .stat-icon i {
+        line-height: 1;
     }
 
     .stat-info {
@@ -1299,11 +1316,28 @@
     @media (max-width: 768px) {
         .statistics-section {
             grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.15rem;
+        }
+
+        .stat-card {
+            padding: 1rem;
+        }
+
+        .expenses-header {
+            margin-bottom: 1rem;
+        }
+
+        .expenses-header h2 {
+            margin-bottom: 0.8rem;
+            font-size: 1.55rem;
         }
 
         .header-actions {
-            flex-direction: column;
+            flex-direction: row;
             width: 100%;
+            gap: 10px;
+            margin-bottom: 0.75rem;
         }
 
         .search-input,

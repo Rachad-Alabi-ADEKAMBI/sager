@@ -678,7 +678,7 @@
 
                 // Added pagination variables
                 currentPage: 1,
-                itemsPerPage: 10,
+                itemsPerPage: 20,
 
                 // Form data
                 newClient: {

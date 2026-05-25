@@ -284,6 +284,11 @@
         color: white;
     }
 
+    .btn-password {
+        background: #667eea;
+        color: white;
+    }
+
     .btn-unban {
         background: #28a745;
         color: white;

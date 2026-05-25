@@ -1143,7 +1143,7 @@
                 filterDateEnd: '',
                 sortOption: 'Date (récent)',
                 currentPage: 1,
-                itemsPerPage: 10,
+                itemsPerPage: 20,
                 showCreateModal: false,
                 showDetailsModal: false,
                 showReturnModal: false,

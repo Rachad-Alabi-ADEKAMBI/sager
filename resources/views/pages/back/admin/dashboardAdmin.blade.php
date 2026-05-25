@@ -246,6 +246,7 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         background: #f5f6fa;
         color: #333;
+        overflow-x: hidden;
     }
 
     /* Sidebar */
@@ -307,15 +308,21 @@
         margin-left: 250px;
         min-height: 100vh;
         transition: all 0.3s ease;
+        max-width: calc(100vw - 250px);
+        overflow-x: hidden;
     }
 
     .header {
         background: white;
         padding: 1rem 2rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 1300;
+        isolation: isolate;
     }
 
     .header h1 {
@@ -343,6 +350,8 @@
     /* Dashboard Content */
     .dashboard-content {
         padding: 2rem;
+        max-width: 100%;
+        overflow-x: hidden;
     }
 
     .stats-grid {
@@ -434,6 +443,7 @@
         padding: 1.5rem;
         border-radius: 15px;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        min-width: 0;
     }
 
     .chart-header {
@@ -508,9 +518,17 @@
     }
 
     /* Mobile Responsive */
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
+        html,
+        body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
         .sidebar {
             transform: translateX(-100%);
+            z-index: 1400;
         }
 
         .sidebar.active {
@@ -519,14 +537,106 @@
 
         .main-content {
             margin-left: 0;
+            max-width: 100vw;
+            width: 100%;
+            padding-bottom: 76px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1300;
+            min-height: 68px;
+            padding: 0.85rem 1rem;
+            gap: 0.75rem;
+            background: #ffffff;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            line-height: 1.2;
+        }
+
+        .dashboard-content {
+            padding: 1rem;
+            width: 100%;
         }
 
         .charts-section {
             grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            padding: 1rem;
+            border-radius: 12px;
+            min-width: 0;
+        }
+
+        .stat-header {
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .stat-value {
+            font-size: 1.35rem;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+        }
+
+        .stat-label {
+            font-size: 0.82rem;
+        }
+
+        .stat-icon {
+            width: 42px;
+            height: 42px;
+            font-size: 1.1rem;
+            flex: 0 0 42px;
+        }
+
+        .chart-card {
+            padding: 1rem;
+            border-radius: 12px;
+        }
+
+        .chart-header {
+            align-items: stretch;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .chart-header select {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        #salesChart {
+            max-width: 100% !important;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .dashboard-content {
+            padding: 0.75rem;
         }
 
         .stats-grid {
             grid-template-columns: 1fr;
+        }
+
+        .user-info span {
+            display: none;
         }
     }
 

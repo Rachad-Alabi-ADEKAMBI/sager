@@ -1,5 +1,14 @@
 {
-  "appId": "dom.sagermarket.mobile",
-  "appName": "sager",
-  "webDir": "public"
+  "appId": "dom.sagermarket.vendeur",
+  "appName": "Sager Vendeur",
+  "webDir": "capacitor-www",
+  "server": {
+    "url": "https://sager-market.com/",
+    "cleartext": false
+  },
+  "plugins": {
+    "CapacitorCookies": {
+      "enabled": true
+    }
+  }
 }

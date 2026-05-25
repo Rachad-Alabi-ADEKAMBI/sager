@@ -379,7 +379,7 @@
 
                 // Pagination
                 currentPage: 1,
-                perPage: 10,
+                perPage: 20,
             };
         },
 

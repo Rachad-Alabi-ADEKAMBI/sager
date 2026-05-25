@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    @vite('resources/js/app.js')
 
     <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
 
@@ -201,7 +201,7 @@
         </div>
     </div>
 
-    <script>
+    <script type="application/json" id="legacy-pdf-disabled">
         // Fonction pour générer et télécharger le PDF
         async function downloadPDF() {
             const {
@@ -225,7 +225,7 @@
         }
 
         // Remplacer le lien "Télécharger" pour déclencher la fonction JS
-        document.querySelector('a[href="download"]').addEventListener('click', function(e) {
+        document.querySelector('a[href="download"]')?.addEventListener('click', function(e) {
             e.preventDefault();
             downloadPDF();
         });

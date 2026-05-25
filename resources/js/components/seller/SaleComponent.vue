@@ -396,7 +396,7 @@
             <!-- Sales History -->
             <div class="sales-history">
                 <div class="history-header">
-                    <h3>Historique de mes ventes ( {{ sales.length }} )</h3>
+                    <h3>Historique des ventes ( {{ sales.length }} )</h3>
                 </div>
                 <table class="table">
                     <thead>
@@ -816,7 +816,7 @@
                 productLines: [],
                 total: 0,
                 sales: [],
-                salesPerPage: 5,
+                salesPerPage: 20,
                 currentPage: 1,
                 showSaleModal: false,
                 selectedSale: null,
@@ -1519,6 +1519,20 @@
 
     /* Responsive: empiler sur mobile */
     @media (max-width: 768px) {
+        main.main-content {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+        }
+
+        main.main-content > .sales-content {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+        }
+
+        .sales-form {
+            margin-top: 0 !important;
+        }
+
         .product-line {
             flex-direction: column;
             align-items: stretch;

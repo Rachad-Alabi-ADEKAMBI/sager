@@ -13,6 +13,8 @@
 /.zed
 /auth.json
 /node_modules
+/android/keystore.properties
+/android/app/*.keystore
 /public/build
 /public/hot
 /public/storage
@@ -22,3 +24,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/android
+android
+capaccitor-wwww
+

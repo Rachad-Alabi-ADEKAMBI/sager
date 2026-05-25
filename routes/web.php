@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\{Route, Auth, DB};
+use Illuminate\Support\Facades\{Route, Auth, DB, Hash};
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 
@@ -221,6 +221,10 @@ Route::get('/returnable-products-returns', [StocksReturnableProductController::c
 //enregistrer un retour
 Route::post('/returnable-products-returns', [StocksReturnableProductController::class, 'store'])
     ->name('stocksReturnableProducts.store');
+
+//supprimer un retour
+Route::post('/returnable-products-delete-return/{id}', [StocksReturnableProductController::class, 'destroy'])
+    ->name('stocksReturnableProducts.destroy');
 
 //annuler une remise
 Route::post('/returnable-products-cancel/{id}', [ReturnableProductController::class, 'cancel'])
@@ -524,6 +528,27 @@ Route::get('/seller/{id}', function ($id) {
         return response()->json(['error' => 'Seller not found'], 404);
     }
 })->name('seller');
+
+Route::post('/sellers/{id}/password', function (Request $request, $id) {
+    if (!Auth::check() || Auth::user()->role !== 'admin') {
+        return response()->json(['error' => 'Accès non autorisé.'], 403);
+    }
+
+    $request->validate([
+        'password' => 'required|string|min:8|confirmed',
+    ]);
+
+    $seller = User::where('role', '!=', 'admin')->find($id);
+
+    if (!$seller) {
+        return response()->json(['error' => 'Vendeur non trouvé.'], 404);
+    }
+
+    $seller->password = Hash::make($request->input('password'));
+    $seller->save();
+
+    return response()->json(['message' => 'Mot de passe mis à jour avec succès.']);
+})->name('sellers.password');
 
 
 // Liste de tous les stocks

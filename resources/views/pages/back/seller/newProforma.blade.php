@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    @vite('resources/js/app.js')
     <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
     <style>
         body {

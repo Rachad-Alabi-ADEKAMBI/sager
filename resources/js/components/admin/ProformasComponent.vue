@@ -3,7 +3,7 @@
         <div class="sales-content">
             <div class="sales-history">
                 <div class="history-header">
-                    <h3>Historique des Factures Proformas</h3>
+                    <h3>Historique des Proformas</h3>
                     <div
                         style="
                             display: flex;
@@ -261,7 +261,7 @@
 
                 // AJOUTÉ POUR LA PAGINATION
                 currentPage: 1,
-                perPage: 10, // Nombre d'éléments par page
+                perPage: 20, // Nombre d'éléments par page
             };
         },
 

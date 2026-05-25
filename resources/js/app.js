@@ -1,4 +1,7 @@
 import { createApp } from 'vue';
+import { installPdfPrintAdapter } from './pdfPrint';
+import { installResponsiveSearchOptions } from './mobileSearchOptions';
+import { installAdminResponsiveSpacing } from './adminResponsiveSpacing';
 import SalesComponent from './components/admin/SalesComponent.vue';
 import ProductsComponent from './components/admin/ProductsComponent.vue';
 import StocksComponent from './components/admin/StocksComponent.vue';
@@ -32,4 +35,10 @@ app.component('sale-component', SaleComponent);
 app.component('proforma-component', ProformaComponent);
 
 
-app.mount('#app');
+installPdfPrintAdapter();
+installResponsiveSearchOptions();
+installAdminResponsiveSpacing();
+
+if (document.querySelector('#app')) {
+    app.mount('#app');
+}

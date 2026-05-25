@@ -1,8 +1,6 @@
 <template>
     <div class="claims-content">
         <div class="claims-header">
-            <h2>Gestion des Créances</h2>
-
             <!-- Improved responsive statistics section -->
             <div class="statistics-section">
                 <div class="stat-card">
@@ -1155,9 +1153,9 @@
                 currentClaim: null,
 
                 currentPage: 1,
-                itemsPerPage: 10,
+                itemsPerPage: 20,
                 isMobileView: false,
-                itemsPerPageMobile: 5, // Nombre de cartes par page en mobile
+                itemsPerPageMobile: 20, // Nombre de cartes par page en mobile
                 expandedClients: {}, // { client_id: boolean } pour gérer l'état des cartes extensibles
 
                 newClient: {
@@ -2418,6 +2416,10 @@
         font-weight: 600;
     }
 
+    .claims-page-title {
+        text-align: center;
+    }
+
     .header-actions {
         display: flex;
         gap: 10px;
@@ -2712,8 +2714,7 @@
         }
 
         .pagination {
-            flex-wrap: wrap;
-            gap: 0.5rem;
+            display: none;
         }
 
         .btn-pagination {

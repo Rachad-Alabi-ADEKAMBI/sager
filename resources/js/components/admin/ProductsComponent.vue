@@ -26,7 +26,7 @@
                 </div>
             </div>
             <div class="stat-card stat-card-4">
-                <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                <div class="stat-icon"><i class="fas fa-box-open"></i></div>
                 <div class="stat-info">
                     <div class="stat-label">Rupture de stock</div>
                     <div class="stat-value">{{ outOfStockCount }}</div>
@@ -1403,7 +1403,7 @@
                 },
 
                 currentPage: 1,
-                itemsPerPage: 10,
+                itemsPerPage: 20,
                 showPrintOptionsModal: false,
                 printOptions: {
                     showPriceDetail: true,
@@ -2591,19 +2591,20 @@
     /* Added statistics section styles */
     .statistics-section {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
 
     .stat-card {
         background: white;
         border-radius: 12px;
-        padding: 1.5rem;
+        min-width: 0;
+        padding: 1.1rem;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         display: flex;
         align-items: center;
-        gap: 1.5rem;
+        gap: 0.9rem;
         transition: all 0.3s ease;
     }
 
@@ -2629,13 +2630,14 @@
     }
 
     .stat-icon {
-        width: 60px;
-        height: 60px;
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 1.35rem;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
@@ -2646,16 +2648,42 @@
 
     .stat-label {
         color: #666;
-        font-size: 0.9rem;
-        margin-bottom: 0.5rem;
+        font-size: 0.82rem;
+        margin-bottom: 0.35rem;
     }
 
     .stat-value {
-        font-size: 1.8rem;
+        font-size: 1.45rem;
         font-weight: bold;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+    }
+
+    @media (max-width: 1200px) {
+        .statistics-section {
+            grid-template-columns: repeat(4, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .stat-card {
+            padding: 0.9rem;
+            gap: 0.7rem;
+        }
+
+        .stat-icon {
+            width: 42px;
+            height: 42px;
+            font-size: 1.15rem;
+        }
+
+        .stat-label {
+            font-size: 0.76rem;
+        }
+
+        .stat-value {
+            font-size: 1.22rem;
+        }
     }
 
     /* Added styled table header */
@@ -3027,6 +3055,42 @@
 
     /* Responsive adjustments */
     @media (max-width: 768px) {
+        .statistics-section {
+            width: 100%;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.65rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .stat-card {
+            min-height: 82px;
+            padding: 0.65rem;
+            gap: 0.5rem;
+            border-radius: 10px;
+        }
+
+        .stat-icon {
+            width: 34px;
+            height: 34px;
+            font-size: 0.92rem;
+            border-radius: 10px;
+        }
+
+        .stat-info {
+            min-width: 0;
+        }
+
+        .stat-label {
+            font-size: 0.68rem;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.05rem;
+            line-height: 1.1;
+        }
+
         .products-header {
             flex-direction: column;
             align-items: flex-start;
@@ -3042,6 +3106,12 @@
         .btn {
             width: 100%;
             margin-bottom: 10px;
+        }
+
+        .header-actions .mobile-search-options-toggle {
+            width: min(88%, 330px) !important;
+            margin: 0.25rem auto 0.75rem !important;
+            flex: 0 0 auto !important;
         }
 
         .table-container {
@@ -3080,7 +3150,21 @@
         }
 
         .action-buttons {
-            justify-content: flex-end; /* Align action buttons to the right */
+            display: grid;
+            grid-template-columns: repeat(4, 34px);
+            justify-content: flex-end;
+            gap: 6px;
+        }
+
+        .action-buttons .btn-sm {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
         }
 
         .pagination-container {

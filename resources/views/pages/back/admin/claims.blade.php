@@ -13,7 +13,7 @@
             <button class="menu-toggle" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i>
             </button>
-            <h1>Clients</h1>
+            <h1>Créances</h1>
         </div>
         <div class="user-info">
             <span>Admin</span>

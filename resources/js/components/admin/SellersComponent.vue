@@ -50,6 +50,13 @@
                             Voir activité
                         </button>
                         <button
+                            class="btn-sm btn-password"
+                            @click="openPasswordModal(seller)"
+                        >
+                            <i class="fas fa-key"></i>
+                            Mot de passe
+                        </button>
+                        <button
                             class="btn-sm btn-ban"
                             @click="openBanUserModal(seller)"
                         >
@@ -115,6 +122,69 @@
                         <button
                             type="button"
                             @click="closeAddUserModal()"
+                            style="
+                                flex: 1;
+                                background: #6c757d;
+                                color: white;
+                                border: none;
+                                padding: 0.75rem;
+                                border-radius: 10px;
+                                cursor: pointer;
+                            "
+                        >
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="" v-if="passwordModal && selectedSeller">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Modifier le mot de passe de {{ selectedSeller.name }}</h3>
+                    <span class="close" @click="closePasswordModal()">
+                        &times;
+                    </span>
+                </div>
+                <form @submit.prevent="submitPasswordForm">
+                    <div class="form-group">
+                        <label for="sellerPassword">Nouveau mot de passe</label>
+                        <input
+                            type="password"
+                            id="sellerPassword"
+                            class="form-control"
+                            v-model="passwordForm.password"
+                            minlength="8"
+                            required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="sellerPasswordConfirmation">
+                            Confirmer le mot de passe
+                        </label>
+                        <input
+                            type="password"
+                            id="sellerPasswordConfirmation"
+                            class="form-control"
+                            v-model="passwordForm.password_confirmation"
+                            minlength="8"
+                            required
+                        />
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem">
+                        <button
+                            type="submit"
+                            class="btn-primary"
+                            style="flex: 1"
+                            :disabled="isUpdatingPassword"
+                        >
+                            <i class="fas fa-save"></i>
+                            Enregistrer
+                        </button>
+                        <button
+                            type="button"
+                            @click="closePasswordModal()"
                             style="
                                 flex: 1;
                                 background: #6c757d;
@@ -240,8 +310,14 @@
                 addUserModal: false,
                 salesModal: false,
                 banUserModal: false,
+                passwordModal: false,
+                isUpdatingPassword: false,
                 selectedSeller: null, // Vendeur sélectionné pour voir ses ventes
                 banReason: '',
+                passwordForm: {
+                    password: '',
+                    password_confirmation: '',
+                },
                 newUser: {
                     name: '',
                     email: '',
@@ -260,6 +336,7 @@
                 this.showUsers = true;
                 this.addUserModal = false;
                 this.salesModal = false;
+                this.passwordModal = false;
 
                 axios
                     .get('/sellersList')
@@ -280,6 +357,7 @@
                 this.addUserModal = true;
                 this.salesModal = false;
                 this.banUserModal = false;
+                this.passwordModal = false;
                 this.selectedSeller = null;
             },
             closeAddUserModal() {
@@ -298,6 +376,7 @@
                 this.selectedSeller = seller;
                 this.addUserModal = false;
                 this.banUserModal = false;
+                this.passwordModal = false;
 
                 axios
                     .get(`/sellers/${seller.id}/sales`)
@@ -330,6 +409,29 @@
                 this.banUserModal = false;
                 this.selectedSeller = null; // Réinitialise le vendeur sélectionné
                 this.banReason = '';
+            },
+
+            openPasswordModal(seller) {
+                this.showUsers = false;
+                this.passwordModal = true;
+                this.selectedSeller = seller;
+                this.addUserModal = false;
+                this.salesModal = false;
+                this.banUserModal = false;
+                this.passwordForm = {
+                    password: '',
+                    password_confirmation: '',
+                };
+            },
+            closePasswordModal() {
+                this.showUsers = true;
+                this.passwordModal = false;
+                this.selectedSeller = null;
+                this.passwordForm = {
+                    password: '',
+                    password_confirmation: '',
+                };
+                this.isUpdatingPassword = false;
             },
 
             // Logique du formulaire
@@ -376,6 +478,39 @@
                         alert(
                             'Erreur lors du bannissement. Veuillez renseigner un motif de minimum 10 caractères'
                         );
+                    });
+            },
+            submitPasswordForm() {
+                if (
+                    this.passwordForm.password !==
+                    this.passwordForm.password_confirmation
+                ) {
+                    alert('Les mots de passe ne correspondent pas.');
+                    return;
+                }
+
+                this.isUpdatingPassword = true;
+
+                axios
+                    .post(
+                        `/sellers/${this.selectedSeller.id}/password`,
+                        this.passwordForm
+                    )
+                    .then(() => {
+                        alert('Mot de passe mis à jour avec succès.');
+                        this.closePasswordModal();
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Erreur lors de la mise à jour du mot de passe :',
+                            error.response ? error.response.data : error.message
+                        );
+                        alert(
+                            'Erreur lors de la mise à jour. Le mot de passe doit contenir au moins 8 caractères.'
+                        );
+                    })
+                    .finally(() => {
+                        this.isUpdatingPassword = false;
                     });
             },
 

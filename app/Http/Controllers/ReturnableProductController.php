@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Notification;
 use App\Models\Product;
 use App\Models\Stock;
+use App\Models\StocksReturnableProduct;
 
 
 class ReturnableProductController extends Controller
@@ -134,12 +135,18 @@ class ReturnableProductController extends Controller
             $notifications = [];
 
             // 🔥 On récupère les lignes métier directement
-            $items = ReturnableProductsList::where('returnable_product_id', $operation->id)->get();
+            $items = ReturnableProductsList::where('returnable_product_id', $operation->id)
+                ->lockForUpdate()
+                ->get();
 
             foreach ($items as $item) {
+                $given = (float) $item->quantity_given;
 
-                $given    = (float) $item->quantity_given;
-                $returned = (float) $item->quantity_returned;
+                $returnRows = StocksReturnableProduct::where('returnable_product_id', $item->id)
+                    ->lockForUpdate()
+                    ->get();
+
+                $returned = round((float) $returnRows->sum('quantity_returned'), 2);
 
                 $correction = round($given - $returned, 2);
 
@@ -162,6 +169,15 @@ class ReturnableProductController extends Controller
                     ]);
 
                     $notifications[] = $product->name . ' (+' . $correction . ')';
+                }
+
+                if ($item->quantity_returned != 0) {
+                    $item->quantity_returned = 0;
+                    $item->save();
+                }
+
+                if ($returnRows->isNotEmpty()) {
+                    StocksReturnableProduct::whereIn('id', $returnRows->pluck('id'))->delete();
                 }
             }
 
